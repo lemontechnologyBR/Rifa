@@ -62,7 +62,7 @@ app.get('/sitemap.xml', async (req, res) => {
     const prisma = require('./lib/prisma');
     const tenants = await prisma.tenant.findMany({
       where: { status: 'ativo' },
-      select: { slug: true, updatedAt: true },
+      select: { slug: true, createdAt: true },
       orderBy: { createdAt: 'asc' }
     });
     const rifas = await prisma.rifa.findMany({
@@ -85,7 +85,7 @@ app.get('/sitemap.xml', async (req, res) => {
     ];
 
     for (const t of tenants) {
-      const d = t.updatedAt ? t.updatedAt.toISOString().split('T')[0] : now;
+      const d = t.createdAt ? t.createdAt.toISOString().split('T')[0] : now;
       urls.push(`<url><loc>${appUrl}/${t.slug}/</loc><lastmod>${d}</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>`);
       urls.push(`<url><loc>${appUrl}/${t.slug}/encerradas</loc><lastmod>${d}</lastmod><changefreq>weekly</changefreq><priority>0.4</priority></url>`);
     }
