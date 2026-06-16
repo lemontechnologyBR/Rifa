@@ -8,7 +8,49 @@ const { slugify } = require('../lib/reservedSlugs');
 
 const platformController = {
   landing(req, res) {
-    res.render('platform/landing', { titulo: 'VouRifar — Rifas Online' });
+    const appUrl = res.locals.baseUrl || process.env.APP_URL || '';
+    res.render('platform/landing', {
+      titulo: 'VouRifar — Rifas Online',
+      seoTitle: 'VouRifar — Crie seu Sistema de Rifas Online com PIX',
+      seoDescription: 'Crie sua própria plataforma de rifas online com pagamento via PIX. Gratuito para o organizador, taxa de 5% no comprador. Cadastre-se agora e comece a vender cotas hoje!',
+      seoUrl: appUrl + '/',
+      seoType: 'website',
+      seoImage: appUrl + '/img/vourifar-logo.png',
+      seoJsonLd: {
+        '@context': 'https://schema.org',
+        '@graph': [
+          {
+            '@type': 'Organization',
+            name: 'VouRifar',
+            url: appUrl,
+            logo: appUrl + '/img/vourifar-logo.png',
+            description: 'Plataforma SaaS de rifas online com pagamento via PIX'
+          },
+          {
+            '@type': 'WebSite',
+            name: 'VouRifar',
+            url: appUrl,
+            potentialAction: {
+              '@type': 'SearchAction',
+              target: appUrl + '/busca?q={search_term_string}',
+              'query-input': 'required name=search_term_string'
+            }
+          },
+          {
+            '@type': 'SoftwareApplication',
+            name: 'VouRifar',
+            applicationCategory: 'BusinessApplication',
+            operatingSystem: 'Web',
+            offers: {
+              '@type': 'Offer',
+              price: '0',
+              priceCurrency: 'BRL',
+              description: 'Gratuito para o organizador'
+            }
+          }
+        ]
+      }
+    });
   },
 
   acessarForm(req, res) {
@@ -18,6 +60,9 @@ const platformController = {
 
     res.render('platform/acessar', {
       titulo: 'Acessar painel',
+      seoTitle: 'Entrar — VouRifar',
+      seoDescription: 'Acesse o painel do seu sistema de rifas online VouRifar.',
+      seoNoIndex: true,
       erro: req.query.erro ? decodeURIComponent(String(req.query.erro).replace(/\+/g, ' ')) : null,
       msg: req.query.msg ? decodeURIComponent(String(req.query.msg).replace(/\+/g, ' ')) : null,
       googleEnabled: GoogleAuthService.isConfigured(),
@@ -63,6 +108,9 @@ const platformController = {
 
       res.render('platform/cadastro', {
         titulo: 'Criar seu sistema de rifas',
+        seoTitle: 'Criar Sistema de Rifas Grátis — VouRifar',
+        seoDescription: 'Cadastre-se gratuitamente e crie seu sistema de rifas online em minutos. Pagamento via PIX, sorteio automático.',
+        seoNoIndex: false,
         erro: req.query.erro ? decodeURIComponent(String(req.query.erro).replace(/\+/g, ' ')) : null,
         dados: viaGoogle
           ? { nome: googleProfile.nome, email: googleProfile.email }

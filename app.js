@@ -49,6 +49,58 @@ app.get('/health', (req, res) => {
   res.status(200).json({ ok: true, uptime: Math.floor(process.uptime()) });
 });
 
+app.get('/robots.txt', (req, res) => {
+  const appUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+  res.type('text/plain').send(
+    `User-agent: *\nAllow: /\n\nDisallow: /super/\nDisallow: /*/admin/\nDisallow: /api/\nDisallow: /webhooks/\nDisallow: /health\nDisallow: /pwa-check\n\nSitemap: ${appUrl}/sitemap.xml\n`
+  );
+});
+
+app.get('/sitemap.xml', async (req, res) => {
+  const appUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+  try {
+    const prisma = require('./lib/prisma');
+    const tenants = await prisma.tenant.findMany({
+      where: { status: 'ativo' },
+      select: { slug: true, updatedAt: true },
+      orderBy: { createdAt: 'asc' }
+    });
+    const rifas = await prisma.rifa.findMany({
+      where: { status: { in: ['ativa', 'finalizada'] } },
+      select: { id: true, tenantId: true, updatedAt: true },
+      include: { tenant: { select: { slug: true, status: true } } },
+      orderBy: { createdAt: 'desc' },
+      take: 500
+    });
+
+    const now = new Date().toISOString().split('T')[0];
+    const urls = [
+      `<url><loc>${appUrl}/</loc><lastmod>${now}</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>`,
+      `<url><loc>${appUrl}/cadastro</loc><lastmod>${now}</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>`,
+      `<url><loc>${appUrl}/acessar</loc><lastmod>${now}</lastmod><changefreq>monthly</changefreq><priority>0.5</priority></url>`,
+    ];
+
+    for (const t of tenants) {
+      const d = t.updatedAt ? t.updatedAt.toISOString().split('T')[0] : now;
+      urls.push(`<url><loc>${appUrl}/${t.slug}/</loc><lastmod>${d}</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>`);
+      urls.push(`<url><loc>${appUrl}/${t.slug}/encerradas</loc><lastmod>${d}</lastmod><changefreq>weekly</changefreq><priority>0.4</priority></url>`);
+    }
+
+    for (const r of rifas) {
+      if (!r.tenant || r.tenant.status !== 'ativo') continue;
+      const d = r.updatedAt ? r.updatedAt.toISOString().split('T')[0] : now;
+      const prio = r.status === 'ativa' ? '0.9' : '0.5';
+      const freq = r.status === 'ativa' ? 'daily' : 'monthly';
+      urls.push(`<url><loc>${appUrl}/${r.tenant.slug}/rifas/${r.id}</loc><lastmod>${d}</lastmod><changefreq>${freq}</changefreq><priority>${prio}</priority></url>`);
+    }
+
+    res.header('Content-Type', 'application/xml');
+    res.send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>`);
+  } catch (err) {
+    res.status(500).type('text/plain').send('Erro ao gerar sitemap.');
+  }
+});
+
 app.use(session({
   secret: process.env.SESSION_SECRET || 'rifas-dev-secret-change-me',
   resave: false,
@@ -85,6 +137,12 @@ app.use((req, res, next) => {
 app.use(csrfToken);
 app.use(carregarUsuario);
 app.use(validarCSRF);
+
+// Páginas de admin/super são noindex
+app.use(['/super', '/:slug/admin'], (req, res, next) => {
+  res.locals.seoNoIndex = true;
+  next();
+});
 
 // Rotas fixas antes do slug dinâmico
 app.use('/auth', authGoogleRoutes);

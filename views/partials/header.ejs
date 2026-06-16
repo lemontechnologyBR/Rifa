@@ -10,8 +10,9 @@
   <% const brandLogo = (typeof rifaBrand !== 'undefined' && rifaBrand && rifaBrand.logoUrl) ? rifaBrand.logoUrl : ((typeof tenant !== 'undefined' && tenant && tenant.logoUrl) ? tenant.logoUrl : null); %>
   <% const brandCorDark = (typeof tenantCorDark !== 'undefined' && tenantCorDark) ? tenantCorDark : brandCor; %>
   <% const brandVars = (typeof tenantCssVars !== 'undefined' && tenantCssVars) ? tenantCssVars : `--brand-from:${platformColor || '#10b981'};--brand-to:${platformColor || '#10b981'};--brand-accent:${platformColor || '#10b981'}`; %>
-  <title><%= titulo %> | <%= (typeof tenant !== 'undefined' && tenant) ? tenant.nome : (platformName || 'VouRifar') %></title>
+  <title><%= (typeof seoTitle !== 'undefined' && seoTitle) ? seoTitle : (titulo + ' | ' + ((typeof tenant !== 'undefined' && tenant) ? tenant.nome : (platformName || 'VouRifar'))) %></title>
   <link rel="icon" href="<%= brandLogo || ((typeof platformFavicon !== 'undefined' && platformFavicon) ? platformFavicon : '/img/vourifar-icon.png') %>" type="image/png" sizes="32x32">
+  <%- include('seo') %>
   <% if (typeof pwaEnabled !== 'undefined' && pwaEnabled) { %>
   <link rel="manifest" href="<%= pwaManifestUrl || '/manifest.webmanifest' %>">
   <meta name="theme-color" content="<%= brandCor %>">
