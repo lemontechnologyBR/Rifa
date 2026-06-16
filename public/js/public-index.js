@@ -2,7 +2,7 @@
  * Listagem pública — modal de compra por quantidade + PIX real
  */
 (function () {
-  const TAXA = 0.10;
+  const TAXA = 0;
   const modal = document.getElementById('modal-participar');
   if (!modal) return;
 
@@ -67,8 +67,7 @@
   }
 
   function calcularComTaxa(subtotal) {
-    const taxa = subtotal * TAXA;
-    return { subtotal, taxa, total: subtotal + taxa };
+    return { subtotal, taxa: 0, total: subtotal };
   }
 
   const COMPRA_MIN_REAIS = 5;
@@ -95,7 +94,11 @@
     const { subtotal, taxa, total } = calcularComTaxa(calcularSubtotal(qtdCotas));
     if (els.qtd) els.qtd.textContent = String(qtdCotas);
     if (els.subtotal) els.subtotal.textContent = 'R$ ' + fmt(subtotal);
-    if (els.taxa) els.taxa.textContent = 'R$ ' + fmt(taxa);
+    if (els.taxa) {
+      const taxaRow = els.taxa.closest('li, tr, .taxa-row') || els.taxa.parentElement;
+      if (taxaRow) taxaRow.classList.toggle('hidden', taxa === 0);
+      els.taxa.textContent = 'R$ ' + fmt(taxa);
+    }
     if (els.valorTotal) els.valorTotal.textContent = 'R$ ' + fmt(total);
     const min = qtdMinima();
     if (els.btnMenos) els.btnMenos.disabled = qtdCotas <= min;

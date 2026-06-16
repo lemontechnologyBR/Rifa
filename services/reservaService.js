@@ -101,13 +101,17 @@ const ReservaService = {
 
   async montarPagamentoWoovi(reserva, rifa, tenant, usuario) {
     const correlationID = reserva.codigoPagamento || `reserva-${reserva.id}`;
-    const { MULTIPLICADOR_TAXA, TAXA_PLATAFORMA } = require('../lib/config');
-    const valorComTaxa = reserva.valorTotal * MULTIPLICADOR_TAXA;
+    const { TAXA_PLATAFORMA, ORGANIZADOR_PERCENTUAL } = require('../lib/config');
+
+    // Comprador paga o valor exato da cota (sem acréscimo).
+    // Plataforma retém 10%; organizador recebe 90% via split Woovi.
+    const valorCobrado = reserva.valorTotal;
+    const valorOrganizador = reserva.valorTotal * ORGANIZADOR_PERCENTUAL;
 
     const charge = await WooviService.criarCobranca(tenant, {
       correlationID,
-      valorReais: valorComTaxa,
-      valorOrganizadorReais: reserva.valorTotal,
+      valorReais: valorCobrado,
+      valorOrganizadorReais: valorOrganizador,
       comentario: `Rifa: ${rifa.titulo}`.slice(0, 120),
       cliente: {
         nome: usuario.nome,
@@ -130,8 +134,8 @@ const ReservaService = {
 
     return {
       metodo: 'woovi',
-      valor: valorComTaxa,
-      valorOrganizador: reserva.valorTotal,
+      valor: valorCobrado,
+      valorOrganizador,
       taxaPlataforma: reserva.valorTotal * TAXA_PLATAFORMA,
       codigoPagamento: reserva.codigoPagamento,
       chavePix: tenant.pixChave,

@@ -8,12 +8,13 @@
   <div class="grid grid-cols-2 gap-3 mb-3">
     <div class="admin-sim-card admin-sim-card-you">
       <p class="admin-sim-card-label">Você recebe / cota</p>
-      <p class="admin-sim-card-value">R$ <span x-text="fmt(valorCota)"></span></p>
+      <p class="admin-sim-card-value">R$ <span x-text="fmt(valorCota * 0.9)"></span></p>
+      <p class="admin-sim-card-sub">90% do valor da cota</p>
     </div>
     <div class="admin-sim-card">
       <p class="admin-sim-card-label">Comprador paga / cota</p>
       <p class="admin-sim-card-value">R$ <span x-text="fmt(compradorPaga)"></span></p>
-      <p class="admin-sim-card-sub">+10% taxa plataforma</p>
+      <p class="admin-sim-card-sub">-10% plataforma (retido)</p>
     </div>
   </div>
 
@@ -24,7 +25,7 @@
       <span class="font-semibold" x-text="fmtInt(totalCotas)"></span>
     </div>
     <div class="flex justify-between text-sm">
-      <span class="text-gray-500">Seu faturamento (100%)</span>
+      <span class="text-gray-500">Seu faturamento (90%)</span>
       <span class="font-bold text-emerald-600">R$ <span x-text="fmt(faturamentoTotal)"></span></span>
     </div>
     <div class="flex justify-between text-sm">
@@ -32,7 +33,7 @@
       <span class="font-semibold">R$ <span x-text="fmt(volumeCompradores)"></span></span>
     </div>
     <div class="flex justify-between text-xs text-gray-400 pt-1 border-t border-emerald-100 dark:border-emerald-900">
-      <span>Taxa 10% (paga pelo comprador)</span>
+      <span>Comissão plataforma (10% do arrecadado)</span>
       <span>R$ <span x-text="fmt(taxaPlataformaTotal)"></span></span>
     </div>
   </div>
@@ -50,10 +51,10 @@
       </div>
     </div>
     <div class="admin-sim-bar mt-3">
-      <div class="admin-sim-bar-you" style="width:95.24%"></div>
-      <div class="admin-sim-bar-fee" style="width:9.09%"></div>
+      <div class="admin-sim-bar-you" style="width:90%"></div>
+      <div class="admin-sim-bar-fee" style="width:10%"></div>
     </div>
-    <p class="text-[10px] text-gray-400 mt-1.5">90% seu · 10% taxa (comprador)</p>
+    <p class="text-[10px] text-gray-400 mt-1.5">90% seu · 10% plataforma</p>
   </div>
   <% } %>
 </div>

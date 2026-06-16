@@ -73,7 +73,7 @@
 
   const tenantPath = typeof TENANT_SLUG !== 'undefined' ? `/${TENANT_SLUG}` : '';
   const maxQtd = typeof QTD_MAX !== 'undefined' ? QTD_MAX : (typeof COTAS_DISPONIVEIS !== 'undefined' ? COTAS_DISPONIVEIS : 5000);
-  const TAXA_PLATAFORMA = 0.10;
+  const TAXA_PLATAFORMA = 0;
   const minutosReserva = typeof TEMPO_RESERVA_MIN !== 'undefined' ? TEMPO_RESERVA_MIN : 10;
 
   let qtdCotas = maxQtd > 0 ? Math.min(1, maxQtd) : 0;
@@ -111,8 +111,7 @@
   }
 
   function calcularComTaxa(subtotal) {
-    const taxa = subtotal * TAXA_PLATAFORMA;
-    return { subtotal, taxa, total: subtotal + taxa };
+    return { subtotal, taxa: 0, total: subtotal };
   }
 
   const COMPRA_MIN_REAIS = 5;

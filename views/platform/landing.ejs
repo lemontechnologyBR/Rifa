@@ -3,11 +3,13 @@
 <div class="landing-page" x-data="{
   valorCota: 10,
   cotasVendidas: 100,
-  get taxa() { return Math.max(0, this.valorCota) * 0.10; },
-  get compradorPaga() { return Math.max(0, this.valorCota) + this.taxa; },
-  get totalOrganizador() { return Math.max(0, this.valorCota) * Math.max(0, this.cotasVendidas); },
-  get totalTaxa() { return this.taxa * Math.max(0, this.cotasVendidas); },
-  get totalCompradores() { return this.compradorPaga * Math.max(0, this.cotasVendidas); },
+  get taxa() { return 0; },
+  get comissao() { return Math.max(0, this.valorCota) * 0.10; },
+  get compradorPaga() { return Math.max(0, this.valorCota); },
+  get organizadorRecebe() { return Math.max(0, this.valorCota) * 0.90; },
+  get totalOrganizador() { return Math.max(0, this.valorCota) * 0.9 * Math.max(0, this.cotasVendidas); },
+  get totalTaxa() { return Math.max(0, this.valorCota) * 0.1 * Math.max(0, this.cotasVendidas); },
+  get totalCompradores() { return Math.max(0, this.valorCota) * Math.max(0, this.cotasVendidas); },
   fmt(v) { return (Math.max(0, v) || 0).toFixed(2).replace('.', ','); }
 }">
   <!-- Hero -->
@@ -26,7 +28,7 @@
               Comissão zero para você
             </span>
             <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold uppercase tracking-wide border border-slate-200 dark:border-slate-700">
-              10% para o comprador
+              10% retido da arrecadação
             </span>
             <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-800 dark:text-violet-300 text-xs font-bold uppercase tracking-wide border border-violet-200 dark:border-violet-800">
               <i data-lucide="infinity" class="w-3.5 h-3.5"></i>
@@ -42,15 +44,15 @@
           </h1>
 
           <p class="landing-subtitle text-lg leading-relaxed max-w-xl mx-auto lg:mx-0 mb-6">
-            Organize rifas com site próprio, painel admin e PIX automático. Defina <strong class="text-violet-600 dark:text-violet-400">quantas cotas quiser</strong> — 100, 1.000 ou 10.000+. O comprador paga <strong class="text-emerald-600 dark:text-emerald-400">10% de taxa</strong>; você recebe <strong class="text-gray-800 dark:text-gray-200">100% do valor da cota</strong>.
+            Organize rifas com site próprio, painel admin e PIX automático. Defina <strong class="text-violet-600 dark:text-violet-400">quantas cotas quiser</strong> — 100, 1.000 ou 10.000+. O comprador paga o <strong class="text-emerald-600 dark:text-emerald-400">valor exato da cota</strong>; você recebe <strong class="text-gray-800 dark:text-gray-200">90% de cada venda</strong>.
           </p>
 
           <div class="inline-flex items-start gap-3 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-sm text-left max-w-md mx-auto lg:mx-0 mb-8">
             <i data-lucide="info" class="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5"></i>
             <p class="text-emerald-950 dark:text-emerald-50/90">
-              Exemplo: comprador paga <strong>R$ 11,00</strong> por uma cota de <strong>R$ 10,00</strong>
-              <span class="text-emerald-600 dark:text-emerald-400"> (R$ 1,00 de taxa da plataforma)</span>.
-              Você recebe os R$ 10,00 inteiros.
+              Exemplo: comprador paga <strong>R$ 10,00</strong> por uma cota de <strong>R$ 10,00</strong>
+              <span class="text-emerald-600 dark:text-emerald-400"> (valor exato, sem acréscimo)</span>.
+              Você recebe <strong>R$ 9,00 (90%)</strong> e a plataforma retém R$ 1,00.
             </p>
           </div>
 
@@ -68,7 +70,7 @@
           <div class="flex flex-wrap justify-center lg:justify-start gap-4 text-sm text-gray-500 dark:text-gray-400">
             <span class="flex items-center gap-2"><i data-lucide="circle-dollar-sign" class="w-4 h-4 text-emerald-500"></i> Você não paga comissão</span>
             <span class="flex items-center gap-2"><i data-lucide="infinity" class="w-4 h-4 text-violet-500"></i> Cotas ilimitadas por rifa</span>
-            <span class="flex items-center gap-2"><i data-lucide="eye" class="w-4 h-4 text-sky-500"></i> Taxa transparente</span>
+            <span class="flex items-center gap-2"><i data-lucide="eye" class="w-4 h-4 text-sky-500"></i> Valor exato, sem surpresas</span>
             <span class="flex items-center gap-2"><i data-lucide="smartphone" class="w-4 h-4 text-teal-500"></i> 100% mobile</span>
           </div>
         </div>
@@ -78,9 +80,9 @@
           <div class="landing-card">
             <h3 class="font-bold text-lg mb-1 flex items-center gap-2">
               <i data-lucide="calculator" class="w-5 h-5 text-emerald-600"></i>
-              Simulador de taxa
+              Simulador por cota
             </h3>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">Por cota — veja quanto o comprador paga e quanto você recebe</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">Veja quanto o comprador paga e quanto você recebe por cota vendida</p>
 
             <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-2">Valor da cota (R$)</label>
             <input type="number" x-model.number="valorCota" min="0.01" step="0.01"
@@ -92,8 +94,8 @@
                 <span class="font-semibold text-gray-900 dark:text-white">R$ <span x-text="fmt(valorCota)"></span></span>
               </div>
               <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
-                <span class="text-gray-500 dark:text-gray-400">Taxa plataforma (10%)</span>
-                <span class="font-semibold text-amber-600 dark:text-amber-400">+ R$ <span x-text="fmt(taxa)"></span></span>
+                <span class="text-gray-500 dark:text-gray-400">Comissão plataforma (10%)</span>
+                <span class="font-semibold text-amber-600 dark:text-amber-400">− R$ <span x-text="fmt(comissao)"></span></span>
               </div>
               <div class="landing-bar-buyer flex justify-between py-3 rounded-xl px-4">
                 <span class="font-medium">Comprador paga</span>
@@ -101,7 +103,7 @@
               </div>
               <div class="landing-bar-organizer flex justify-between py-3 rounded-xl px-4">
                 <span class="font-medium">Organizador recebe</span>
-                <span class="font-bold text-lg">R$ <span x-text="fmt(valorCota)"></span></span>
+                <span class="font-bold text-lg">R$ <span x-text="fmt(organizadorRecebe)"></span></span>
               </div>
             </div>
           </div>
@@ -111,10 +113,6 @@
             <div class="flex justify-between text-sm mb-1">
               <span>1 cota × R$ <span x-text="fmt(valorCota)"></span></span>
               <span>R$ <span x-text="fmt(valorCota)"></span></span>
-            </div>
-            <div class="flex justify-between text-sm text-amber-600 dark:text-amber-400 mb-3">
-              <span>Taxa VouRifar (10%)</span>
-              <span>+ R$ <span x-text="fmt(taxa)"></span></span>
             </div>
             <div class="flex justify-between font-bold pt-3 border-t border-gray-200 dark:border-slate-700">
               <span>Total PIX</span>
@@ -131,7 +129,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="text-center max-w-2xl mx-auto mb-12">
         <h2 class="text-3xl sm:text-4xl font-extrabold mb-4">Modelo justo para organizadores</h2>
-        <p class="text-gray-500 dark:text-gray-400">Você foca na rifa. A plataforma se mantém com uma taxa clara para quem compra.</p>
+        <p class="text-gray-500 dark:text-gray-400">Você foca na rifa. A plataforma só ganha quando você vende — 10% retido do arrecadado.</p>
       </div>
 
       <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-6">
@@ -140,9 +138,9 @@
           <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center mb-5 shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform">
             <i data-lucide="badge-percent" class="w-7 h-7 text-white"></i>
           </div>
-          <h3 class="text-xl font-bold mb-2">Organizador não paga nada</h3>
+          <h3 class="text-xl font-bold mb-2">Você paga 0% — gratuito para começar</h3>
           <p class="text-gray-500 dark:text-gray-400 leading-relaxed text-sm">
-            Sua rifa, seu lucro. A comissão de <strong class="text-gray-700 dark:text-gray-300">10%</strong> fica por conta do comprador — você nunca paga taxa à plataforma.
+            A plataforma retém <strong class="text-gray-700 dark:text-gray-300">10%</strong> do valor arrecadado — você recebe 90% de cada venda. Nunca paga do bolso.
           </p>
         </article>
 
@@ -151,9 +149,9 @@
           <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-sky-500 to-slate-700 flex items-center justify-center mb-5 shadow-lg shadow-sky-500/20 group-hover:scale-105 transition-transform">
             <i data-lucide="wallet" class="w-7 h-7 text-white"></i>
           </div>
-          <h3 class="text-xl font-bold mb-2">PIX automático com taxa embutida</h3>
+          <h3 class="text-xl font-bold mb-2">PIX automático sem acréscimo</h3>
           <p class="text-gray-500 dark:text-gray-400 leading-relaxed text-sm">
-            Integração PIX calcula os <strong class="text-gray-700 dark:text-gray-300">10% automaticamente</strong>. O comprador vê o valor final antes de pagar.
+            Integração PIX cobra o <strong class="text-gray-700 dark:text-gray-300">valor exato da cota</strong>. A comissão de 10% é descontada automaticamente do repasse.
           </p>
         </article>
 
@@ -174,7 +172,7 @@
           </div>
           <h3 class="text-xl font-bold mb-2">Sem login para comprar</h3>
           <p class="text-gray-500 dark:text-gray-400 leading-relaxed text-sm">
-            Comprador informa telefone e vê o acréscimo de <strong class="text-gray-700 dark:text-gray-300">10%</strong> no resumo antes de confirmar o PIX.
+            Comprador informa telefone e confirma o <strong class="text-gray-700 dark:text-gray-300">valor exato da cota</strong> no resumo antes de pagar o PIX.
           </p>
         </article>
       </div>
@@ -196,7 +194,7 @@
           <ul class="space-y-3 text-sm text-gray-600 dark:text-gray-400">
             <li class="flex items-start gap-3"><i data-lucide="check-circle-2" class="w-5 h-5 text-violet-600 shrink-0 mt-0.5"></i> Defina o total ao criar a rifa — de dezenas a <strong>10.000+ números</strong></li>
             <li class="flex items-start gap-3"><i data-lucide="check-circle-2" class="w-5 h-5 text-violet-600 shrink-0 mt-0.5"></i> Grade visual com busca e seleção rápida para o comprador</li>
-            <li class="flex items-start gap-3"><i data-lucide="check-circle-2" class="w-5 h-5 text-violet-600 shrink-0 mt-0.5"></i> Mesma taxa de <strong>10% por cota vendida</strong> — não importa o tamanho da rifa</li>
+            <li class="flex items-start gap-3"><i data-lucide="check-circle-2" class="w-5 h-5 text-violet-600 shrink-0 mt-0.5"></i> Mesma comissão de <strong>10% retida por cota vendida</strong> — não importa o tamanho da rifa</li>
           </ul>
         </div>
 
@@ -230,8 +228,8 @@
   <section id="como-funciona" class="py-16 lg:py-24">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="text-center max-w-2xl mx-auto mb-14">
-        <h2 class="text-3xl sm:text-4xl font-extrabold mb-4">Como funciona a taxa de 10%</h2>
-        <p class="text-gray-500 dark:text-gray-400">Transparente para o comprador. Lucro integral para você.</p>
+        <h2 class="text-3xl sm:text-4xl font-extrabold mb-4">Como funciona a comissão de 10%</h2>
+        <p class="text-gray-500 dark:text-gray-400">Comprador paga o valor exato. Você recebe 90% de cada venda.</p>
       </div>
 
       <div class="grid md:grid-cols-3 gap-8 relative">
@@ -251,20 +249,20 @@
         <div class="landing-card text-center relative">
           <div class="w-12 h-12 rounded-full landing-btn-primary flex items-center justify-center font-bold text-lg mx-auto mb-4 shadow-lg">2</div>
           <h3 class="font-bold text-lg mb-2">Comprador seleciona cotas</h3>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Vê o valor final no resumo:</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Vê o valor exato no resumo:</p>
           <div class="space-y-1 text-sm">
-            <div class="text-gray-500">R$ 10,00 + R$ 1,00 taxa</div>
-            <div class="font-bold text-lg text-slate-800 dark:text-white">= R$ 11,00 por cota</div>
+            <div class="text-gray-500">R$ 10,00 × 90% = R$ 9,00 para você</div>
+            <div class="font-bold text-lg text-slate-800 dark:text-white">= R$ 9,00 líquido por cota</div>
           </div>
-          <p class="text-xs text-amber-600 dark:text-amber-400 mt-3">Taxa visível antes do PIX</p>
+          <p class="text-xs text-emerald-600 dark:text-emerald-400 mt-3">Valor exato, sem surpresas</p>
         </div>
 
         <div class="landing-card text-center relative">
           <div class="w-12 h-12 rounded-full landing-btn-primary flex items-center justify-center font-bold text-lg mx-auto mb-4 shadow-lg">3</div>
-          <h3 class="font-bold text-lg mb-2">Organizador recebe tudo</h3>
+          <h3 class="font-bold text-lg mb-2">Organizador recebe 90%</h3>
           <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Cada cota vendida rende:</p>
-          <div class="inline-block px-4 py-2 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 font-bold text-emerald-700 dark:text-emerald-400 text-xl">R$ 10,00</div>
-          <p class="text-xs text-emerald-600 dark:text-emerald-400 mt-3">100% do valor da cota</p>
+          <div class="inline-block px-4 py-2 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 font-bold text-emerald-700 dark:text-emerald-400 text-xl">R$ 9,00</div>
+          <p class="text-xs text-emerald-600 dark:text-emerald-400 mt-3">90% do valor da cota</p>
         </div>
       </div>
     </div>
@@ -278,7 +276,7 @@
           <i data-lucide="trending-up" class="w-3.5 h-3.5"></i> Projeção de vendas
         </span>
         <h2 class="text-3xl sm:text-4xl font-extrabold mb-3">Simulador de arrecadação</h2>
-        <p class="text-gray-500 dark:text-gray-400 max-w-lg mx-auto">Estime quanto você arrecada e quanto os compradores pagam no total — a taxa de 10% nunca sai do seu bolso.</p>
+        <p class="text-gray-500 dark:text-gray-400 max-w-lg mx-auto">Estime quanto você arrecada — você paga 0% e a plataforma só ganha quando você vende.</p>
       </div>
 
       <div class="landing-card">
@@ -309,28 +307,28 @@
             <i data-lucide="piggy-bank" class="w-8 h-8 text-emerald-600 mx-auto mb-2"></i>
             <p class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase mb-1">Você arrecada</p>
             <p class="text-2xl sm:text-3xl font-extrabold text-emerald-700 dark:text-emerald-300">R$ <span x-text="fmt(totalOrganizador)"></span></p>
-            <p class="text-[11px] text-gray-500 mt-2">100% do valor das cotas</p>
+            <p class="text-[11px] text-gray-500 mt-2">90% do valor arrecadado</p>
           </div>
           <div class="rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 p-5 text-center">
             <i data-lucide="users" class="w-8 h-8 text-slate-600 dark:text-slate-400 mx-auto mb-2"></i>
             <p class="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase mb-1">Compradores pagam</p>
             <p class="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-white">R$ <span x-text="fmt(totalCompradores)"></span></p>
-            <p class="text-[11px] text-gray-500 mt-2">Total em PIX (cotas + taxa)</p>
+            <p class="text-[11px] text-gray-500 mt-2">Valor exato pago pelos compradores</p>
           </div>
           <div class="rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 p-5 text-center">
             <i data-lucide="percent" class="w-8 h-8 text-amber-600 mx-auto mb-2"></i>
-            <p class="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase mb-1">Taxa plataforma (10%)</p>
+            <p class="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase mb-1">Comissão plataforma (10%)</p>
             <p class="text-2xl sm:text-3xl font-extrabold text-amber-700 dark:text-amber-300">R$ <span x-text="fmt(totalTaxa)"></span></p>
-            <p class="text-[11px] text-gray-500 mt-2">Paga pelo comprador</p>
+            <p class="text-[11px] text-gray-500 mt-2">Retida do arrecadado</p>
           </div>
         </div>
 
         <div class="rounded-xl bg-gray-50 dark:bg-gray-900/50 p-4 text-sm space-y-2 border border-gray-100 dark:border-gray-800">
-          <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400"><span x-text="cotasVendidas"></span> cotas × R$ <span x-text="fmt(valorCota)"></span></span><span class="font-medium text-gray-900 dark:text-white">R$ <span x-text="fmt(totalOrganizador)"></span></span></div>
-          <div class="flex justify-between text-amber-600 dark:text-amber-400"><span>+ Taxa VouRifar (10%)</span><span>R$ <span x-text="fmt(totalTaxa)"></span></span></div>
+          <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400"><span x-text="cotasVendidas"></span> cotas × R$ <span x-text="fmt(valorCota)"></span> (arrecadação bruta)</span><span class="font-medium text-gray-900 dark:text-white">R$ <span x-text="fmt(totalCompradores)"></span></span></div>
+          <div class="flex justify-between text-amber-600 dark:text-amber-400"><span>− Comissão VouRifar (10%)</span><span>R$ <span x-text="fmt(totalTaxa)"></span></span></div>
           <div class="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-700 font-bold text-gray-900 dark:text-white">
-            <span>Total movimentado (PIX)</span>
-            <span class="text-emerald-600 dark:text-emerald-400">R$ <span x-text="fmt(totalCompradores)"></span></span>
+            <span>Você recebe (líquido)</span>
+            <span class="text-emerald-600 dark:text-emerald-400">R$ <span x-text="fmt(totalOrganizador)"></span></span>
           </div>
         </div>
       </div>
@@ -343,9 +341,9 @@
       <div class="rounded-3xl bg-gradient-to-br from-slate-800 via-slate-900 to-emerald-900 p-10 sm:p-14 text-white shadow-2xl relative overflow-hidden">
         <div class="absolute inset-0 opacity-10" style="background-image:radial-gradient(circle at 2px 2px, white 1px, transparent 0);background-size:24px 24px"></div>
         <div class="relative">
-          <span class="inline-block px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold uppercase mb-4">Comissão zero para organizadores</span>
+          <span class="inline-block px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold uppercase mb-4">Gratuito para começar</span>
           <h2 class="text-2xl sm:text-3xl font-extrabold mb-3">Comece sua rifa sem pagar nada</h2>
-          <p class="text-slate-300 mb-8 max-w-lg mx-auto">Crie seu sistema grátis. A taxa de 10% é repassada ao comprador de forma transparente.</p>
+          <p class="text-slate-300 mb-8 max-w-lg mx-auto">Crie seu sistema grátis. A comissão de 10% é descontada do valor arrecadado — você nunca paga do bolso.</p>
           <div class="flex flex-col sm:flex-row gap-3 justify-center">
             <a href="/cadastro" class="landing-btn-primary inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-bold shadow-lg">Criar meu sistema grátis</a>
             <a href="/demo" class="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl border-2 border-white/30 font-semibold hover:bg-white/10 transition">Ver demo</a>

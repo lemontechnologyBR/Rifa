@@ -12,7 +12,7 @@ const platformController = {
     res.render('platform/landing', {
       titulo: 'VouRifar — Rifas Online',
       seoTitle: 'VouRifar — Crie seu Sistema de Rifas Online com PIX',
-      seoDescription: 'Crie sua própria plataforma de rifas online com pagamento via PIX. Gratuito para o organizador, taxa de 10% no comprador. Cadastre-se agora e comece a vender cotas hoje!',
+      seoDescription: 'Crie sua própria plataforma de rifas online com pagamento via PIX. Gratuito para começar — comissão de 10% sobre o arrecadado. Você recebe 90% de cada venda. Cadastre-se agora!',
       seoUrl: appUrl + '/',
       seoType: 'website',
       seoImage: appUrl + '/img/vourifar-logo.png',
