@@ -67,8 +67,12 @@ app.get('/sitemap.xml', async (req, res) => {
     });
     const rifas = await prisma.rifa.findMany({
       where: { status: { in: ['ativa', 'finalizada'] } },
-      select: { id: true, tenantId: true, updatedAt: true },
-      include: { tenant: { select: { slug: true, status: true } } },
+      select: {
+        id: true,
+        status: true,
+        updatedAt: true,
+        tenant: { select: { slug: true, status: true } }
+      },
       orderBy: { createdAt: 'desc' },
       take: 500
     });
