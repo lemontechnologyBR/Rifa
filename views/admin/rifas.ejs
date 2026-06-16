@@ -11,7 +11,7 @@
   totalCotas: 100,
   dataSorteio: '',
   carteiraOk: <%= tenant.pixChave ? 'true' : 'false' %>,
-  get taxaCota() { return Math.max(0, this.valorCota) * 0.05; },
+  get taxaCota() { return Math.max(0, this.valorCota) * 0.10; },
   get compradorPaga() { return Math.max(0, this.valorCota) + this.taxaCota; },
   get faturamentoTotal() { return Math.max(0, this.valorCota) * Math.max(0, this.totalCotas); },
   get volumeCompradores() { return this.compradorPaga * Math.max(0, this.totalCotas); },
