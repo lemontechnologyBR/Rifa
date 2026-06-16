@@ -1,0 +1,97 @@
+<!-- Modal nova rifa — onboarding -->
+<div x-show="modalNovaRifa" x-cloak class="fixed inset-0 z-[60] flex items-center justify-center p-4"
+  @keydown.escape.window="modalNovaRifa = false">
+  <div class="admin-modal-backdrop absolute inset-0" @click="modalNovaRifa = false"></div>
+  <div class="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-xl max-h-[92vh] overflow-hidden border border-gray-200 dark:border-gray-700 flex flex-col"
+    x-transition @click.outside="">
+
+    <div class="shrink-0 bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-gray-800 px-6 py-4">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-bold text-lg flex items-center gap-2">
+          <i data-lucide="plus-circle" class="w-5 h-5 text-emerald-600"></i>
+          <span x-text="wizardStep === 1 ? 'O prêmio' : wizardStep === 2 ? 'Sorteio' : 'Revisão'"></span>
+        </h3>
+        <button type="button" @click="modalNovaRifa = false" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="admin-wizard-steps">
+        <template x-for="(label, i) in ['Prêmio', 'Sorteio', 'Confirmar']" :key="i">
+          <div class="admin-wizard-step" :class="{ 'is-done': wizardStep > i + 1, 'is-active': wizardStep === i + 1 }">
+            <span class="admin-wizard-step-num" x-text="wizardStep > i + 1 ? '✓' : i + 1"></span>
+            <span class="admin-wizard-step-label" x-text="label"></span>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <form method="POST" action="<%= adminBase %>/rifas/nova" class="flex flex-col flex-1 min-h-0 overflow-y-auto">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="premio_titulo" value="Prêmio principal">
+      <input type="hidden" name="chave_pix" value="<%= tenant.pixChave || '' %>">
+
+      <div x-show="wizardStep === 1" class="p-6 space-y-4">
+        <p class="text-sm text-gray-500 dark:text-gray-400">Defina o prêmio e quantas cotas serão vendidas.</p>
+        <div>
+          <label class="admin-label">Nome da rifa *</label>
+          <input type="text" name="titulo" required x-model="titulo" placeholder="Ex: iPhone 15 Pro Max 256GB" class="admin-input">
+        </div>
+        <%- include('rifa-imagem', { adminBase, imagemUrl: '' }) %>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="admin-label">Valor da cota (R$) *</label>
+            <input type="number" name="valor_cota" step="0.01" min="0.01" required x-model.number="valorCota" class="admin-input">
+          </div>
+          <div>
+            <label class="admin-label">Total de cotas *</label>
+            <input type="number" name="total_numeros" required min="1" max="10000" x-model.number="totalCotas" class="admin-input">
+          </div>
+        </div>
+        <%- include('rifa-simulacao') %>
+      </div>
+
+      <div x-show="wizardStep === 2" x-cloak class="p-6 space-y-4">
+        <p class="text-sm text-gray-500 dark:text-gray-400">Quando acontece o sorteio.</p>
+        <div>
+          <label class="admin-label">Data do sorteio *</label>
+          <input type="datetime-local" name="data_sorteio" required x-model="dataSorteio" class="admin-input">
+        </div>
+        <div class="admin-panel-card p-4 text-sm space-y-2">
+          <p class="font-semibold flex items-center gap-2"><i data-lucide="wallet" class="w-4 h-4 text-emerald-600"></i> Pagamentos automáticos</p>
+          <p class="text-gray-500 dark:text-gray-400">Os valores caem na chave PIX da sua Carteira. Confirmação automática após o pagamento.</p>
+          <% if (tenant.pixChave) { %>
+            <p class="text-xs text-emerald-700 dark:text-emerald-400 font-medium">Chave: <%= tenant.pixChave %></p>
+          <% } %>
+        </div>
+      </div>
+
+      <div x-show="wizardStep === 3" x-cloak class="p-6 space-y-4">
+        <p class="text-sm text-gray-500 dark:text-gray-400">Confira os dados antes de publicar a rifa.</p>
+        <dl class="admin-config-dl">
+          <div><dt>Rifa</dt><dd x-text="titulo"></dd></div>
+          <div><dt>Cota</dt><dd>R$ <span x-text="fmt(valorCota)"></span> · <span x-text="fmtInt(totalCotas)"></span> cotas</dd></div>
+          <div><dt>Sorteio</dt><dd x-text="dataSorteio ? new Date(dataSorteio).toLocaleString('pt-BR') : '—'"></dd></div>
+          <div><dt>Recebimento</dt><dd>Chave PIX da Carteira</dd></div>
+        </dl>
+        <%- include('rifa-simulacao', { full: true }) %>
+      </div>
+
+      <div class="shrink-0 border-t border-gray-100 dark:border-gray-800 px-6 py-4 flex gap-3 bg-white dark:bg-slate-900">
+        <button type="button" x-show="wizardStep > 1" @click="wizardStep--" class="flex-1 py-3 rounded-xl border border-gray-200 dark:border-gray-600 font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition text-sm">
+          Voltar
+        </button>
+        <button type="button" x-show="wizardStep < 3" @click="nextStep()" class="flex-1 admin-btn-primary py-3 text-sm">
+          Continuar
+        </button>
+        <button type="submit" x-show="wizardStep === 3" class="flex-1 admin-btn-primary py-3 text-sm">
+          <i data-lucide="rocket" class="w-4 h-4 inline-block mr-1 -mt-0.5"></i>
+          Publicar rifa
+        </button>
+        <button type="button" x-show="wizardStep === 1" @click="modalNovaRifa = false" class="py-3 px-4 rounded-xl border border-gray-200 dark:border-gray-600 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800">
+          Cancelar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,556 @@
+/**
+ * VouRifar — Site público do tenant (compradores)
+ * Cores: verde #10B981, azul #1E3A8A, fundo #F9FAFB
+ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+.public-site.mesh-bg {
+  background-color: #f9fafb;
+  background-image: none;
+}
+.dark .public-site {
+  background-color: #0f172a;
+  color: #f1f5f9;
+}
+.dark .public-site.mesh-bg {
+  background-color: #0f172a;
+}
+.public-site {
+  font-family: 'Inter', system-ui, sans-serif;
+  color: #111827;
+  font-size: 16px;
+}
+
+.public-hero-title {
+  color: #1e3a8a;
+}
+.dark .public-hero-title {
+  color: #e2e8f0;
+}
+
+.public-btn-primary {
+  background: linear-gradient(135deg, var(--brand-from, #10b981), var(--brand-to, #059669));
+  color: #fff !important;
+  font-weight: 600;
+  border-radius: 0.75rem;
+  transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 4px 14px -2px color-mix(in srgb, var(--brand-from, #10b981) 40%, transparent);
+}
+.public-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px -4px color-mix(in srgb, var(--brand-from, #10b981) 50%, transparent);
+}
+
+.public-rifa-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+.public-rifa-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 32px -8px color-mix(in srgb, var(--brand-from, #10b981) 18%, transparent);
+  border-color: color-mix(in srgb, var(--brand-from, #10b981) 35%, #e5e7eb);
+}
+.dark .public-rifa-card {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+.public-fee-note {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  color: #065f46;
+}
+.dark .public-fee-note {
+  background: rgba(6, 78, 59, 0.2);
+  border-color: #065f46;
+  color: #6ee7b7;
+}
+
+.public-progress-track {
+  background: #e5e7eb;
+  border-radius: 9999px;
+  height: 0.5rem;
+  overflow: hidden;
+}
+.public-rifa-card .public-btn-primary {
+  background: linear-gradient(135deg, var(--brand-from, #10b981), var(--brand-to, #059669)) !important;
+  box-shadow: 0 4px 14px -2px color-mix(in srgb, var(--brand-from, #10b981) 40%, transparent) !important;
+}
+.public-rifa-card .public-btn-primary:hover {
+  box-shadow: 0 8px 20px -4px color-mix(in srgb, var(--brand-from, #10b981) 50%, transparent) !important;
+}
+.public-rifa-card .public-progress-fill {
+  background: linear-gradient(90deg, var(--brand-from, #10b981), var(--brand-to, #059669)) !important;
+}
+
+.dark .public-progress-track { background: #334155; }
+.public-progress-fill {
+  background: linear-gradient(90deg, var(--brand-from, #10b981), var(--brand-to, #059669));
+  height: 100%;
+  border-radius: 9999px;
+}
+
+.rifa-brand-text { color: var(--brand-from, #10b981); }
+.dark .rifa-brand-text { color: color-mix(in srgb, var(--brand-from, #10b981) 80%, #fff); }
+.rifa-brand-badge { background: var(--brand-from, #10b981); }
+.rifa-brand-outline:hover {
+  border-color: var(--brand-from, #10b981) !important;
+  color: var(--brand-from, #10b981) !important;
+}
+.rifa-brand-soft {
+  background: color-mix(in srgb, var(--brand-from, #10b981) 12%, #fff);
+}
+.dark .rifa-brand-soft {
+  background: color-mix(in srgb, var(--brand-from, #10b981) 20%, #1e293b);
+}
+.rifa-brand-soft-text { color: var(--brand-from, #10b981); }
+.dark .rifa-brand-soft-text { color: color-mix(in srgb, var(--brand-from, #10b981) 75%, #fff); }
+
+.public-numero-btn {
+  min-height: 40px;
+  min-width: 40px;
+  border-radius: 0.625rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border: 2px solid #d1fae5;
+  background: #fff;
+  color: #065f46;
+  transition: all 0.15s;
+  touch-action: manipulation;
+}
+.public-numero-btn:hover:not(:disabled) {
+  border-color: var(--brand-from, #10b981);
+  background: color-mix(in srgb, var(--brand-from, #10b981) 8%, #fff);
+}
+.public-numero-btn.selected {
+  background: var(--brand-from, #10b981);
+  border-color: var(--brand-to, #059669);
+  color: #fff;
+  transform: scale(1.05);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-from, #10b981) 35%, transparent);
+}
+.public-numero-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.public-numero-btn.vendido {
+  background: #fee2e2;
+  border-color: #fecaca;
+  color: #991b1b;
+}
+
+.public-modal-backdrop {
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+}
+
+.public-checkout-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+.dark .public-checkout-box {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+.public-transparency-bar {
+  background: #eff6ff;
+  border-bottom: 1px solid #bfdbfe;
+  color: #1e3a8a;
+  font-size: 0.8125rem;
+}
+.dark .public-transparency-bar {
+  background: rgba(30, 58, 138, 0.2);
+  border-color: #1e40af;
+  color: #93c5fd;
+}
+
+/* Compra por quantidade (página da rifa) */
+.compra-qtd-panel {
+  background: linear-gradient(160deg, #111827 0%, #0b1120 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1.25rem;
+  box-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.5);
+  color: #f3f4f6;
+}
+.compra-qtd-panel .btn-quick {
+  background: rgba(31, 41, 55, 0.9);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  color: #fbbf24;
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  font-weight: 700;
+  font-size: 0.875rem;
+  transition: all 0.15s;
+}
+.compra-qtd-panel .btn-quick:hover {
+  background: rgba(251, 191, 36, 0.12);
+  border-color: #fbbf24;
+}
+.compra-qtd-panel .stepper-btn {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 1rem;
+  background: #374151;
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.compra-qtd-panel .stepper-btn:hover:not(:disabled) { background: #4b5563; }
+.compra-qtd-panel .stepper-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.compra-qtd-panel .stepper-input {
+  background: #f3f4f6;
+  color: #111827;
+  font-size: 1.75rem;
+  font-weight: 800;
+  text-align: center;
+  border-radius: 1rem;
+  border: 2px solid transparent;
+  width: 100%;
+  max-width: 120px;
+  padding: 0.5rem;
+}
+.compra-qtd-panel .stepper-input:focus {
+  outline: none;
+  border-color: var(--brand-from, #10b981);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-from, #10b981) 25%, transparent);
+}
+.compra-qtd-panel .resumo-checkout {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid color-mix(in srgb, var(--brand-from, #10b981) 25%, transparent);
+  border-radius: 1rem;
+  padding: 1.25rem;
+}
+.compra-qtd-panel .btn-pix-main {
+  background: linear-gradient(135deg, var(--brand-from, #10b981), var(--brand-to, #059669));
+  box-shadow: 0 8px 24px -4px color-mix(in srgb, var(--brand-from, #10b981) 45%, transparent);
+  color: #fff;
+  font-weight: 700;
+  border-radius: 1rem;
+  transition: transform 0.15s, filter 0.15s;
+}
+.compra-qtd-panel .btn-pix-main:hover:not(:disabled) {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+.compra-qtd-panel .btn-pix-main:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Mobile / touch ── */
+.public-site {
+  overflow-x: clip;
+  -webkit-text-size-adjust: 100%;
+}
+
+.public-site .input-field,
+.public-site input[type="text"],
+.public-site input[type="tel"],
+.public-site input[type="number"],
+.public-site input[type="email"],
+.public-site textarea,
+.public-site select {
+  font-size: 16px;
+}
+
+.public-touch-target {
+  touch-action: manipulation;
+}
+
+@media (max-width: 639px) {
+  .public-touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+.pb-safe {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.modal-sheet {
+  max-height: min(92vh, calc(100dvh - env(safe-area-inset-top, 0px) - 1rem));
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+.sticky-buy-bar {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+}
+
+@media (max-width: 639px) {
+  .public-site .compra-qtd-panel {
+    padding: 1.25rem;
+    border-radius: 1rem;
+  }
+
+  .public-site .compra-qtd-panel .btn-quick {
+    padding: 0.65rem 0.35rem;
+    font-size: 0.8125rem;
+    min-height: 44px;
+  }
+
+  .public-site .compra-qtd-panel .stepper-btn {
+    width: 2.75rem;
+    height: 2.75rem;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .public-site .compra-qtd-panel .stepper-input {
+    font-size: 1.5rem;
+    max-width: 100px;
+  }
+
+  .public-site .compra-qtd-panel .btn-pix-main {
+    min-height: 48px;
+  }
+
+  .public-site h1 {
+    font-size: 1.5rem;
+    line-height: 1.25;
+  }
+
+  .public-rifa-card .public-btn-primary,
+  .public-rifa-card a.flex-1 {
+    min-height: 48px;
+  }
+}
+
+@media (max-width: 380px) {
+  .public-site .compra-qtd-panel .grid.grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  .public-site .compra-qtd-panel .btn-quick {
+    font-size: 0.75rem;
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+  }
+}
+
+/* Branding do tenant — sobrescreve utilitários Tailwind emerald/indigo fixos */
+.public-site .text-emerald-600,
+.public-site .text-emerald-400,
+.public-site .text-emerald-700,
+.public-site .text-emerald-300,
+.public-site .dark .text-emerald-400,
+.public-site .dark .text-emerald-300 {
+  color: var(--brand-from, #10b981) !important;
+}
+
+.public-site .bg-emerald-500,
+.public-site .bg-emerald-600 {
+  background-color: var(--brand-from, #10b981) !important;
+}
+
+.public-site .border-emerald-500,
+.public-site .hover\:border-emerald-500:hover {
+  border-color: var(--brand-from, #10b981) !important;
+}
+
+.public-site .hover\:text-emerald-700:hover,
+.public-site .dark .hover\:text-emerald-400:hover {
+  color: var(--brand-from, #10b981) !important;
+}
+
+.public-site .focus\:ring-emerald-500\/30:focus {
+  --tw-ring-color: color-mix(in srgb, var(--brand-from, #10b981) 30%, transparent) !important;
+}
+
+.public-site .public-link-brand {
+  color: var(--brand-from, #10b981);
+}
+.public-site .public-link-brand:hover {
+  filter: brightness(0.9);
+}
+
+.public-site .text-indigo-600,
+.public-site .dark .text-indigo-400 {
+  color: var(--brand-from, #10b981) !important;
+}
+
+/* Rodapé público do tenant */
+.public-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem 0 0.5rem;
+  text-align: center;
+}
+
+.public-footer-brand {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.125rem;
+}
+
+.public-footer-desc {
+  max-width: 22rem;
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #6b7280;
+}
+
+.dark .public-footer-desc {
+  color: #9ca3af;
+}
+
+.public-footer-social {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  margin-top: 0.25rem;
+}
+
+.public-footer-social-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+  padding: 0.375rem 0.875rem;
+  border-radius: 9999px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1;
+  color: #374151;
+  text-decoration: none;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+
+.dark .public-footer-social-link {
+  border-color: #334155;
+  background: #1e293b;
+  color: #e2e8f0;
+}
+
+.public-footer-social-link:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+.dark .public-footer-social-link:hover {
+  border-color: #475569;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+}
+
+.public-footer-social-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.public-footer-social-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.public-footer-social-link--wa:hover {
+  border-color: #86efac;
+}
+
+.public-footer-social-link--ig:hover {
+  border-color: #f9a8d4;
+}
+
+.public-footer-divider {
+  width: min(16rem, 72%);
+  height: 1px;
+  margin: 0.5rem 0 0.125rem;
+  background: linear-gradient(90deg, transparent, #e5e7eb 20%, #e5e7eb 80%, transparent);
+}
+
+.dark .public-footer-divider {
+  background: linear-gradient(90deg, transparent, #334155 20%, #334155 80%, transparent);
+}
+
+.public-footer-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.public-footer-copy {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #6b7280;
+}
+
+.dark .public-footer-copy {
+  color: #94a3b8;
+}
+
+.public-footer-link {
+  font-weight: 600;
+  color: var(--brand-from, #10b981);
+  text-decoration: none;
+}
+
+.public-footer-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.public-footer-powered {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #9ca3af;
+}
+
+.dark .public-footer-powered {
+  color: #64748b;
+}
+
+.public-footer-legal {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #6b7280;
+  text-decoration: none;
+  text-underline-offset: 3px;
+  transition: color 0.15s;
+}
+
+.public-footer-legal:hover {
+  color: #374151;
+  text-decoration: underline;
+}
+
+.dark .public-footer-legal {
+  color: #94a3b8;
+}
+
+.dark .public-footer-legal:hover {
+  color: #cbd5e1;
+}

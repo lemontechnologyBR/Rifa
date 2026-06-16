@@ -1,0 +1,49 @@
+<%- include('../partials/header') %>
+
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 pb-safe">
+  <div class="text-center mb-10 animate-fade-up">
+    <div class="w-14 h-14 rounded-2xl public-btn-primary flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-500/20">
+      <i data-lucide="help-circle" class="w-7 h-7 text-white"></i>
+    </div>
+    <h1 class="text-3xl sm:text-4xl font-extrabold dark:text-white mb-2">Como funciona</h1>
+    <p class="text-gray-500 dark:text-gray-400">Participar das rifas de <%= tenant.nome %> é simples e seguro.</p>
+  </div>
+
+  <div class="space-y-4 mb-10">
+    <% [
+      { icon: 'search', title: '1. Escolha a rifa', text: 'Navegue pelas rifas ativas e abra a que mais te interessar. Veja prêmio, valor da cota e data do sorteio.' },
+      { icon: 'hash', title: '2. Defina a quantidade', text: 'Informe quantas cotas deseja comprar. Os números são sorteados automaticamente entre os disponíveis — você não precisa escolher na grade.' },
+      { icon: 'user', title: '3. Preencha seus dados', text: 'Informe nome, CPF e telefone. O CPF é usado para consultar suas reservas em Minhas Reservas.' },
+      { icon: 'wallet', title: '4. Pague via PIX', text: 'Após reservar, você recebe o QR Code ou código copia e cola. O pagamento é confirmado automaticamente após a compensação.' },
+      { icon: 'clock', title: '5. Prazo de 10 minutos', text: 'A reserva expira em 10 minutos se o pagamento não for confirmado. Os números voltam a ficar disponíveis para outros participantes.' },
+      { icon: 'check-circle', title: '6. Confirmação', text: 'Assim que o PIX é compensado, seus números ficam garantidos — sem precisar aguardar aprovação manual.' }
+    ].forEach(function(passo, i) { %>
+      <div class="flex gap-4 bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-100 dark:border-gray-700/60 p-5 shadow-sm animate-fade-up" style="animation-delay:<%= i * 0.05 %>s">
+        <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
+          <i data-lucide="<%= passo.icon %>" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i>
+        </div>
+        <div>
+          <h2 class="font-bold dark:text-white mb-1"><%= passo.title %></h2>
+          <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed"><%= passo.text %></p>
+        </div>
+      </div>
+    <% }); %>
+  </div>
+
+  <div class="bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-800 p-6 mb-8">
+    <h2 class="font-bold dark:text-white mb-2 flex items-center gap-2">
+      <i data-lucide="info" class="w-5 h-5 text-emerald-600"></i> Taxa de serviço
+    </h2>
+    <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+      Uma taxa de <strong>5%</strong> é aplicada sobre o valor das cotas e repassada ao comprador no checkout.
+      O organizador da rifa não paga comissão sobre as vendas.
+    </p>
+  </div>
+
+  <div class="flex flex-col sm:flex-row gap-3 justify-center">
+    <a href="<%= tenantBase %>/" class="btn-brand text-center font-semibold px-6 py-3 rounded-xl shadow-md">Ver rifas ativas</a>
+    <a href="<%= tenantBase %>/minhas-reservas" class="text-center font-semibold px-6 py-3 rounded-xl border border-gray-200 dark:border-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 transition">Minhas reservas</a>
+  </div>
+</div>
+
+<%- include('../partials/footer', { tenantPublic: true }) %>

@@ -1,0 +1,23 @@
+<script>
+(function () {
+  if (!/ngrok-free\.(app|dev)|\.ngrok\.io|\.ngrok-free\.app/i.test(location.hostname)) return;
+
+  fetch('/img/vourifar-icon.png', {
+    credentials: 'same-origin',
+    headers: {
+      'ngrok-skip-browser-warning': 'true',
+      'X-Requested-With': 'XMLHttpRequest',
+      'Accept': 'image/png,image/*,*/*'
+    }
+  })
+    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.blob(); })
+    .then(function (blob) {
+      if (!blob.type || blob.type.indexOf('image') !== 0) return;
+      var url = URL.createObjectURL(blob);
+      document.querySelectorAll('link[rel="icon"]').forEach(function (link) {
+        link.href = url;
+      });
+    })
+    .catch(function () {});
+})();
+</script>

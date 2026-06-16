@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="admin-panel">
+<head>
+  <%- include('partials/head', { titulo, csrfToken }) %>
+</head>
+<body class="admin-panel">
+  <%- include('partials/nav', {
+    active: 'rifas',
+    pageTitle: rifa && rifa.id ? 'Editar rifa' : 'Nova rifa',
+    pageSubtitle: rifa && rifa.titulo ? rifa.titulo : 'Preencha os dados da rifa',
+    tenant, adminBase, tenantBase, adminUsuario
+  }) %>
+
+    <div class="max-w-3xl">
+    <% if (erro) { %><div class="admin-alert admin-alert-error mb-4"><span><%= erro %></span></div><% } %>
+    <form method="POST" action="<%= rifa && rifa.id ? adminBase+'/rifas/'+rifa.id+'/editar' : adminBase+'/rifas/nova' %>" class="space-y-4">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+      <div class="admin-panel-card p-6 space-y-4">
+      <div>
+        <label class="text-sm font-medium text-gray-600">Título *</label>
+        <input type="text" name="titulo" required value="<%= rifa ? (rifa.titulo || '') : '' %>" class="admin-input mt-1">
+      </div>
+      <div>
+        <label class="text-sm font-medium text-gray-600">Descrição</label>
+        <textarea name="descricao" rows="3" class="w-full border rounded-xl px-4 py-2 mt-1"><%= rifa ? (rifa.descricao || '') : '' %></textarea>
+      </div>
+      <%- include('partials/rifa-imagem', {
+        adminBase,
+        imagemUrl: rifa ? (rifa.imagemUrl || rifa.imagem_url || '') : ''
+      }) %>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="text-sm font-medium text-gray-600">Valor da cota *</label>
+          <input type="number" name="valor_cota" step="0.01" required value="<%= rifa ? (rifa.valorCota ?? rifa.valor_cota ?? '') : '' %>" class="w-full border rounded-xl px-4 py-2 mt-1">
+        </div>
+        <% if (!rifa || !rifa.id) { %>
+          <div>
+            <label class="text-sm font-medium text-gray-600">Total de números *</label>
+            <input type="number" name="total_numeros" required min="1" class="w-full border rounded-xl px-4 py-2 mt-1">
+          </div>
+        <% } else { %>
+          <div>
+            <label class="text-sm font-medium text-gray-600">Total de números</label>
+            <input type="text" readonly value="<%= rifa.stats ? rifa.stats.total : '—' %>" class="w-full border rounded-xl px-4 py-2 mt-1 bg-gray-50 text-gray-500">
+          </div>
+        <% } %>
+      </div>
+      <div>
+        <label class="text-sm font-medium text-gray-600">Data do sorteio *</label>
+        <input type="datetime-local" name="data_sorteio" required
+          value="<%= rifa && rifa.dataSorteio ? new Date(rifa.dataSorteio).toISOString().slice(0,16) : (rifa && rifa.data_sorteio ? rifa.data_sorteio.slice(0,16) : '') %>"
+          class="w-full border rounded-xl px-4 py-2 mt-1">
+      </div>
+      <input type="hidden" name="chave_pix" value="<%= tenant.pixChave || '' %>">
+      <div class="admin-panel-card p-4 text-sm !shadow-none border border-gray-100 dark:border-gray-800">
+        <p class="font-semibold flex items-center gap-2 mb-1"><i data-lucide="wallet" class="w-4 h-4 text-emerald-600"></i> Recebimento via Carteira</p>
+        <% if (tenant.pixChave) { %>
+          <p class="text-gray-500">PIX processado pela VouRifar — confirmação automática.</p>
+          <p class="text-xs text-emerald-700 dark:text-emerald-400 font-medium mt-1">Chave: <%= tenant.pixChave %></p>
+        <% } else { %>
+          <p class="text-amber-700">Configure a <a href="<%= adminBase %>/carteira" class="underline font-medium">Carteira</a> antes de publicar.</p>
+        <% } %>
+      </div>
+      <div>
+        <label class="text-sm font-medium text-gray-600">Meta mínima % (opcional)</label>
+        <input type="number" name="meta_minima_pct" step="0.1" min="0" max="100" value="<%= rifa ? (rifa.metaMinimaPct ?? rifa.meta_minima_pct ?? '') : '' %>" class="w-full border rounded-xl px-4 py-2 mt-1" placeholder="Ex: 70">
+      </div>
+
+      <% if (!rifa || !rifa.id) { %>
+        <fieldset class="border rounded-xl p-4">
+          <legend class="text-sm font-semibold px-2">Prêmios</legend>
+          <input type="text" name="premio_titulo" placeholder="Prêmio principal" class="w-full border rounded-xl px-4 py-2 mb-2">
+          <input type="text" name="premio_titulo" placeholder="Prêmio secundário (opcional)" class="w-full border rounded-xl px-4 py-2">
+        </fieldset>
+        <fieldset class="border rounded-xl p-4">
+          <legend class="text-sm font-semibold px-2">Faixas de Desconto</legend>
+          <div class="grid grid-cols-2 gap-2 mb-2">
+            <input type="number" name="faixa_qtd" placeholder="Qtd mín" class="border rounded-xl px-4 py-2">
+            <input type="number" name="faixa_valor" step="0.01" placeholder="Valor total" class="border rounded-xl px-4 py-2">
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <input type="number" name="faixa_qtd" placeholder="Qtd mín" class="border rounded-xl px-4 py-2">
+            <input type="number" name="faixa_valor" step="0.01" placeholder="Valor total" class="border rounded-xl px-4 py-2">
+          </div>
+        </fieldset>
+      <% } else if (rifa.premios && rifa.premios.length) { %>
+        <fieldset class="border rounded-xl p-4 bg-gray-50">
+          <legend class="text-sm font-semibold px-2">Prêmios cadastrados</legend>
+          <ul class="space-y-2 text-sm">
+            <% rifa.premios.forEach(function(p) { %>
+              <li class="flex justify-between gap-2">
+                <span class="font-medium"><%= p.titulo %></span>
+                <span class="text-gray-500"><%= p.descricao || '—' %></span>
+              </li>
+            <% }); %>
+          </ul>
+          <p class="text-xs text-gray-400 mt-2">Prêmios não podem ser alterados após a criação.</p>
+        </fieldset>
+      <% } %>
+
+      <% if (rifa && rifa.id && rifa.faixasDesconto && rifa.faixasDesconto.length) { %>
+        <fieldset class="border rounded-xl p-4 bg-gray-50">
+          <legend class="text-sm font-semibold px-2">Faixas de desconto</legend>
+          <ul class="space-y-1 text-sm">
+            <% rifa.faixasDesconto.forEach(function(f) { %>
+              <li><%= f.quantidadeMin %>+ números → R$ <%= f.valorTotal.toFixed(2).replace('.', ',') %></li>
+            <% }); %>
+          </ul>
+        </fieldset>
+      <% } %>
+      </div>
+
+      <%- include('partials/rifa-aparencia') %>
+
+      <div class="flex gap-3 pt-2">
+        <% if (rifa && rifa.id) { %>
+          <a href="<%= adminBase %>/rifas/<%= rifa.id %>/participantes" class="flex-1 text-center border border-gray-300 font-semibold py-3 rounded-xl hover:bg-gray-50 transition">Participantes</a>
+        <% } %>
+        <button type="submit" class="flex-1 admin-btn-primary py-3 text-sm"><%= rifa && rifa.id ? 'Salvar alterações' : 'Criar rifa' %></button>
+      </div>
+    </form>
+    </div>
+
+  <%- include('partials/layout-end') %>
+  <script>lucide.createIcons();</script>
+</body>
+</html>

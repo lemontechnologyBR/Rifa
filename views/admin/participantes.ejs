@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="admin-panel">
+<head>
+  <%- include('partials/head', { titulo, csrfToken }) %>
+</head>
+<body class="admin-panel">
+  <%- include('partials/nav', {
+    active: 'rifas',
+    pageTitle: 'Participantes',
+    pageSubtitle: rifa.titulo,
+    tenant, adminBase, tenantBase, adminUsuario
+  }) %>
+
+    <% if (mensagem) { %><div class="admin-alert admin-alert-success mb-4"><span><%= mensagem %></span></div><% } %>
+    <% if (erro) { %><div class="admin-alert admin-alert-error mb-4"><span><%= erro %></span></div><% } %>
+
+    <div class="flex flex-wrap justify-between items-start gap-4 mb-6">
+      <div class="flex flex-wrap gap-3 text-sm">
+        <span class="admin-panel-card px-3 py-2"><strong><%= stats.vendidos %></strong> vendidos</span>
+        <span class="admin-panel-card px-3 py-2"><strong><%= stats.reservados %></strong> reservados</span>
+        <span class="admin-panel-card px-3 py-2"><strong><%= stats.disponiveis %></strong> disponíveis</span>
+      </div>
+      <div class="flex gap-2">
+        <a href="<%= adminBase %>/rifas/<%= rifa.id %>/editar" class="admin-action-btn">Editar rifa</a>
+        <a href="<%= adminBase %>/rifas/<%= rifa.id %>/exportar" class="admin-btn-primary px-4 py-2 text-sm">Exportar CSV</a>
+      </div>
+    </div>
+
+    <% if (rifa.status === 'ativa') { %>
+      <form method="POST" action="<%= adminBase %>/rifas/<%= rifa.id %>/sortear" onsubmit="return confirm('Realizar sorteio? Esta ação não pode ser desfeita.')" class="mb-6">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold px-5 py-2.5 rounded-xl transition">Realizar sorteio (<%= rifa.premios?.length || 1 %> prêmio(s))</button>
+      </form>
+    <% } %>
+
+    <% if (rifa.status === 'finalizada' && rifa.premios) { %>
+      <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6">
+        <% rifa.premios.forEach(function(p) { %>
+          <p class="font-semibold">🏆 <%= p.titulo %>: Nº <%= p.numeroSorteado %> — <%= p.ganhadorNome %></p>
+        <% }); %>
+      </div>
+    <% } %>
+
+    <div class="admin-panel-card overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b"><tr>
+          <th class="text-left p-3">Participante</th><th class="p-3">Números</th><th class="p-3">Valor</th><th class="p-3">Status</th><th class="p-3">Ações</th>
+        </tr></thead>
+        <tbody>
+          <% if (reservas.length === 0) { %>
+            <tr><td colspan="5" class="p-8 text-center text-gray-500">Nenhuma reserva ainda.</td></tr>
+          <% } else { reservas.forEach(function(r) { %>
+            <tr class="border-t hover:bg-gray-50">
+              <td class="p-3"><strong><%= r.usuario.nome %></strong><br><span class="text-xs text-gray-400"><%= r.usuario.cpf ? r.usuario.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4') + ' · ' : '' %><%= r.usuario.telefone %></span></td>
+              <td class="p-3 font-mono text-xs"><%= r.numeros.join(', ') %></td>
+              <td class="p-3">R$ <%= r.valorTotal.toFixed(2).replace('.',',') %></td>
+              <td class="p-3"><span class="text-xs px-2 py-1 rounded-full capitalize <%= r.statusPagamento==='confirmado'?'bg-green-100 text-green-700':r.statusPagamento==='cancelado'?'bg-red-100 text-red-700':'bg-yellow-100 text-yellow-700' %>"><%= r.statusPagamento %></span></td>
+              <td class="p-3">
+                <% if (r.statusPagamento === 'pendente') { %>
+                  <% if (!wooviAtivo) { %>
+                  <form method="POST" action="<%= adminBase %>/rifas/<%= rifa.id %>/reservas/<%= r.id %>/confirmar" class="inline">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button class="text-xs bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700">Confirmar</button>
+                  </form>
+                  <% } else { %>
+                    <span class="text-xs text-gray-400">Confirmação automática</span>
+                  <% } %>
+                  <form method="POST" action="<%= adminBase %>/rifas/<%= rifa.id %>/reservas/<%= r.id %>/cancelar" class="inline" onsubmit="return confirm('Cancelar reserva?')">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button class="text-xs bg-red-100 text-red-700 px-3 py-1 rounded-lg hover:bg-red-200">Cancelar</button>
+                  </form>
+                <% } else { %>
+                  <span class="text-xs text-gray-400">—</span>
+                <% } %>
+              </td>
+            </tr>
+          <% }); } %>
+        </tbody>
+      </table>
+    </div>
+
+  <%- include('partials/layout-end') %>
+  <script>lucide.createIcons();</script>
+</body>
+</html>

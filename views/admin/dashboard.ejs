@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="admin-panel">
+<head>
+  <%- include('partials/head') %>
+</head>
+<body class="admin-panel">
+
+  <%- include('partials/nav', {
+    active: 'dashboard',
+    pageTitle: 'Visão geral',
+    pageSubtitle: adminUsuario ? 'Olá, ' + adminUsuario.split(' ')[0] : 'Resumo do seu negócio',
+    tenant,
+    adminBase,
+    tenantBase,
+    adminUsuario
+  }) %>
+
+    <% if (msg) { %>
+      <div class="admin-alert admin-alert-success">
+        <i data-lucide="check-circle" class="w-4 h-4 shrink-0 mt-0.5"></i>
+        <span><%= msg %></span>
+      </div>
+    <% } %>
+    <% if (erro) { %>
+      <div class="admin-alert admin-alert-error">
+        <i data-lucide="alert-circle" class="w-4 h-4 shrink-0 mt-0.5"></i>
+        <span><%= erro %></span>
+      </div>
+    <% } %>
+
+    <div class="admin-metrics">
+      <article class="admin-metric-card">
+        <div class="admin-metric-head">
+          <div class="admin-metric-icon blue"><i data-lucide="zap" class="w-4 h-4"></i></div>
+        </div>
+        <p class="admin-metric-value"><%= metricas.rifasAtivas || 0 %></p>
+        <p class="admin-metric-label">Rifas ativas</p>
+      </article>
+      <article class="admin-metric-card">
+        <div class="admin-metric-head">
+          <div class="admin-metric-icon violet"><i data-lucide="hash" class="w-4 h-4"></i></div>
+        </div>
+        <p class="admin-metric-value"><%= (metricas.totalCotasVendidas || 0).toLocaleString('pt-BR') %></p>
+        <p class="admin-metric-label">Cotas vendidas</p>
+      </article>
+      <article class="admin-metric-card">
+        <div class="admin-metric-head">
+          <div class="admin-metric-icon emerald"><i data-lucide="wallet" class="w-4 h-4"></i></div>
+        </div>
+        <p class="admin-metric-value">R$ <%= (metricas.faturamentoBruto || 0).toFixed(2).replace('.', ',') %></p>
+        <p class="admin-metric-label">Seu faturamento</p>
+      </article>
+    </div>
+
+    <div id="vendas" class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+      <div class="admin-panel-card p-5 lg:col-span-2">
+        <div class="admin-section-head">
+          <h2 class="admin-section-title">
+            <i data-lucide="bar-chart-3" class="w-4 h-4 text-emerald-600"></i>
+            Cotas vendidas — últimos 7 dias
+          </h2>
+        </div>
+        <% const totalVendas7d = (metricas.vendasUltimos7Dias || []).reduce(function (s, v) { return s + (v.cotas || 0); }, 0); %>
+        <% if (totalVendas7d === 0) { %>
+          <div class="admin-empty-chart">
+            <i data-lucide="bar-chart-2" class="w-10 h-10 opacity-30"></i>
+            <p>Sem cotas vendidas nos últimos 7 dias</p>
+            <p class="text-xs opacity-70">Crie uma rifa e compartilhe o link público</p>
+          </div>
+        <% } else { %>
+          <div class="h-56"><canvas id="chartVendas7d"></canvas></div>
+        <% } %>
+      </div>
+
+      <div class="admin-panel-card p-5">
+        <h2 class="admin-section-title mb-4">
+          <i data-lucide="users" class="w-4 h-4 text-blue-600"></i>
+          Últimos compradores
+        </h2>
+        <div class="space-y-3 max-h-56 overflow-y-auto">
+          <% if (!metricas.ultimosCompradores || metricas.ultimosCompradores.length === 0) { %>
+            <div class="admin-empty-chart h-40">
+              <i data-lucide="user-plus" class="w-8 h-8 opacity-30"></i>
+              <p class="text-sm">Nenhuma venda confirmada</p>
+            </div>
+          <% } else { metricas.ultimosCompradores.forEach(function(c) { %>
+            <div class="flex items-start gap-3 pb-3 border-b border-gray-100 dark:border-gray-700 last:border-0">
+              <div class="w-9 h-9 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center shrink-0">
+                <span class="text-xs font-bold text-emerald-700 dark:text-emerald-300"><%= c.nome.charAt(0).toUpperCase() %></span>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="font-semibold text-sm truncate"><%= c.nome %></p>
+                <p class="text-xs text-gray-500 dark:text-gray-400"><%= c.telefone %> · <%= c.cotas %> cota<%= c.cotas !== 1 ? 's' : '' %></p>
+                <p class="text-[10px] text-gray-400 truncate"><%= c.rifa %></p>
+              </div>
+            </div>
+          <% }); } %>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-panel-card p-5">
+      <div class="admin-section-head mb-3">
+        <h2 class="admin-section-title">
+          <i data-lucide="activity" class="w-4 h-4 text-gray-400"></i>
+          Atividades recentes
+        </h2>
+        <a href="<%= adminBase %>/logs" class="text-sm text-emerald-600 font-medium hover:underline">Ver todas</a>
+      </div>
+      <div class="space-y-2 text-sm max-h-32 overflow-y-auto">
+        <% if (logs.length === 0) { %>
+          <p class="text-gray-400 text-sm py-4 text-center">Nenhuma atividade registrada.</p>
+        <% } else { logs.slice(0, 6).forEach(function(l) { %>
+          <div class="flex gap-0.5 text-gray-600 dark:text-gray-300 py-1 border-b border-gray-50 dark:border-gray-800 last:border-0">
+            <span class="text-gray-400 text-xs shrink-0"><%= new Date(l.createdAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) %></span>
+            <span class="mx-1">·</span>
+            <span><strong><%= l.acao %></strong><% if (l.detalhes) { %> — <%= l.detalhes %><% } %></span>
+          </div>
+        <% }); } %>
+      </div>
+    </div>
+
+  <%- include('partials/layout-end') %>
+
+  <script>
+    lucide.createIcons();
+
+    <% if (totalVendas7d > 0) { %>
+    const vendas7d = <%- JSON.stringify(metricas.vendasUltimos7Dias || []) %>;
+    const isDark = document.documentElement.classList.contains('dark');
+    const gridColor = isDark ? 'rgba(148,163,184,0.15)' : 'rgba(0,0,0,0.06)';
+    const labelColor = isDark ? '#94a3b8' : '#64748b';
+
+    new Chart(document.getElementById('chartVendas7d'), {
+      type: 'bar',
+      data: {
+        labels: vendas7d.map(function (v) { return v.dia; }),
+        datasets: [{
+          label: 'Cotas vendidas',
+          data: vendas7d.map(function (v) { return v.cotas; }),
+          backgroundColor: 'rgba(16, 185, 129, 0.75)',
+          borderRadius: 6,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              afterLabel: function (ctx) {
+                const r = vendas7d[ctx.dataIndex];
+                return r ? 'Receita: R$ ' + (r.receita || 0).toFixed(2).replace('.', ',') : '';
+              }
+            }
+          }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: labelColor, font: { size: 11 } } },
+          y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: labelColor, stepSize: 1 } }
+        }
+      }
+    });
+    <% } %>
+  </script>
+</body>
+</html>

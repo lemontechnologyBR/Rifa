@@ -1,0 +1,305 @@
+<%- include('../partials/header') %>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-28 lg:pb-8">
+  <!-- Breadcrumb -->
+  <nav class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-6 animate-fade-up">
+    <a href="<%= tenantBase %>/" class="hover:text-indigo-600 transition flex items-center gap-1"><i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar</a>
+    <span>/</span>
+    <span class="text-gray-700 dark:text-gray-300 font-medium truncate"><%= rifa.titulo %></span>
+  </nav>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
+    <!-- Detalhes da rifa -->
+    <div class="lg:col-span-1 space-y-4 order-1 lg:order-1">
+      <div class="bg-white dark:bg-gray-800/80 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700/60 overflow-hidden lg:sticky lg:top-24 animate-fade-up" style="<%= typeof rifaBrand !== 'undefined' && rifaBrand ? rifaBrand.cssVars : '' %>">
+        <div class="relative">
+          <% if (rifa.imagemUrl) { %>
+            <img src="<%= rifa.imagemUrl %>" alt="<%= rifa.titulo %>" class="w-full h-56 object-cover" loading="lazy">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+          <% } else if (typeof rifaBrand !== 'undefined' && rifaBrand && rifaBrand.logoUrl) { %>
+            <div class="w-full h-56 flex items-center justify-center rifa-brand-soft p-6">
+              <img src="<%= rifaBrand.logoUrl %>" alt="<%= rifa.titulo %>" class="max-h-32 max-w-full object-contain" loading="lazy">
+            </div>
+          <% } %>
+          <span class="absolute top-3 left-3 px-2.5 py-1 rounded-full text-white text-xs font-bold rifa-brand-badge">ATIVA</span>
+        </div>
+        <div class="p-6">
+          <h1 class="text-xl sm:text-2xl font-extrabold dark:text-white mb-1 leading-tight"><%= rifa.titulo %></h1>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-1.5">
+            <i data-lucide="user-round" class="w-3.5 h-3.5 shrink-0"></i>
+            Organizador: <%= typeof organizadorNome !== 'undefined' ? organizadorNome : tenant.nome %>
+          </p>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-5 leading-relaxed"><%= rifa.descricao %></p>
+
+          <!-- Stats grid -->
+          <div class="grid grid-cols-2 gap-3 mb-5">
+            <div class="rifa-brand-soft rounded-xl p-3 text-center">
+              <p class="text-xs rifa-brand-soft-text font-medium">Cota</p>
+              <p class="text-xl font-extrabold rifa-brand-text">R$ <%= rifa.valorCota.toFixed(2).replace('.',',') %></p>
+            </div>
+            <div class="bg-emerald-50 dark:bg-emerald-900/30 rounded-xl p-3 text-center">
+              <p class="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Disponíveis</p>
+              <p class="text-xl font-extrabold text-emerald-700 dark:text-emerald-300"><%= stats.disponiveis %></p>
+            </div>
+            <div class="rifa-brand-soft rounded-xl p-3 text-center col-span-2">
+              <p class="text-xs rifa-brand-soft-text font-medium flex items-center justify-center gap-1 mb-2">
+                <i data-lucide="calendar" class="w-3 h-3"></i> Sorteio em
+              </p>
+              <div id="countdown-sorteio" class="grid grid-cols-4 gap-1.5">
+                <div class="bg-white/70 dark:bg-slate-900/40 rounded-lg py-1.5 px-1">
+                  <span id="cd-dias" class="block text-lg font-black rifa-brand-text leading-none">--</span>
+                  <span class="text-[9px] uppercase tracking-wide text-gray-500">dias</span>
+                </div>
+                <div class="bg-white/70 dark:bg-slate-900/40 rounded-lg py-1.5 px-1">
+                  <span id="cd-horas" class="block text-lg font-black rifa-brand-text leading-none">--</span>
+                  <span class="text-[9px] uppercase tracking-wide text-gray-500">hrs</span>
+                </div>
+                <div class="bg-white/70 dark:bg-slate-900/40 rounded-lg py-1.5 px-1">
+                  <span id="cd-min" class="block text-lg font-black rifa-brand-text leading-none">--</span>
+                  <span class="text-[9px] uppercase tracking-wide text-gray-500">min</span>
+                </div>
+                <div class="bg-white/70 dark:bg-slate-900/40 rounded-lg py-1.5 px-1">
+                  <span id="cd-seg" class="block text-lg font-black rifa-brand-text leading-none">--</span>
+                  <span class="text-[9px] uppercase tracking-wide text-gray-500">seg</span>
+                </div>
+              </div>
+              <p id="sorteio-status" class="hidden text-sm font-bold rifa-brand-text mt-2"></p>
+              <p class="text-[10px] text-gray-500 mt-2"><%= new Date(rifa.dataSorteio).toLocaleString('pt-BR') %></p>
+            </div>
+          </div>
+
+          <% const pctVend = Math.round(((stats.total - stats.disponiveis) / stats.total) * 100); %>
+          <div class="mb-4">
+            <div class="flex justify-between text-xs text-gray-500 mb-1"><span><%= pctVend %>% vendido</span><span class="rifa-brand-text font-semibold"><%= stats.total - stats.disponiveis %>/<%= stats.total %></span></div>
+            <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2"><div class="progress-shine h-2 rounded-full" style="width:<%= pctVend %>%"></div></div>
+          </div>
+
+          <% if (rifa.faixasDesconto?.length) { %>
+            <div class="mb-4 p-3 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-900/20">
+              <p class="text-xs font-bold text-emerald-700 dark:text-emerald-300 mb-2 flex items-center gap-1"><i data-lucide="tag" class="w-3.5 h-3.5"></i> Descontos progressivos</p>
+              <% rifa.faixasDesconto.forEach(f => { %>
+                <p class="text-xs text-emerald-600 dark:text-emerald-400"><%= f.quantidadeMin %> cotas → <strong>R$ <%= f.valorTotal.toFixed(2).replace('.',',') %></strong></p>
+              <% }) %>
+            </div>
+          <% } %>
+
+          <% if (rifa.status === 'ativa') { %>
+            <a href="https://wa.me/?text=<%= whatsappMsg %>" target="_blank"
+               class="hidden lg:flex w-full items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold py-3 rounded-xl transition shadow-md">
+              <i data-lucide="share-2" class="w-4 h-4"></i> Compartilhar no WhatsApp
+            </a>
+          <% } else if (rifa.status === 'finalizada') { %>
+            <a href="<%= tenantBase %>/rifas/<%= rifa.id %>/resultado" class="block text-center btn-brand py-3.5 rounded-xl font-bold">🏆 Ver Resultado</a>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Compra e depoimentos -->
+    <div class="lg:col-span-2 space-y-6 order-2 lg:order-2">
+      <% if (rifa.status === 'ativa') { %>
+      <section id="comprar-cotas" class="compra-qtd-panel p-5 sm:p-8 animate-fade-up">
+        <h2 class="text-lg sm:text-xl font-bold flex items-center gap-2 mb-1">
+          <i data-lucide="layers" class="w-5 h-5 text-emerald-400"></i>
+          Quantas cotas você quer?
+        </h2>
+        <p class="text-sm text-gray-400 mb-6">Os números são atribuídos automaticamente após a compra.</p>
+
+        <div class="grid grid-cols-3 gap-3 mb-6">
+          <button type="button" class="btn-quick" data-add-qtd="100">+100</button>
+          <button type="button" class="btn-quick" data-add-qtd="500">+500</button>
+          <button type="button" class="btn-quick" data-add-qtd="1000">+1000</button>
+        </div>
+
+        <div class="flex items-center justify-center gap-4 mb-4">
+          <button type="button" class="stepper-btn" id="qtd-menos" aria-label="Diminuir">−</button>
+          <input type="number" id="input-qtd-cotas" class="stepper-input" value="1" min="1" inputmode="numeric">
+          <button type="button" class="stepper-btn" id="qtd-mais" aria-label="Aumentar">+</button>
+        </div>
+
+        <p class="text-center text-sm text-gray-400 mb-1">
+          <span id="label-qtd-cotas">1</span> cota(s) · <span id="label-disponiveis"><%= stats.disponiveis %></span> disponíveis
+        </p>
+        <p id="aviso-limite-qtd" class="text-center text-xs text-amber-400 mt-2 hidden"></p>
+
+        <div class="resumo-checkout mt-6 mb-6 space-y-2 text-sm">
+          <p class="font-bold text-white mb-3 flex items-center gap-2">
+            <i data-lucide="receipt" class="w-4 h-4 text-amber-400"></i> Resumo
+          </p>
+          <div class="flex justify-between text-gray-400"><span>Cotas</span><span id="page-res-qtd" class="text-white font-medium">1</span></div>
+          <div class="flex justify-between text-gray-400"><span>Subtotal</span><span id="page-res-subtotal">R$ 0,00</span></div>
+          <div class="flex justify-between text-amber-400/90"><span>Taxa plataforma (5%)</span><span id="page-res-taxa">R$ 0,00</span></div>
+          <div class="flex justify-between pt-3 border-t border-white/10 text-base font-bold">
+            <span class="text-white">Total PIX</span>
+            <span id="page-res-total" class="text-emerald-400 text-xl">R$ 0,00</span>
+          </div>
+        </div>
+
+        <button type="button" id="btn-iniciar-compra" class="btn-pix-main w-full py-4 text-base sm:text-lg flex items-center justify-center gap-2">
+          <i data-lucide="qr-code" class="w-5 h-5"></i>
+          Comprar agora via PIX
+        </button>
+      </section>
+      <% } %>
+
+      <!-- Depoimentos -->
+      <div id="comentarios" class="bg-white dark:bg-gray-800/80 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700/60 p-5 sm:p-6 animate-fade-up">
+        <h2 class="text-lg font-bold dark:text-white mb-4 flex items-center gap-2"><i data-lucide="message-circle" class="w-5 h-5 text-indigo-500"></i> Depoimentos</h2>
+        <div id="lista-comentarios" class="space-y-3">
+          <% if (!(comentarios || []).length) { %>
+            <p id="depoimentos-vazio" class="text-sm text-gray-400 text-center py-4">Seja o primeiro a comentar!</p>
+          <% } %>
+          <% (comentarios || []).forEach(function(c) { %>
+            <div class="depoimento-item flex gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700/50">
+              <div class="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 text-white text-sm font-bold flex items-center justify-center flex-shrink-0"><%= c.usuario.nome.charAt(0).toUpperCase() %></div>
+              <div>
+                <p class="text-sm dark:text-gray-200 depoimento-texto"><%= c.texto %></p>
+                <p class="text-xs text-gray-400 mt-1"><%= c.usuario.nome %> · <%= new Date(c.createdAt).toLocaleDateString('pt-BR') %></p>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+
+        <form id="form-depoimento" class="mt-5 pt-5 border-t border-gray-100 dark:border-gray-700 space-y-3">
+          <p class="text-xs text-gray-500 dark:text-gray-400 flex items-start gap-1.5">
+            <i data-lucide="shield-check" class="w-3.5 h-3.5 shrink-0 mt-0.5 text-emerald-600"></i>
+            Somente quem comprou cota com <strong class="mx-0.5">pagamento confirmado</strong> pode deixar depoimento (1 por pessoa).
+          </p>
+          <input type="text" name="cpf" id="depoimento-cpf" required placeholder="Seu CPF (000.000.000-00)" inputmode="numeric" maxlength="14" class="input-field">
+          <textarea name="texto" rows="3" maxlength="500" required placeholder="Conte como foi sua experiência..." class="input-field resize-none"></textarea>
+          <button type="submit" class="w-full public-btn-primary py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2">
+            <i data-lucide="send" class="w-4 h-4"></i> Enviar depoimento
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Sticky bar mobile -->
+<% if (rifa.status === 'ativa') { %>
+<div id="sticky-buy" class="lg:hidden fixed bottom-0 inset-x-0 z-40 sticky-buy sticky-buy-bar bg-gray-900/95 backdrop-blur-md border-t border-gray-700 px-4 pt-3">
+  <div class="flex items-center gap-3 max-w-lg mx-auto">
+    <div class="flex-1 min-w-0">
+      <p class="text-xs text-gray-400"><span id="sticky-qtd">1</span> cota(s)</p>
+      <p class="text-lg font-extrabold text-emerald-400" id="sticky-total">R$ 0,00</p>
+    </div>
+    <button id="btn-comprar-mobile" class="btn-pix-main font-bold px-5 py-3 rounded-xl flex items-center gap-2 text-sm">
+      <i data-lucide="qr-code" class="w-4 h-4"></i> PIX
+    </button>
+  </div>
+</div>
+<% } %>
+
+<!-- Modal compra -->
+<div id="modal-compra" class="fixed inset-0 bg-black/60 modal-backdrop z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+  <div class="bg-white dark:bg-gray-800 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full sm:max-w-md modal-sheet overflow-y-auto pb-safe">
+    <div class="w-12 h-1 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mt-3 sm:hidden shrink-0"></div>
+    <div class="p-5 sm:p-6">
+      <div class="flex justify-between items-center mb-5">
+        <h3 class="text-xl font-extrabold dark:text-white">Finalizar compra</h3>
+        <button id="btn-fechar-modal" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition public-touch-target" aria-label="Fechar"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div id="timer-reserva" class="hidden bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-xl p-3 mb-4 flex items-center gap-2 text-sm text-amber-800 dark:text-amber-200">
+        <i data-lucide="clock" class="w-5 h-5"></i>
+        Reserva expira em <strong id="timer-texto" class="ml-1"><%= typeof tempoReservaMin !== 'undefined' ? tempoReservaMin : 10 %>:00</strong>
+      </div>
+      <div class="mb-4">
+        <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Suas cotas</label>
+        <div id="numeros-selecionados" class="text-sm text-gray-600 dark:text-gray-300"></div>
+      </div>
+      <div id="checkout-resumo" class="public-checkout-box mb-5 space-y-2 text-sm hidden">
+        <div class="flex justify-between text-gray-600 dark:text-gray-400"><span>Subtotal cotas</span><span id="checkout-subtotal">R$ 0,00</span></div>
+        <div class="flex justify-between text-amber-600 dark:text-amber-400"><span>Taxa plataforma (5%)</span><span id="checkout-taxa">R$ 0,00</span></div>
+        <div class="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-700 font-bold text-base dark:text-white">
+          <span>Total PIX</span><span id="valor-total" class="text-emerald-600 dark:text-emerald-400">R$ 0,00</span>
+        </div>
+      </div>
+      <form id="form-compra" class="space-y-3">
+        <input type="text" name="nome" required placeholder="Nome completo *" class="input-field">
+        <input type="text" name="cpf" required placeholder="000.000.000-00" inputmode="numeric" maxlength="14" class="input-field" id="input-cpf">
+        <input type="tel" name="telefone" required placeholder="(11) 99999-9999" inputmode="numeric" maxlength="15" class="input-field" id="input-telefone">
+        <div class="flex items-center gap-2 text-xs text-gray-500 p-2">
+          <i data-lucide="credit-card" class="w-4 h-4 text-blue-500"></i> Pagamento seguro via PIX
+        </div>
+        <button type="submit" id="btn-confirmar" disabled class="w-full public-btn-primary font-bold py-4 rounded-xl text-lg flex items-center justify-center gap-2">
+          <i data-lucide="qr-code" class="w-5 h-5"></i> Pagar via PIX
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal sucesso -->
+<div id="modal-sucesso" class="fixed inset-0 bg-black/60 modal-backdrop z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+  <div class="bg-white dark:bg-gray-800 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full sm:max-w-md modal-sheet overflow-y-auto pb-safe">
+    <div class="w-12 h-1 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mt-3 sm:hidden shrink-0"></div>
+    <div class="p-5 sm:p-6 text-center">
+      <div class="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center mx-auto mb-4">
+        <i data-lucide="check-circle" class="w-10 h-10 text-emerald-500"></i>
+      </div>
+      <h3 class="text-2xl font-extrabold dark:text-white mb-1">Reserva Confirmada!</h3>
+      <p class="text-sm text-gray-500 mb-5">Realize o pagamento PIX para garantir seus números</p>
+      <div id="sucesso-detalhes" class="text-sm dark:text-gray-300 text-left"></div>
+      <a id="link-comprovante" href="#" class="block mt-5 btn-brand font-bold py-3.5 rounded-xl shadow-md">Ver Comprovante</a>
+      <button id="btn-fechar-sucesso" class="mt-3 text-gray-500 text-sm hover:text-gray-700 transition">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const TENANT_SLUG = '<%= tenant.slug %>';
+  const API_BASE = '/<%= tenant.slug %>/api';
+  const RIFA_ID = <%= rifa.id %>;
+  const VALOR_COTA = <%= rifa.valorCota %>;
+  const COTAS_DISPONIVEIS = <%= stats.disponiveis %>;
+  const QTD_MAX = Math.min(5000, <%= stats.disponiveis %>);
+  const RIFA_ATIVA = <%= rifa.status === 'ativa' ? 'true' : 'false' %>;
+  const FAIXAS = <%- JSON.stringify(rifa.faixasDesconto || []) %>;
+  const TEMPO_RESERVA_MIN = <%= typeof tempoReservaMin !== 'undefined' ? tempoReservaMin : 10 %>;
+  const CODIGO_INDICACAO = '<%= codigoIndicacao || '' %>';
+  const DATA_SORTEIO = '<%= new Date(rifa.dataSorteio).toISOString() %>';
+
+  (function () {
+    const alvo = new Date(DATA_SORTEIO).getTime();
+    const els = {
+      dias: document.getElementById('cd-dias'),
+      horas: document.getElementById('cd-horas'),
+      min: document.getElementById('cd-min'),
+      seg: document.getElementById('cd-seg'),
+      grid: document.getElementById('countdown-sorteio'),
+      status: document.getElementById('sorteio-status')
+    };
+    if (!els.dias) return;
+
+    function pad(n) { return String(n).padStart(2, '0'); }
+
+    function tick() {
+      const diff = alvo - Date.now();
+      if (diff <= 0) {
+        if (els.grid) els.grid.classList.add('hidden');
+        if (els.status) {
+          els.status.classList.remove('hidden');
+          els.status.textContent = '<%= rifa.status === "finalizada" ? "Sorteio realizado!" : "Sorteio em andamento!" %>';
+        }
+        clearInterval(iv);
+        return;
+      }
+      const dias = Math.floor(diff / 86400000);
+      const horas = Math.floor((diff % 86400000) / 3600000);
+      const min = Math.floor((diff % 3600000) / 60000);
+      const seg = Math.floor((diff % 60000) / 1000);
+      els.dias.textContent = dias;
+      els.horas.textContent = pad(horas);
+      els.min.textContent = pad(min);
+      els.seg.textContent = pad(seg);
+    }
+
+    tick();
+    const iv = setInterval(tick, 1000);
+  })();
+
+  window.__pendingScripts = window.__pendingScripts || [];
+  window.__pendingScripts.push('/js/rifa-detalhe.js');
+</script>
+<%- include('../partials/footer', { tenantPublic: true }) %>

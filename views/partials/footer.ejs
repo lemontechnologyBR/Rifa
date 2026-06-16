@@ -1,0 +1,154 @@
+  </main>
+
+  <% const tb = (typeof tenant !== 'undefined' && tenant) ? '/' + tenant.slug : ''; %>
+  <% const brandName = (typeof tenant !== 'undefined' && tenant) ? tenant.nome : (platformName || 'VouRifar'); %>
+  <% const isPlatformLanding = typeof platformLanding !== 'undefined' && platformLanding; %>
+
+  <footer class="mt-auto <%= isPlatformLanding ? 'landing-footer' : 'border-t border-gray-200/60 dark:border-gray-800/60 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm' %>">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 <%= isPlatformLanding ? 'py-12' : 'py-10' %>">
+      <% if (isPlatformLanding) { %>
+        <div class="landing-footer-inner">
+          <div class="landing-footer-grid">
+            <div class="landing-footer-brand">
+              <%- include('vourifar-logo', { logoClass: 'h-11 sm:h-12 w-auto', logoTitle: platformName || 'VouRifar' }) %>
+              <p class="landing-footer-tagline">
+                Plataforma justa para rifas online — cotas ilimitadas, comissão zero para você e 5% repassado ao comprador.
+              </p>
+            </div>
+
+            <div class="landing-footer-col">
+              <h4 class="landing-footer-heading">Produto</h4>
+              <nav class="landing-footer-nav" aria-label="Links do produto">
+                <a href="/demo" class="landing-footer-link">
+                  <i data-lucide="ticket" class="w-4 h-4"></i>
+                  Rifas demo
+                </a>
+                <a href="/cadastro" class="landing-footer-link">
+                  <i data-lucide="rocket" class="w-4 h-4"></i>
+                  Criar sistema grátis
+                </a>
+                <a href="/acessar" class="landing-footer-link">
+                  <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                  Acessar painel
+                </a>
+              </nav>
+            </div>
+
+            <div class="landing-footer-col">
+              <h4 class="landing-footer-heading">Diferenciais</h4>
+              <ul class="landing-footer-features">
+                <li><i data-lucide="infinity" class="w-4 h-4"></i> Cotas ilimitadas</li>
+                <li><i data-lucide="percent" class="w-4 h-4"></i> Taxa de 5% no comprador</li>
+                <li><i data-lucide="qr-code" class="w-4 h-4"></i> Pagamento via PIX</li>
+                <li><i data-lucide="smartphone" class="w-4 h-4"></i> 100% mobile</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="landing-footer-divider" aria-hidden="true"></div>
+
+          <div class="landing-footer-bottom">
+            <p class="landing-footer-copy">&copy; <%= new Date().getFullYear() %> <%= platformName %></p>
+            <p class="landing-footer-powered">Powered by Lemon Technology🍋‍🟩</p>
+          </div>
+        </div>
+      <% } else if ((typeof tenantPublic !== 'undefined' && tenantPublic) || tb) { %>
+      <div class="public-footer">
+        <div class="public-footer-brand">
+          <%- include('vourifar-logo', { logoClass: 'h-9 sm:h-10 w-auto', logoTitle: platformName || 'VouRifar' }) %>
+        </div>
+
+        <% if (typeof tenant !== 'undefined' && tenant && tenant.descricao) { %>
+          <p class="public-footer-desc"><%= tenant.descricao %></p>
+        <% } %>
+
+        <% const footerWa = (typeof rifaBrand !== 'undefined' && rifaBrand && rifaBrand.whatsapp) ? rifaBrand.whatsapp : (tenant && tenant.whatsapp); %>
+        <% const footerIg = (typeof rifaBrand !== 'undefined' && rifaBrand && rifaBrand.instagram) ? rifaBrand.instagram : (tenant && tenant.instagram); %>
+        <% if (typeof tenant !== 'undefined' && tenant && (footerWa || footerIg)) { %>
+          <nav class="public-footer-social" aria-label="Redes sociais">
+            <% if (footerWa) { %>
+              <a href="https://wa.me/<%= footerWa %>" target="_blank" rel="noopener noreferrer" class="public-footer-social-link public-footer-social-link--wa">
+                <span class="public-footer-social-icon" aria-hidden="true"><%- include('icon-whatsapp', { iconClass: 'w-[18px] h-[18px]' }) %></span>
+                <span>WhatsApp</span>
+              </a>
+            <% } %>
+            <% if (footerIg) { %>
+              <a href="https://instagram.com/<%= footerIg %>" target="_blank" rel="noopener noreferrer" class="public-footer-social-link public-footer-social-link--ig">
+                <span class="public-footer-social-icon" aria-hidden="true"><%- include('icon-instagram', { iconClass: 'w-[18px] h-[18px]', gradId: 'ig-gradient-footer' }) %></span>
+                <span>@<%= footerIg %></span>
+              </a>
+            <% } %>
+          </nav>
+        <% } %>
+
+        <div class="public-footer-divider" aria-hidden="true"></div>
+
+        <div class="public-footer-meta">
+          <p class="public-footer-copy">Quer criar suas rifas? <a href="/" class="public-footer-link">Clique Aqui</a></p>
+          <p class="public-footer-powered">Powered by Lemon Technology🍋‍🟩</p>
+          <a href="<%= tb %>/politica-de-privacidade" class="public-footer-legal">Termos e condições de uso para participante</a>
+        </div>
+      </div>      <% } else { %>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-8">
+        <div>
+          <div class="flex items-center gap-2 mb-3">
+            <div class="w-8 h-8 rounded-lg btn-brand flex items-center justify-center"><i data-lucide="ticket" class="w-4 h-4 text-white"></i></div>
+            <span class="font-bold text-lg"><%= brandName %></span>
+          </div>
+          <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">Rifas online com pagamento PIX.</p>
+        </div>
+        <div>
+          <h4 class="font-semibold text-sm mb-3 dark:text-gray-200">Links</h4>
+          <div class="space-y-2 text-sm text-gray-500 dark:text-gray-400">
+            <% if (tb) { %>
+              <a href="<%= tb %>/" class="block hover:text-indigo-600 transition">Rifas Ativas</a>
+              <a href="<%= tb %>/encerradas" class="block hover:text-indigo-600 transition">Ganhadores</a>
+              <a href="<%= tb %>/minhas-reservas" class="block hover:text-indigo-600 transition">Minhas Reservas</a>
+            <% } else { %>
+              <a href="/demo" class="block hover:text-indigo-600 transition">Rifas Demo</a>
+              <a href="/acessar" class="block hover:text-indigo-600 transition">Acessar painel</a>
+              <a href="/cadastro" class="block hover:text-indigo-600 transition">Criar Sistema</a>
+            <% } %>
+          </div>
+        </div>
+        <div>
+          <h4 class="font-semibold text-sm mb-3 dark:text-gray-200">Plataforma</h4>
+          <div class="space-y-2 text-sm text-gray-500 dark:text-gray-400">
+            <a href="/acessar" class="block hover:text-indigo-600 transition">Acessar painel</a>
+            <a href="/cadastro" class="block hover:text-indigo-600 transition">Cadastrar sistema</a>
+            <a href="/super/login" class="block hover:text-indigo-600 transition">Super Admin</a>
+          </div>
+        </div>
+      </div>
+      <div class="border-t border-gray-200 dark:border-gray-800 pt-6 text-center text-xs text-gray-400">
+        <p>&copy; <%= new Date().getFullYear() %> <%= platformName %></p>
+      </div>
+      <% } %>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+  <script>
+    (function () {
+      window.__pendingScripts = window.__pendingScripts || [];
+      window.loadAppScript = function (url) {
+        return fetch(url, {
+          credentials: 'same-origin',
+          headers: { 'ngrok-skip-browser-warning': 'true', 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/javascript, text/javascript, */*' }
+        }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+          .then(function (code) {
+            if (code.trim().charAt(0) === '<') throw new Error('JS bloqueado pelo ngrok');
+            var s = document.createElement('script'); s.textContent = code; document.body.appendChild(s);
+          });
+      };
+      var scripts = ['/js/input-masks.js', '/js/app.js'].concat(window.__pendingScripts);
+      scripts.reduce(function (p, url) { return p.then(function () { return loadAppScript(url); }); }, Promise.resolve())
+        .then(function () {
+          if (window.initInputMasks) window.initInputMasks();
+          if (window.lucide) lucide.createIcons();
+        })
+        .catch(function (e) { console.error('[Scripts]', e.message); });
+    })();
+  </script>
+</body>
+</html>

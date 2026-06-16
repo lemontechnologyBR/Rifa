@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LT 33 - Strada dos Sonhos | VouRifar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+          colors: {
+            surface: { DEFAULT: '#0b1120', card: '#111827', lift: '#1f2937' },
+            gold: { DEFAULT: '#fbbf24', dim: '#d97706' }
+          }
+        }
+      }
+    };
+  </script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    /* Fundo escuro sofisticado + brilho sutil nos cards */
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(16, 185, 129, 0.12), transparent),
+                  radial-gradient(ellipse 60% 40% at 100% 100%, rgba(251, 191, 36, 0.08), transparent),
+                  #0b1120;
+      min-height: 100vh;
+    }
+    .card-glow {
+      background: rgba(17, 24, 39, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      box-shadow: 0 4px 24px -4px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+    .btn-quick {
+      background: rgba(31, 41, 55, 0.9);
+      border: 1px solid rgba(251, 191, 36, 0.35);
+      color: #fbbf24;
+      transition: all 0.15s;
+    }
+    .btn-quick:hover {
+      background: rgba(251, 191, 36, 0.12);
+      border-color: #fbbf24;
+      transform: translateY(-1px);
+    }
+    .stepper-btn {
+      width: 3rem;
+      height: 3rem;
+      border-radius: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #374151;
+      color: #f9fafb;
+      font-size: 1.5rem;
+      font-weight: 600;
+      transition: background 0.15s;
+    }
+    .stepper-btn:hover:not(:disabled) { background: #4b5563; }
+    .stepper-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .stepper-input {
+      background: #f3f4f6;
+      color: #111827;
+      font-size: 2rem;
+      font-weight: 800;
+      text-align: center;
+      border-radius: 1rem;
+      border: 2px solid transparent;
+      width: 100%;
+      max-width: 140px;
+    }
+    .stepper-input:focus {
+      outline: none;
+      border-color: #10b981;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+    }
+    .btn-pix {
+      background: linear-gradient(135deg, #10b981, #059669);
+      box-shadow: 0 8px 24px -4px rgba(16, 185, 129, 0.45);
+    }
+    .btn-pix:hover {
+      filter: brightness(1.06);
+      transform: translateY(-1px);
+    }
+  </style>
+</head>
+<body class="text-gray-100 antialiased">
+
+  <!-- Branding topo -->
+  <header class="border-b border-white/5 bg-black/20 backdrop-blur-sm sticky top-0 z-30">
+    <div class="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-gold to-gold-dim flex items-center justify-center">
+          <i data-lucide="clover" class="w-5 h-5 text-gray-900"></i>
+        </div>
+        <span class="font-extrabold text-sm tracking-wide text-gold uppercase">A Paraíba Tem Sorte</span>
+      </div>
+      <span class="text-xs text-gray-500">VouRifar</span>
+    </div>
+  </header>
+
+  <main class="max-w-lg mx-auto px-4 py-6 pb-12 space-y-5" id="app">
+
+    <!-- 1. Cabeçalho da rifa -->
+    <section class="card-glow rounded-2xl p-5 sm:p-6">
+      <div class="flex items-start gap-3 mb-4">
+        <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-600/30 to-emerald-900/50 border border-emerald-500/30 flex items-center justify-center shrink-0">
+          <i data-lucide="car" class="w-7 h-7 text-emerald-400"></i>
+        </div>
+        <div class="min-w-0">
+          <h1 class="text-xl sm:text-2xl font-extrabold text-white leading-tight" id="rifa-nome">
+            LT 33 - Strada dos Sonhos
+          </h1>
+          <p class="text-sm text-gray-400 mt-1 flex items-center gap-1.5">
+            <i data-lucide="calendar" class="w-4 h-4 text-gold shrink-0"></i>
+            Sorteio: <span id="rifa-data">17/06/2026 - 20:00</span>
+          </p>
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-sm font-semibold">
+          <span id="valor-cota-label">R$ 0,10</span> por cota
+        </span>
+        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gold/10 border border-gold/30 text-gold text-xs font-medium">
+          Taxa 5% incluída no total
+        </span>
+      </div>
+    </section>
+
+    <!-- 2. Seleção de quantidade -->
+    <section class="card-glow rounded-2xl p-5 sm:p-6">
+      <h2 class="text-base font-bold text-white mb-1 flex items-center gap-2">
+        <i data-lucide="layers" class="w-5 h-5 text-emerald-400"></i>
+        Quantas cotas você quer?
+      </h2>
+      <p class="text-sm text-gray-400 mb-5">Escolha a quantidade — os números são atribuídos automaticamente.</p>
+
+      <!-- Botões rápidos -->
+      <div class="grid grid-cols-3 gap-3 mb-6">
+        <button type="button" class="btn-quick rounded-xl py-3 text-sm font-bold" data-add="100">+100</button>
+        <button type="button" class="btn-quick rounded-xl py-3 text-sm font-bold" data-add="500">+500</button>
+        <button type="button" class="btn-quick rounded-xl py-3 text-sm font-bold" data-add="1000">+1000</button>
+      </div>
+
+      <!-- Stepper -->
+      <div class="flex items-center justify-center gap-4 mb-4">
+        <button type="button" class="stepper-btn" id="btn-menos" aria-label="Diminuir">−</button>
+        <input type="number" id="input-qtd" class="stepper-input py-3" value="59" min="1" max="5000" inputmode="numeric">
+        <button type="button" class="stepper-btn" id="btn-mais" aria-label="Aumentar">+</button>
+      </div>
+
+      <p class="text-center text-sm text-gray-400">
+        Total selecionado: <strong class="text-white text-lg" id="label-qtd">59</strong> cotas
+      </p>
+      <p class="text-center text-xs text-amber-400/90 mt-2 hidden" id="aviso-limite">
+        Limite máximo de 5.000 cotas por compra.
+      </p>
+    </section>
+
+    <!-- 3. Resumo do pedido (checkout — taxa visível aqui) -->
+    <section class="card-glow rounded-2xl p-5 sm:p-6 ring-1 ring-emerald-500/20">
+      <h2 class="text-base font-bold text-white mb-4 flex items-center gap-2">
+        <i data-lucide="receipt" class="w-5 h-5 text-gold"></i>
+        Resumo do pedido
+      </h2>
+      <dl class="space-y-3 text-sm">
+        <div class="flex justify-between text-gray-400">
+          <dt>Quantidade de cotas</dt>
+          <dd class="font-semibold text-white" id="res-qtd">59</dd>
+        </div>
+        <div class="flex justify-between text-gray-400">
+          <dt>Preço da cota (sem taxa)</dt>
+          <dd id="res-preco-unit">R$ 0,10</dd>
+        </div>
+        <div class="flex justify-between text-gray-400">
+          <dt>Taxa plataforma (5%)</dt>
+          <dd class="text-amber-400" id="res-taxa-unit">R$ 0,01 / cota</dd>
+        </div>
+        <div class="flex justify-between text-gray-300">
+          <dt>Preço final por cota</dt>
+          <dd class="font-medium" id="res-preco-final">R$ 0,11</dd>
+        </div>
+        <div class="border-t border-white/10 pt-3 flex justify-between text-gray-400">
+          <dt>Subtotal (sem taxa)</dt>
+          <dd id="res-subtotal">R$ 5,90</dd>
+        </div>
+        <div class="flex justify-between text-gray-400">
+          <dt>Taxa 5%</dt>
+          <dd class="text-amber-400" id="res-taxa-total">R$ 0,30</dd>
+        </div>
+        <div class="border-t border-emerald-500/30 pt-4 flex justify-between items-center">
+          <dt class="text-base font-bold text-white">Total a pagar</dt>
+          <dd class="text-2xl font-extrabold text-emerald-400" id="res-total">R$ 6,20</dd>
+        </div>
+      </dl>
+      <p class="text-xs text-gray-500 mt-3 text-center">Valor final com 5% da plataforma</p>
+    </section>
+
+    <!-- 4. Botão principal -->
+    <button type="button" id="btn-comprar" class="btn-pix w-full py-4 rounded-2xl text-lg font-bold text-white flex items-center justify-center gap-2 transition-all">
+      <i data-lucide="qr-code" class="w-6 h-6"></i>
+      Comprar agora via PIX
+    </button>
+
+    <!-- 5. Informações adicionais -->
+    <section class="card-glow rounded-2xl p-5 sm:p-6">
+      <h3 class="font-bold text-white mb-2 flex items-center gap-2">
+        <i data-lucide="info" class="w-4 h-4 text-gray-400"></i>
+        Informações
+      </h3>
+      <p class="text-sm text-gray-400 leading-relaxed mb-4">
+        Participe da rifa LT 33 e concorra a uma Strada dos Sonhos zero km. Pagamento via PIX com confirmação pelo organizador. Após a confirmação, você recebe os números das cotas por WhatsApp.
+      </p>
+      <button type="button" id="btn-compartilhar" class="w-full py-3 rounded-xl border border-white/10 text-sm font-semibold text-gray-300 hover:bg-white/5 transition flex items-center justify-center gap-2">
+        <i data-lucide="share-2" class="w-4 h-4"></i>
+        Compartilhar rifa
+      </button>
+    </section>
+
+    <!-- Branding rodapé -->
+    <footer class="text-center pt-4 pb-2">
+      <p class="text-gold font-extrabold text-sm tracking-widest uppercase">A Paraíba Tem Sorte</p>
+      <p class="text-xs text-gray-600 mt-1">Powered by VouRifar · Demonstração</p>
+    </footer>
+  </main>
+
+  <script>
+    /**
+     * Configuração mock — altere VALOR_COTA para simular outras rifas
+     */
+    const CONFIG = {
+      valorCota: 0.10,
+      taxaPct: 0.05,
+      qtdInicial: 59,
+      qtdMin: 1,
+      qtdMax: 5000,
+      rifaNome: 'LT 33 - Strada dos Sonhos',
+      rifaData: '17/06/2026 - 20:00'
+    };
+
+    const els = {
+      input: document.getElementById('input-qtd'),
+      labelQtd: document.getElementById('label-qtd'),
+      avisoLimite: document.getElementById('aviso-limite'),
+      resQtd: document.getElementById('res-qtd'),
+      resPrecoUnit: document.getElementById('res-preco-unit'),
+      resTaxaUnit: document.getElementById('res-taxa-unit'),
+      resPrecoFinal: document.getElementById('res-preco-final'),
+      resSubtotal: document.getElementById('res-subtotal'),
+      resTaxaTotal: document.getElementById('res-taxa-total'),
+      resTotal: document.getElementById('res-total'),
+      valorCotaLabel: document.getElementById('valor-cota-label'),
+      btnMenos: document.getElementById('btn-menos'),
+      btnMais: document.getElementById('btn-mais'),
+      btnComprar: document.getElementById('btn-comprar'),
+      btnCompartilhar: document.getElementById('btn-compartilhar')
+    };
+
+    /** Formata valor em BRL (2 casas decimais) */
+    function fmt(v) {
+      return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    /** Arredonda para 2 casas (centavos) */
+    function round2(v) {
+      return Math.round(v * 100) / 100;
+    }
+
+    function clampQtd(n) {
+      return Math.min(CONFIG.qtdMax, Math.max(CONFIG.qtdMin, Math.floor(Number(n) || CONFIG.qtdMin)));
+    }
+
+    function getQtd() {
+      return clampQtd(els.input.value);
+    }
+
+    function setQtd(n) {
+      const q = clampQtd(n);
+      els.input.value = q;
+      atualizar();
+    }
+
+    /**
+     * Cálculo exato:
+     * subtotal = qtd × valorCota
+     * taxa = subtotal × 5%
+     * total = subtotal + taxa  (= subtotal × 1.05)
+     */
+    function calcular(qtd) {
+      const subtotal = round2(qtd * CONFIG.valorCota);
+      const taxa = round2(subtotal * CONFIG.taxaPct);
+      const total = round2(subtotal + taxa);
+      const taxaPorCota = CONFIG.valorCota * CONFIG.taxaPct;
+      const precoFinalPorCota = CONFIG.valorCota + taxaPorCota;
+      return { qtd, subtotal, taxa, total, taxaPorCota, precoFinalPorCota };
+    }
+
+    function atualizar() {
+      const qtd = getQtd();
+      const c = calcular(qtd);
+
+      els.labelQtd.textContent = qtd.toLocaleString('pt-BR');
+      els.resQtd.textContent = qtd.toLocaleString('pt-BR');
+      els.resPrecoUnit.textContent = fmt(CONFIG.valorCota);
+      els.resTaxaUnit.textContent = fmt(c.taxaPorCota) + ' / cota';
+      els.resPrecoFinal.textContent = fmt(round2(c.precoFinalPorCota));
+      els.resSubtotal.textContent = fmt(c.subtotal);
+      els.resTaxaTotal.textContent = fmt(c.taxa);
+      els.resTotal.textContent = fmt(c.total);
+
+      els.btnMenos.disabled = qtd <= CONFIG.qtdMin;
+      els.btnMais.disabled = qtd >= CONFIG.qtdMax;
+      els.avisoLimite.classList.toggle('hidden', qtd < CONFIG.qtdMax);
+    }
+
+    // Stepper e botões rápidos
+    els.btnMenos.addEventListener('click', () => setQtd(getQtd() - 1));
+    els.btnMais.addEventListener('click', () => setQtd(getQtd() + 1));
+    els.input.addEventListener('input', () => atualizar());
+    els.input.addEventListener('blur', () => setQtd(getQtd()));
+
+    document.querySelectorAll('[data-add]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        setQtd(getQtd() + parseInt(btn.dataset.add, 10));
+      });
+    });
+
+    els.btnComprar.addEventListener('click', () => {
+      const c = calcular(getQtd());
+      alert(
+        'Simulação PIX\n\n' +
+        'Rifa: ' + CONFIG.rifaNome + '\n' +
+        'Cotas: ' + c.qtd + '\n' +
+        'Subtotal: ' + fmt(c.subtotal) + '\n' +
+        'Taxa (5%): ' + fmt(c.taxa) + '\n' +
+        'Total a pagar: ' + fmt(c.total) + '\n\n' +
+        'Em produção, você veria o QR Code PIX aqui.'
+      );
+    });
+
+    els.btnCompartilhar.addEventListener('click', () => {
+      const url = window.location.href;
+      if (navigator.share) {
+        navigator.share({ title: CONFIG.rifaNome, text: 'Participe desta rifa!', url }).catch(() => {});
+      } else {
+        alert('Compartilhe este link:\n\n' + url);
+      }
+    });
+
+    // Init
+    els.valorCotaLabel.textContent = fmt(CONFIG.valorCota);
+    setQtd(CONFIG.qtdInicial);
+    lucide.createIcons();
+  </script>
+</body>
+</html>

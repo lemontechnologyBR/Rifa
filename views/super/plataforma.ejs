@@ -1,0 +1,35 @@
+<%- include('partials/page-start') %>
+<%- include('partials/alerts') %>
+
+<div class="super-grid super-grid--single">
+  <section class="super-panel">
+    <div class="super-panel-head">
+      <div><h2 class="super-panel-title">Links da plataforma</h2><p class="super-panel-sub">Acesso rápido ao front e cadastro</p></div>
+    </div>
+    <div class="super-links-grid">
+      <a href="/" target="_blank" rel="noopener" class="super-link-card"><i data-lucide="home" class="w-5 h-5"></i><strong>Landing</strong><span>Página inicial VouRifar</span></a>
+      <a href="/cadastro" target="_blank" rel="noopener" class="super-link-card"><i data-lucide="rocket" class="w-5 h-5"></i><strong>Cadastro</strong><span>Novo sistema / onboarding</span></a>
+      <a href="/acessar" target="_blank" rel="noopener" class="super-link-card"><i data-lucide="log-in" class="w-5 h-5"></i><strong>Acessar</strong><span>Login organizador</span></a>
+      <a href="/demo/" target="_blank" rel="noopener" class="super-link-card"><i data-lucide="flask-conical" class="w-5 h-5"></i><strong>Demo</strong><span>Loja demonstração</span></a>
+      <a href="/pwa-check" target="_blank" rel="noopener" class="super-link-card"><i data-lucide="smartphone" class="w-5 h-5"></i><strong>PWA Check</strong><span>Diagnóstico instalação app</span></a>
+    </div>
+  </section>
+
+  <section class="super-panel">
+    <div class="super-panel-head">
+      <div><h2 class="super-panel-title">Números gerais</h2><p class="super-panel-sub">Resumo da operação</p></div>
+    </div>
+    <dl class="super-dl">
+      <div><dt>Sistemas ativos</dt><dd><%= metricas.totalTenants %></div>
+      <div><dt>Organizadores</dt><dd><%= metricas.totalOrganizadores %></div>
+      <div><dt>Compradores cadastrados</dt><dd><%= info.totalUsuarios %></div>
+      <div><dt>Rifas ativas</dt><dd><%= metricas.rifasAtivas %> / <%= metricas.totalRifas %></div>
+      <div><dt>Vendas confirmadas</dt><dd><%= info.reservasConfirmadas %></div>
+      <div><dt>Reservas pendentes</dt><dd><%= info.reservasPendentes %></div>
+      <div><dt>GMV total</dt><dd>R$ <%= metricas.gmvTotalFmt %></div>
+      <div><dt>Receita plataforma (5%)</dt><dd class="super-dl-green">R$ <%= metricas.receitaPlataformaFmt %></div>
+    </dl>
+  </section>
+</div>
+
+<%- include('partials/page-end') %>

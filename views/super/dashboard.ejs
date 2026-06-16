@@ -1,0 +1,67 @@
+<%- include('partials/page-start') %>
+<%- include('partials/alerts') %>
+
+<section class="super-metrics">
+  <article class="super-metric">
+    <p class="super-metric-label">Sistemas ativos</p>
+    <p class="super-metric-value"><%= metricas.totalTenants %></p>
+    <% if (metricas.tenantsSuspensos > 0) { %><p class="super-metric-hint"><%= metricas.tenantsSuspensos %> suspenso<%= metricas.tenantsSuspensos > 1 ? 's' : '' %></p><% } %>
+  </article>
+  <article class="super-metric">
+    <p class="super-metric-label">Novos este mês</p>
+    <p class="super-metric-value"><%= metricas.novosTenantsMes %></p>
+    <p class="super-metric-hint"><%= metricas.totalOrganizadores %> organizadores</p>
+  </article>
+  <article class="super-metric">
+    <p class="super-metric-label">Rifas ativas</p>
+    <p class="super-metric-value"><%= metricas.rifasAtivas %></p>
+    <p class="super-metric-hint"><%= metricas.totalRifas %> no total</p>
+  </article>
+  <article class="super-metric">
+    <p class="super-metric-label">Vendas confirmadas</p>
+    <p class="super-metric-value"><%= metricas.reservasConfirmadas %></p>
+    <p class="super-metric-hint">GMV R$ <%= metricas.gmvTotalFmt %></p>
+  </article>
+  <article class="super-metric">
+    <p class="super-metric-label">Receita plataforma</p>
+    <p class="super-metric-value super-metric-value--green">R$ <%= metricas.receitaPlataformaFmt %></p>
+    <p class="super-metric-hint">Taxa 5%</p>
+  </article>
+</section>
+
+<div class="super-grid">
+  <section class="super-panel">
+    <div class="super-panel-head">
+      <div>
+        <h2 class="super-panel-title">Atalhos</h2>
+        <p class="super-panel-sub">Acesso rápido às áreas do painel</p>
+      </div>
+    </div>
+    <div class="super-shortcuts">
+      <a href="/super/sistemas" class="super-shortcut"><i data-lucide="store" class="w-5 h-5"></i><span>Sistemas</span></a>
+      <a href="/super/rifas" class="super-shortcut"><i data-lucide="ticket" class="w-5 h-5"></i><span>Rifas</span></a>
+      <a href="/super/vendas" class="super-shortcut"><i data-lucide="receipt" class="w-5 h-5"></i><span>Vendas</span></a>
+      <a href="/super/organizadores" class="super-shortcut"><i data-lucide="users" class="w-5 h-5"></i><span>Organizadores</span></a>
+      <a href="/super/plataforma" class="super-shortcut"><i data-lucide="globe" class="w-5 h-5"></i><span>Plataforma</span></a>
+      <a href="/cadastro" target="_blank" rel="noopener" class="super-shortcut"><i data-lucide="user-plus" class="w-5 h-5"></i><span>Cadastro</span></a>
+    </div>
+  </section>
+
+  <aside class="super-panel">
+    <div class="super-panel-head">
+      <div><h2 class="super-panel-title">Últimos cadastros</h2><p class="super-panel-sub">Sistemas recentes</p></div>
+      <a href="/super/sistemas" class="super-action-link">Ver todos</a>
+    </div>
+    <ul class="super-recent-list">
+      <% recentes.forEach(function(t) { %>
+        <li class="super-recent-item">
+          <p class="super-recent-name"><%= t.nome %></p>
+          <p class="super-recent-meta">/<%= t.slug %> · <%= t.createdAtFmt %><% if (t.orgEmail) { %> · <%= t.orgEmail %><% } %></p>
+          <p class="super-recent-meta"><%= t._count.rifas %> rifa<%= t._count.rifas !== 1 ? 's' : '' %> · <%= t.status %></p>
+        </li>
+      <% }); %>
+    </ul>
+  </aside>
+</div>
+
+<%- include('partials/page-end') %>

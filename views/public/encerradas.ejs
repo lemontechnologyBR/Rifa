@@ -1,0 +1,43 @@
+<%- include('../partials/header') %>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="text-center mb-10 animate-fade-up">
+    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300 text-xs font-semibold mb-3">
+      <i data-lucide="trophy" class="w-3.5 h-3.5"></i> Hall da Fama
+    </span>
+    <h1 class="text-3xl sm:text-4xl font-extrabold dark:text-white">Rifas Encerradas</h1>
+    <p class="text-gray-500 dark:text-gray-400 mt-2">Confira os ganhadores das rifas já sorteadas</p>
+  </div>
+
+  <% if (rifas.length === 0) { %>
+    <div class="text-center py-20 bg-white/60 dark:bg-gray-800/60 rounded-3xl border border-dashed border-gray-300 dark:border-gray-700">
+      <i data-lucide="trophy" class="w-16 h-16 text-gray-300 mx-auto mb-4"></i>
+      <p class="text-gray-500 dark:text-gray-400">Nenhuma rifa encerrada ainda</p>
+    </div>
+  <% } else { %>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <% rifas.forEach(function(rifa, idx) { %>
+        <article class="rifa-card card-hover bg-white dark:bg-gray-800/80 rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-700/60 shadow-sm" style="animation-delay:<%= idx * 0.05 %>s">
+          <div class="relative h-48 overflow-hidden group">
+            <img src="<%= rifa.imagemUrl %>" alt="<%= rifa.titulo %>" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+            <span class="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-gray-800/80 text-white text-xs font-bold">ENCERRADA</span>
+          </div>
+          <div class="p-5">
+            <h2 class="font-bold dark:text-white text-lg mb-3"><%= rifa.titulo %></h2>
+            <div class="bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/20 rounded-xl p-4 text-center border border-yellow-200 dark:border-yellow-800">
+              <p class="text-xs font-semibold text-yellow-700 dark:text-yellow-400 uppercase tracking-wide mb-1">🏆 Ganhador</p>
+              <p class="text-3xl font-black text-yellow-600 dark:text-yellow-400">Nº <%= rifa.numeroSorteado %></p>
+              <p class="font-semibold dark:text-white mt-1"><%= rifa.ganhadorNome %></p>
+            </div>
+            <a href="<%= tenantBase %>/rifas/<%= rifa.id %>/resultado" class="block mt-4 text-center btn-brand font-semibold py-2.5 rounded-xl text-sm">
+              Ver detalhes →
+            </a>
+          </div>
+        </article>
+      <% }); %>
+    </div>
+  <% } %>
+</div>
+
+<%- include('../partials/footer') %>

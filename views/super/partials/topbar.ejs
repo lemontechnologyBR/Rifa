@@ -1,0 +1,24 @@
+<header class="super-topbar">
+  <div class="super-topbar-inner">
+    <div class="super-page-head">
+      <button type="button" class="super-menu-toggle" id="super-menu-toggle" aria-label="Abrir menu">
+        <i data-lucide="menu" class="w-5 h-5"></i>
+      </button>
+      <h1 class="super-page-title"><%= typeof titulo !== 'undefined' ? titulo : 'Super Admin' %></h1>
+    </div>
+    <div class="super-topbar-actions">
+      <% if (typeof adminUsuario !== 'undefined' && adminUsuario) { %>
+        <span class="super-user"><i data-lucide="shield" class="w-4 h-4"></i> <%= adminUsuario %></span>
+      <% } %>
+    </div>
+  </div>
+</header>
+<script>
+  (function () {
+    var btn = document.getElementById('super-menu-toggle');
+    var shell = document.querySelector('.super-shell');
+    if (btn && shell) {
+      btn.addEventListener('click', function () { shell.classList.toggle('menu-open'); });
+    }
+  })();
+</script>

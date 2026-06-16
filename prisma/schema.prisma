@@ -1,0 +1,227 @@
+// Schema Prisma — VouRifar SaaS Multi-tenant
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id        Int    @id @default(autoincrement())
+  usuario   String @unique
+  senhaHash String @map("senha_hash")
+
+  @@map("admin")
+}
+
+model Tenant {
+  id            Int      @id @default(autoincrement())
+  slug          String   @unique
+  nome          String
+  descricao     String?  @map("descricao")
+  logoUrl       String?  @map("logo_url")
+  corPrimaria   String   @default("#10b981") @map("cor_primaria")
+  whatsapp      String?  @map("whatsapp")
+  instagram     String?  @map("instagram")
+  wooviAppId    String?  @map("woovi_app_id")
+  pixChave      String?  @map("pix_chave")
+  wooviAtivo    Boolean  @default(false) @map("woovi_ativo")
+  status        String   @default("ativo")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  organizadores Organizador[]
+  rifas         Rifa[]
+  logs          LogAdmin[]
+
+  @@map("tenants")
+}
+
+model Organizador {
+  id        Int      @id @default(autoincrement())
+  tenantId  Int      @map("tenant_id")
+  nome      String
+  email     String   @unique
+  senhaHash String?  @map("senha_hash")
+  googleId  String?  @unique @map("google_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("organizadores")
+}
+
+model Usuario {
+  id               Int       @id @default(autoincrement())
+  nome             String
+  email            String    @unique
+  telefone         String    @unique
+  cpf              String?   @unique @map("cpf")
+  senhaHash        String?   @map("senha_hash")
+  chavePix         String?   @map("chave_pix")
+  codigoIndicacao  String    @unique @map("codigo_indicacao")
+  indicadoPorId    Int?      @map("indicado_por_id")
+  bonusCotas       Int       @default(0) @map("bonus_cotas")
+  tokenRecuperacao String?   @map("token_recuperacao")
+  tokenExpira      DateTime? @map("token_expira")
+  googleId         String?   @unique @map("google_id")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  indicadoPor  Usuario?  @relation("Indicacoes", fields: [indicadoPorId], references: [id])
+  indicados    Usuario[] @relation("Indicacoes")
+  reservas     Reserva[]
+  numeros      Numero[]
+  comentarios  Comentario[]
+  carrinhos    Carrinho[]
+
+  @@map("usuarios")
+}
+
+model Rifa {
+  id             Int      @id @default(autoincrement())
+  tenantId       Int      @map("tenant_id")
+  titulo         String
+  descricao      String?
+  imagemUrl      String?  @map("imagem_url")
+  logoUrl        String?  @map("logo_url")
+  corPrimaria    String?  @map("cor_primaria")
+  whatsapp       String?  @map("whatsapp")
+  instagram      String?  @map("instagram")
+  valorCota      Float    @map("valor_cota")
+  totalNumeros   Int      @map("total_numeros")
+  dataSorteio    DateTime @map("data_sorteio")
+  chavePix       String   @map("chave_pix")
+  status         String   @default("ativa")
+  numeroSorteado Int?     @map("numero_sorteado")
+  ganhadorNome   String?  @map("ganhador_nome")
+  metaMinimaPct  Float?   @map("meta_minima_pct")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  tenant         Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  numeros        Numero[]
+  reservas       Reserva[]
+  premios        Premio[]
+  faixasDesconto FaixaDesconto[]
+  comentarios    Comentario[]
+  carrinhos      Carrinho[]
+
+  @@map("rifas")
+}
+
+model Premio {
+  id             Int     @id @default(autoincrement())
+  rifaId         Int     @map("rifa_id")
+  titulo         String
+  descricao      String?
+  imagemUrl      String? @map("imagem_url")
+  ordem          Int     @default(0)
+  principal      Boolean @default(false)
+  numeroSorteado Int?    @map("numero_sorteado")
+  ganhadorNome   String? @map("ganhador_nome")
+
+  rifa Rifa @relation(fields: [rifaId], references: [id], onDelete: Cascade)
+
+  @@map("premios")
+}
+
+model FaixaDesconto {
+  id            Int   @id @default(autoincrement())
+  rifaId        Int   @map("rifa_id")
+  quantidadeMin Int   @map("quantidade_min")
+  valorTotal    Float @map("valor_total")
+
+  rifa Rifa @relation(fields: [rifaId], references: [id], onDelete: Cascade)
+
+  @@map("faixas_desconto")
+}
+
+model Numero {
+  id           Int       @id @default(autoincrement())
+  rifaId       Int       @map("rifa_id")
+  numero       Int
+  status       String    @default("disponivel")
+  usuarioId    Int?      @map("usuario_id")
+  reservadoAte DateTime? @map("reservado_ate")
+
+  rifa           Rifa            @relation(fields: [rifaId], references: [id], onDelete: Cascade)
+  usuario        Usuario?        @relation(fields: [usuarioId], references: [id])
+  reservaNumeros ReservaNumero[]
+
+  @@unique([rifaId, numero])
+  @@map("numeros")
+}
+
+model Reserva {
+  id                   Int      @id @default(autoincrement())
+  usuarioId            Int      @map("usuario_id")
+  rifaId               Int      @map("rifa_id")
+  valorTotal           Float    @map("valor_total")
+  statusPagamento      String   @default("pendente") @map("status_pagamento")
+  codigoPagamento      String?  @unique @map("codigo_pagamento")
+  wooviCorrelationId   String?  @unique @map("woovi_correlation_id")
+  wooviBrCode          String?  @map("woovi_br_code")
+  codigoIndicacaoUsado String?  @map("codigo_indicacao_usado")
+  expiraEm             DateTime? @map("expira_em")
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  usuario        Usuario         @relation(fields: [usuarioId], references: [id])
+  rifa           Rifa            @relation(fields: [rifaId], references: [id], onDelete: Cascade)
+  reservaNumeros ReservaNumero[]
+
+  @@map("reservas")
+}
+
+model ReservaNumero {
+  id        Int @id @default(autoincrement())
+  reservaId Int @map("reserva_id")
+  numeroId  Int @map("numero_id")
+
+  reserva Reserva @relation(fields: [reservaId], references: [id], onDelete: Cascade)
+  numero  Numero  @relation(fields: [numeroId], references: [id], onDelete: Cascade)
+
+  @@unique([reservaId, numeroId])
+  @@map("reserva_numeros")
+}
+
+model Carrinho {
+  id        Int      @id @default(autoincrement())
+  sessionId String   @map("session_id")
+  usuarioId Int?     @map("usuario_id")
+  rifaId    Int      @map("rifa_id")
+  numeros   String
+  expiraEm  DateTime @map("expira_em")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  usuario Usuario? @relation(fields: [usuarioId], references: [id])
+  rifa    Rifa     @relation(fields: [rifaId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, rifaId])
+  @@map("carrinhos")
+}
+
+model Comentario {
+  id        Int      @id @default(autoincrement())
+  rifaId    Int      @map("rifa_id")
+  usuarioId Int      @map("usuario_id")
+  texto     String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  rifa    Rifa    @relation(fields: [rifaId], references: [id], onDelete: Cascade)
+  usuario Usuario @relation(fields: [usuarioId], references: [id])
+
+  @@map("comentarios")
+}
+
+model LogAdmin {
+  id           Int      @id @default(autoincrement())
+  tenantId     Int?     @map("tenant_id")
+  adminUsuario String   @map("admin_usuario")
+  acao         String
+  detalhes     String?
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+
+  @@map("log_admin")
+}

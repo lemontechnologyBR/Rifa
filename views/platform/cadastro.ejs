@@ -1,0 +1,223 @@
+<%- include('../partials/header') %>
+
+<% const base = typeof baseUrl !== 'undefined' ? baseUrl.replace(/\/$/, '') : ''; %>
+<% const startStep = viaGoogle ? 2 : 1; %>
+
+<div class="landing-page onboarding-page min-h-[calc(100vh-12rem)]"
+  x-data="{
+    step: <%= startStep %>,
+    slugTouched: <%= dados.slug ? 'true' : 'false' %>,
+    nome: <%= JSON.stringify(dados.nome || '') %>,
+    email: <%= JSON.stringify(dados.email || '') %>,
+    senha: '',
+    confirmar: '',
+    nomeLoja: <%= JSON.stringify(dados.nome_loja || '') %>,
+    slug: <%= JSON.stringify(dados.slug || '') %>,
+    viaGoogle: <%= viaGoogle ? 'true' : 'false' %>,
+    slugify(t) {
+      return String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').substring(0, 48) || 'loja';
+    },
+    onLojaInput() {
+      if (!this.slugTouched) this.slug = this.slugify(this.nomeLoja);
+    },
+    validStep1() {
+      if (this.viaGoogle) return true;
+      return this.nome.trim().length >= 2 && this.email.includes('@')
+        && this.senha.length >= 6 && this.senha === this.confirmar;
+    },
+    validStep2() {
+      return this.nomeLoja.trim().length >= 2 && /^[a-z0-9-]{3,48}$/.test(this.slug);
+    },
+    nextStep() {
+      if (this.step === 1 && !this.validStep1()) {
+        return alert('Preencha nome, e-mail válido e senha (mín. 6 caracteres, iguais nos dois campos).');
+      }
+      if (this.step === 2 && !this.validStep2()) {
+        return alert('Informe o nome do sistema e uma URL válida (mín. 3 caracteres, só letras minúsculas, números e hífen).');
+      }
+      if (this.step < 3) this.step++;
+    }
+  }">
+
+  <div class="max-w-5xl mx-auto px-4 py-10 sm:py-14">
+    <div class="grid lg:grid-cols-5 gap-8 lg:gap-12 items-start">
+
+      <!-- Painel lateral — desktop -->
+      <aside class="hidden lg:block lg:col-span-2 lg:sticky lg:top-24">
+        <h2 class="text-2xl font-extrabold mb-3 leading-tight">Configure seu sistema em poucos passos</h2>
+        <p class="landing-subtitle text-sm leading-relaxed mb-8">
+          Crie sua loja de rifas, receba PIX automaticamente e compartilhe o link público com seus compradores.
+        </p>
+        <ol class="onboarding-side-steps space-y-4">
+          <li class="onboarding-side-step" :class="{ 'is-active': step === 1, 'is-done': step > 1 }">
+            <span class="onboarding-side-num">1</span>
+            <div>
+              <p class="font-semibold text-sm">Sua conta</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Nome, e-mail e senha de acesso</p>
+            </div>
+          </li>
+          <li class="onboarding-side-step" :class="{ 'is-active': step === 2, 'is-done': step > 2 }">
+            <span class="onboarding-side-num">2</span>
+            <div>
+              <p class="font-semibold text-sm">Seu sistema</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Nome da loja e endereço público</p>
+            </div>
+          </li>
+          <li class="onboarding-side-step" :class="{ 'is-active': step === 3 }">
+            <span class="onboarding-side-num">3</span>
+            <div>
+              <p class="font-semibold text-sm">Confirmar</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Revise e publique sua loja</p>
+            </div>
+          </li>
+        </ol>
+      </aside>
+
+      <!-- Wizard -->
+      <div class="lg:col-span-3">
+        <div class="landing-card onboarding-card animate-fade-up">
+          <div class="onboarding-wizard-head mb-6">
+            <p class="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-2">Onboarding</p>
+            <div class="onboarding-wizard-steps lg:hidden">
+              <template x-for="(label, i) in ['Conta', 'Sistema', 'Confirmar']" :key="i">
+                <div class="onboarding-wizard-step"
+                  :class="{ 'is-done': step > i + 1, 'is-active': step === i + 1 }">
+                  <span class="onboarding-wizard-step-num" x-text="step > i + 1 ? '✓' : i + 1"></span>
+                  <span class="onboarding-wizard-step-label" x-text="label"></span>
+                </div>
+              </template>
+            </div>
+            <h1 class="text-xl sm:text-2xl font-extrabold mt-4" x-text="step === 1 ? 'Crie sua conta' : step === 2 ? 'Configure sua loja' : 'Tudo pronto para começar'"></h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1"
+              x-text="step === 1 ? 'Dados do organizador responsável pelo sistema.' : step === 2 ? 'Como seus compradores vão encontrar suas rifas.' : 'Confira os dados antes de criar o sistema.'"></p>
+          </div>
+
+          <% if (erro) { %>
+            <div class="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 p-3 rounded-xl mb-5 text-sm border border-red-200 dark:border-red-800"><%= erro %></div>
+          <% } %>
+
+          <% if (typeof googleEnabled !== 'undefined' && googleEnabled && !viaGoogle) { %>
+            <div x-show="step === 1" class="mb-5">
+              <a href="/cadastro/auth/google" class="w-full flex items-center justify-center gap-3 border border-gray-300 dark:border-gray-600 rounded-xl py-3 font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition text-sm">
+                <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                Continuar com Google
+              </a>
+              <div class="relative my-4">
+                <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200 dark:border-gray-700"></div></div>
+                <div class="relative flex justify-center text-xs uppercase"><span class="bg-white dark:bg-slate-900 px-2 text-gray-400">ou preencha abaixo</span></div>
+              </div>
+            </div>
+          <% } else if (viaGoogle) { %>
+            <div class="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 p-3 rounded-xl mb-5 text-sm border border-emerald-200 dark:border-emerald-800 flex items-start gap-2">
+              <i data-lucide="check-circle" class="w-4 h-4 shrink-0 mt-0.5"></i>
+              Conta Google conectada. Complete os dados da sua loja abaixo.
+            </div>
+          <% } %>
+
+          <form method="POST" action="/cadastro" class="space-y-4" @submit="if(!validStep1() || !validStep2()) { $event.preventDefault(); alert('Revise os dados antes de continuar.'); }">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <% if (viaGoogle) { %><input type="hidden" name="via_google" value="1"><% } %>
+            <input type="hidden" name="nome" :value="nome">
+            <input type="hidden" name="email" :value="email">
+            <input type="hidden" name="nome_loja" :value="nomeLoja">
+            <input type="hidden" name="slug" :value="slug">
+            <div x-show="!viaGoogle" class="hidden">
+              <input type="hidden" name="senha" :value="senha">
+              <input type="hidden" name="confirmar_senha" :value="confirmar">
+            </div>
+
+            <!-- Step 1: Conta -->
+            <div x-show="step === 1 && !viaGoogle" x-cloak class="space-y-4">
+              <div>
+                <label class="onboarding-label">Seu nome *</label>
+                <input type="text" required x-model="nome" class="landing-field w-full rounded-xl px-4 py-3 text-sm" placeholder="João Silva">
+              </div>
+              <div>
+                <label class="onboarding-label">E-mail *</label>
+                <input type="email" required x-model="email" autocomplete="email" class="landing-field w-full rounded-xl px-4 py-3 text-sm" placeholder="seu@email.com">
+              </div>
+              <div>
+                <label class="onboarding-label">Senha *</label>
+                <input type="password" x-model="senha" minlength="6" autocomplete="new-password" class="landing-field w-full rounded-xl px-4 py-3 text-sm" placeholder="Mínimo 6 caracteres">
+              </div>
+              <div>
+                <label class="onboarding-label">Confirmar senha *</label>
+                <input type="password" x-model="confirmar" minlength="6" autocomplete="new-password" class="landing-field w-full rounded-xl px-4 py-3 text-sm">
+              </div>
+            </div>
+
+            <!-- Step 2: Sistema -->
+            <div x-show="step === 2" x-cloak class="space-y-4">
+              <div>
+                <label class="onboarding-label">Nome do sistema *</label>
+                <input type="text" required x-model="nomeLoja" @input="onLojaInput()" class="landing-field w-full rounded-xl px-4 py-3 text-sm" placeholder="Rifas do João">
+              </div>
+              <div>
+                <label class="onboarding-label">Endereço público (slug) *</label>
+                <div class="flex items-center gap-2 landing-field rounded-xl px-3 py-2">
+                  <span class="text-xs text-gray-400 shrink-0">/</span>
+                  <input type="text" required x-model="slug" @input="slugTouched = true" pattern="[a-z0-9-]+" class="flex-1 bg-transparent border-0 outline-none text-sm py-1" placeholder="rifas-do-joao">
+                </div>
+                <p class="text-[11px] text-gray-400 mt-1.5">Letras minúsculas, números e hífens · mín. 3 caracteres</p>
+              </div>
+              <div class="onboarding-url-preview" x-show="slug.length >= 3">
+                <i data-lucide="link" class="w-4 h-4 shrink-0 text-emerald-600"></i>
+                <span class="text-xs text-gray-500">Sua loja ficará em:</span>
+                <strong class="text-sm text-emerald-700 dark:text-emerald-400 truncate"><%= base %>/<span x-text="slug"></span></strong>
+              </div>
+            </div>
+
+            <!-- Step 3: Revisão -->
+            <div x-show="step === 3" x-cloak class="space-y-4">
+              <dl class="onboarding-review">
+                <div><dt>Organizador</dt><dd x-text="nome || '—'"></dd></div>
+                <div><dt>E-mail</dt><dd x-text="email || '—'"></dd></div>
+                <div><dt>Sistema</dt><dd x-text="nomeLoja || '—'"></dd></div>
+                <div><dt>URL pública</dt><dd>/<span x-text="slug"></span></dd></div>
+              </dl>
+
+              <div class="onboarding-next-steps">
+                <p class="text-xs font-bold uppercase tracking-wide text-gray-400 mb-3">Depois de criar, você vai:</p>
+                <ul class="space-y-2.5">
+                  <li class="onboarding-next-item">
+                    <span class="onboarding-next-icon"><i data-lucide="wallet" class="w-4 h-4"></i></span>
+                    <span>Cadastrar sua chave PIX na <strong>Carteira</strong></span>
+                  </li>
+                  <li class="onboarding-next-item">
+                    <span class="onboarding-next-icon"><i data-lucide="ticket" class="w-4 h-4"></i></span>
+                    <span>Criar sua primeira rifa em poucos cliques</span>
+                  </li>
+                  <li class="onboarding-next-item">
+                    <span class="onboarding-next-icon"><i data-lucide="share-2" class="w-4 h-4"></i></span>
+                    <span>Compartilhar o link público e receber pagamentos</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="flex gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
+              <button type="button" x-show="step > (viaGoogle ? 2 : 1)" @click="step--" class="flex-1 landing-btn-secondary py-3 rounded-xl text-sm font-semibold">
+                Voltar
+              </button>
+              <button type="button" x-show="step < 3" @click="nextStep()" class="flex-1 landing-btn-primary py-3 rounded-xl text-sm font-bold">
+                Continuar
+              </button>
+              <button type="submit" x-show="step === 3" class="flex-1 landing-btn-primary py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2">
+                <i data-lucide="rocket" class="w-4 h-4"></i>
+                <%= viaGoogle ? 'Criar sistema com Google' : 'Criar meu sistema' %>
+              </button>
+            </div>
+          </form>
+
+          <p class="mt-6 text-center text-sm text-gray-500">
+            Já tem sistema? <a href="/acessar" class="text-emerald-600 font-semibold hover:underline">Acessar painel</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>if (window.lucide) lucide.createIcons();</script>
+<%- include('../partials/footer', { platformLanding: true }) %>

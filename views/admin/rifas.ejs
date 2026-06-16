@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="admin-panel">
+<head>
+  <%- include('partials/head') %>
+</head>
+<body class="admin-panel" x-data="{
+  modalNovaRifa: false,
+  wizardStep: 1,
+  titulo: '',
+  valorCota: 10,
+  totalCotas: 100,
+  dataSorteio: '',
+  carteiraOk: <%= tenant.pixChave ? 'true' : 'false' %>,
+  get taxaCota() { return Math.max(0, this.valorCota) * 0.05; },
+  get compradorPaga() { return Math.max(0, this.valorCota) + this.taxaCota; },
+  get faturamentoTotal() { return Math.max(0, this.valorCota) * Math.max(0, this.totalCotas); },
+  get volumeCompradores() { return this.compradorPaga * Math.max(0, this.totalCotas); },
+  get taxaPlataformaTotal() { return this.taxaCota * Math.max(0, this.totalCotas); },
+  fmt(v) { return (Math.max(0, v) || 0).toFixed(2).replace('.', ','); },
+  fmtInt(v) { return Math.max(0, Math.round(v) || 0).toLocaleString('pt-BR'); },
+  resetWizard() {
+    this.wizardStep = 1;
+    this.titulo = '';
+    this.valorCota = 10;
+    this.totalCotas = 100;
+    this.dataSorteio = '';
+  },
+  openWizard() {
+    if (!this.carteiraOk) {
+      alert('Configure sua chave PIX na Carteira antes de criar rifas.');
+      window.location.href = '<%= adminBase %>/carteira';
+      return;
+    }
+    this.resetWizard();
+    this.modalNovaRifa = true;
+  },
+  validStep1() { return this.titulo.trim().length >= 3 && this.valorCota > 0 && this.totalCotas >= 1; },
+  validStep2() { return !!this.dataSorteio; },
+  nextStep() {
+    if (this.wizardStep === 1 && !this.validStep1()) return alert('Preencha nome, valor e total de cotas.');
+    if (this.wizardStep === 2 && !this.validStep2()) return alert('Informe a data do sorteio.');
+    if (this.wizardStep < 3) this.wizardStep++;
+  },
+  init() {
+    if (new URLSearchParams(window.location.search).get('nova') === '1') {
+      this.$nextTick(() => this.openWizard());
+      const url = new URL(window.location.href);
+      url.searchParams.delete('nova');
+      history.replaceState({}, '', url.pathname + url.search);
+    }
+  }
+}" @open-nova-rifa.window="openWizard()">
+
+  <%- include('partials/nav', {
+    active: 'rifas',
+    pageTitle: 'Rifas',
+    pageSubtitle: totalRifas ? totalRifas + ' rifa' + (totalRifas !== 1 ? 's' : '') + ' cadastrada' + (totalRifas !== 1 ? 's' : '') : 'Gerencie suas rifas',
+    tenant,
+    adminBase,
+    tenantBase,
+    adminUsuario,
+    openModal: true
+  }) %>
+
+    <% if (msg) { %>
+      <div class="admin-alert admin-alert-success">
+        <i data-lucide="check-circle" class="w-4 h-4 shrink-0 mt-0.5"></i>
+        <span><%= msg %></span>
+      </div>
+    <% } %>
+    <% if (erro) { %>
+      <div class="admin-alert admin-alert-error">
+        <i data-lucide="alert-circle" class="w-4 h-4 shrink-0 mt-0.5"></i>
+        <span><%= erro %></span>
+      </div>
+    <% } %>
+
+    <%- include('partials/rifas-lista') %>
+
+  <%- include('partials/layout-end') %>
+
+  <%- include('partials/nova-rifa-modal') %>
+
+  <script>
+    lucide.createIcons();
+
+    function compartilharRifa(url) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(function () {
+          alert('Link copiado!\n\n' + url);
+        }).catch(function () { prompt('Copie o link:', url); });
+      } else {
+        prompt('Copie o link da rifa:', url);
+      }
+    }
+
+    document.querySelectorAll('.btn-share').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        compartilharRifa(btn.dataset.url);
+      });
+    });
+  </script>
+</body>
+</html>

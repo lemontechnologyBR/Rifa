@@ -1,0 +1,71 @@
+<section class="super-panel">
+  <div class="super-panel-head">
+    <div>
+      <h2 class="super-panel-title">Sistemas cadastrados</h2>
+      <p class="super-panel-sub"><%= total %> loja<%= total !== 1 ? 's' : '' %> · página <%= page %> de <%= paginas %></p>
+    </div>
+    <form method="GET" action="/super/sistemas" class="super-filters">
+      <input type="text" name="q" value="<%= busca %>" placeholder="Buscar nome ou slug…" class="super-input">
+      <select name="status" class="super-select">
+        <option value="todos" <%= statusFiltro === 'todos' ? 'selected' : '' %>>Todos</option>
+        <option value="ativo" <%= statusFiltro === 'ativo' ? 'selected' : '' %>>Ativos</option>
+        <option value="suspenso" <%= statusFiltro === 'suspenso' ? 'selected' : '' %>>Suspensos</option>
+      </select>
+      <button type="submit" class="super-btn super-btn--primary"><i data-lucide="search" class="w-4 h-4"></i> Filtrar</button>
+      <% if (busca || statusFiltro !== 'todos') { %><a href="/super/sistemas" class="super-btn super-btn--ghost">Limpar</a><% } %>
+    </form>
+  </div>
+
+  <div class="super-table-wrap">
+    <table class="super-table">
+      <thead>
+        <tr>
+          <th>Sistema</th><th>Slug</th><th>Rifas</th><th>PIX</th><th>Criado</th><th>Status</th><th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (!tenants.length) { %>
+          <tr><td colspan="7" class="super-empty">Nenhum sistema encontrado.</td></tr>
+        <% } %>
+        <% tenants.forEach(function(t) { %>
+          <tr>
+            <td>
+              <span class="super-tenant-name"><%= t.nome %></span>
+              <% if (t.org) { %><span class="super-tenant-email"><%= t.org.nome %> · <%= t.org.email %></span><% } %>
+            </td>
+            <td><a href="/<%= t.slug %>/" target="_blank" rel="noopener" class="super-action-link">/<%= t.slug %></a></td>
+            <td><%= t._count.rifas %></td>
+            <td><span class="super-badge <%= t.pixOk ? 'super-badge--pix-ok' : 'super-badge--pix-no' %>"><%= t.pixOk ? 'OK' : 'Pendente' %></span></td>
+            <td><%= t.createdAtFmt %></td>
+            <td><span class="super-badge super-badge--<%= t.status === 'ativo' ? 'ativo' : 'suspenso' %>"><%= t.status %></span></td>
+            <td>
+              <div class="super-actions">
+                <a href="/<%= t.slug %>/" target="_blank" rel="noopener" class="super-action-link">Loja</a>
+                <a href="/<%= t.slug %>/admin" target="_blank" rel="noopener" class="super-action-link">Painel</a>
+                <form method="POST" action="/super/tenants/<%= t.id %>/status" class="inline">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <input type="hidden" name="redirect" value="/super/sistemas<%= busca ? '?q=' + encodeURIComponent(busca) : '' %><%= statusFiltro !== 'todos' ? (busca ? '&' : '?') + 'status=' + statusFiltro : '' %>">
+                  <input type="hidden" name="status" value="<%= t.status === 'ativo' ? 'suspenso' : 'ativo' %>">
+                  <button type="submit" class="super-action-btn <%= t.status === 'ativo' ? '' : 'super-action-btn--ok' %>"><%= t.status === 'ativo' ? 'Suspender' : 'Ativar' %></button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+
+  <% if (paginas > 1) { %>
+    <div class="super-pagination">
+      <span><%= total %> sistema<%= total !== 1 ? 's' : '' %></span>
+      <div class="super-pagination-links">
+        <% if (page > 1) { %><a class="super-page-link" href="/super/sistemas?page=<%= page - 1 %><%= busca ? '&q=' + encodeURIComponent(busca) : '' %><%= statusFiltro !== 'todos' ? '&status=' + statusFiltro : '' %>">←</a><% } %>
+        <% for (var p = Math.max(1, page - 2); p <= Math.min(paginas, page + 2); p++) { %>
+          <a class="super-page-link <%= p === page ? 'is-active' : '' %>" href="/super/sistemas?page=<%= p %><%= busca ? '&q=' + encodeURIComponent(busca) : '' %><%= statusFiltro !== 'todos' ? '&status=' + statusFiltro : '' %>"><%= p %></a>
+        <% } %>
+        <% if (page < paginas) { %><a class="super-page-link" href="/super/sistemas?page=<%= page + 1 %><%= busca ? '&q=' + encodeURIComponent(busca) : '' %><%= statusFiltro !== 'todos' ? '&status=' + statusFiltro : '' %>">→</a><% } %>
+      </div>
+    </div>
+  <% } %>
+</section>

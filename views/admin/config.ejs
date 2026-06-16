@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="admin-panel">
+<head>
+  <%- include('partials/head', { titulo: 'Minha conta — ' + tenant.nome, csrfToken }) %>
+</head>
+<body class="admin-panel">
+  <%- include('partials/nav', {
+    active: 'config',
+    pageTitle: 'Minha conta',
+    pageSubtitle: 'Dados de acesso e informações da loja',
+    tenant,
+    adminBase,
+    tenantBase,
+    adminUsuario
+  }) %>
+
+    <% if (typeof msg !== 'undefined' && msg) { %>
+      <div class="admin-alert admin-alert-success mb-4"><i data-lucide="check-circle" class="w-4 h-4 shrink-0"></i><span><%= msg %></span></div>
+    <% } %>
+    <% if (typeof erro !== 'undefined' && erro) { %>
+      <div class="admin-alert admin-alert-error mb-4"><i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i><span><%= erro %></span></div>
+    <% } %>
+
+    <% if (typeof organizador !== 'undefined' && organizador) { %>
+    <form method="POST" action="<%= adminBase %>/config" class="max-w-2xl space-y-4">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+      <section class="admin-panel-card p-6 space-y-4">
+        <div class="admin-config-section-head">
+          <div class="admin-config-section-icon slate"><i data-lucide="user-circle" class="w-5 h-5"></i></div>
+          <div>
+            <h2 class="font-bold text-base">Sua conta</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Dados do organizador desta loja.</p>
+          </div>
+        </div>
+
+        <div>
+          <label class="admin-label">Seu nome</label>
+          <input type="text" name="nome_organizador" required minlength="2" maxlength="80" value="<%= organizador.nome %>" class="admin-input">
+        </div>
+
+        <dl class="admin-config-dl mt-2">
+          <div><dt>E-mail</dt><dd><%= organizador.email %></dd></div>
+          <div><dt>Login</dt><dd><%= organizador.googleId ? 'Google + e-mail' : 'E-mail e senha' %></dd></div>
+          <div><dt>Cadastro</dt><dd><%= new Date(organizador.createdAt).toLocaleDateString('pt-BR') %></dd></div>
+        </dl>
+      </section>
+
+      <section class="admin-panel-card p-6 space-y-4"
+        x-data="{
+          slug: <%= JSON.stringify(tenant.slug) %>,
+          logoUrl: <%= JSON.stringify(tenant.logoUrl || '') %>,
+          logoUploading: false,
+          logoStatus: 'JPG, PNG, WebP ou GIF · até 5 MB',
+          csrf() { return document.querySelector('meta[name=csrf-token]')?.content || ''; },
+          async uploadLogo(e) {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+            this.logoUploading = true;
+            this.logoStatus = 'Enviando…';
+            const fd = new FormData();
+            fd.append('imagem', file);
+            fd.append('_csrf', this.csrf());
+            try {
+              const r = await fetch('<%= adminBase %>/upload/imagem-rifa', {
+                method: 'POST',
+                body: fd,
+                credentials: 'same-origin',
+                headers: {
+                  'X-CSRF-Token': this.csrf(),
+                  'X-Requested-With': 'XMLHttpRequest',
+                  'ngrok-skip-browser-warning': 'true'
+                }
+              });
+              const d = await r.json();
+              if (!r.ok) throw new Error(d.erro || 'Falha no upload');
+              this.logoUrl = d.url;
+              this.logoStatus = 'Logo enviado!';
+            } catch (err) {
+              this.logoStatus = err.message || 'Falha no upload';
+            } finally {
+              this.logoUploading = false;
+              e.target.value = '';
+            }
+          },
+          removeLogo() {
+            this.logoUrl = '';
+            this.logoStatus = 'JPG, PNG, WebP ou GIF · até 5 MB';
+          }
+        }">
+        <div class="admin-config-section-head">
+          <div class="admin-config-section-icon emerald"><i data-lucide="store" class="w-5 h-5"></i></div>
+          <div>
+            <h2 class="font-bold text-base">Sua loja</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Nome, endereço e contato exibidos na página pública.</p>
+          </div>
+        </div>
+
+        <div>
+          <label class="admin-label">Nome da loja</label>
+          <input type="text" name="nome_loja" required minlength="2" maxlength="80" value="<%= tenant.nome %>" class="admin-input">
+        </div>
+
+        <div>
+          <label class="admin-label">Endereço da loja (URL)</label>
+          <div class="flex items-center gap-2 admin-input px-3 py-2">
+            <span class="text-sm text-gray-400 shrink-0">/</span>
+            <input type="text" name="slug" required minlength="3" maxlength="48" pattern="[a-z0-9-]+"
+              x-model="slug"
+              class="flex-1 bg-transparent border-0 outline-none text-sm py-1 font-mono lowercase"
+              placeholder="minha-loja">
+          </div>
+          <p class="admin-hint">Letras minúsculas, números e hífens · mínimo 3 caracteres</p>
+          <p class="admin-hint mt-1">
+            <i data-lucide="link" class="w-3.5 h-3.5 inline-block align-text-bottom"></i>
+            Link público: <strong><%= typeof baseUrl !== 'undefined' ? baseUrl : '' %>/<span x-text="slug"></span></strong>
+          </p>
+        </div>
+
+        <div>
+          <label class="admin-label">Logo da loja (topo da página)</label>
+
+          <div class="admin-rifa-imagem-preview-wrap">
+            <div class="admin-rifa-imagem-preview admin-rifa-imagem-preview--empty" x-show="!logoUrl" x-cloak>
+              <i data-lucide="image" class="w-8 h-8 opacity-30"></i>
+              <span class="text-xs text-gray-400">Nenhum logo</span>
+            </div>
+            <img :src="logoUrl" alt="Preview do logo" class="admin-rifa-imagem-preview" x-show="logoUrl" x-cloak>
+          </div>
+
+          <div class="flex flex-wrap gap-2 mt-3">
+            <label class="admin-upload-btn cursor-pointer" :class="{ 'opacity-60 pointer-events-none': logoUploading }">
+              <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" class="hidden" @change="uploadLogo($event)">
+              <i data-lucide="upload" class="w-4 h-4"></i>
+              <span x-text="logoUploading ? 'Enviando…' : (logoUrl ? 'Trocar logo' : 'Enviar logo')"></span>
+            </label>
+            <button type="button" class="admin-action-btn" x-show="logoUrl" x-cloak @click="removeLogo()">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Remover
+            </button>
+          </div>
+          <p class="admin-hint" x-text="logoStatus"></p>
+
+          <div class="mt-3">
+            <label class="admin-label text-xs">Ou cole uma URL externa</label>
+            <input type="text" name="logo_url" x-model="logoUrl" class="admin-input text-sm" placeholder="https://exemplo.com/logo.png" autocomplete="off">
+          </div>
+          <p class="admin-hint">Aparece no menu superior da sua loja pública.</p>
+        </div>
+
+        <div>
+          <label class="admin-label">Descrição da loja</label>
+          <textarea name="descricao" rows="2" maxlength="160" class="admin-input" placeholder="Opcional — aparece abaixo do nome no topo da loja"><%= tenant.descricao || '' %></textarea>
+        </div>
+
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label class="admin-label">WhatsApp</label>
+            <input type="tel" name="whatsapp" value="<%= tenant.whatsapp || '' %>" class="admin-input" placeholder="5511999999999">
+          </div>
+          <div>
+            <label class="admin-label">Instagram</label>
+            <div class="relative">
+              <span class="admin-input-prefix">@</span>
+              <input type="text" name="instagram" value="<%= tenant.instagram || '' %>" class="admin-input admin-input-with-prefix" placeholder="seurifas">
+            </div>
+          </div>
+        </div>
+
+        <dl class="admin-config-dl mt-2">
+          <div><dt>Status</dt><dd><%= tenant.status === 'ativo' ? 'Ativa' : 'Suspensa' %></dd></div>
+          <div><dt>Rifas criadas</dt><dd><%= typeof totalRifas !== 'undefined' ? totalRifas : 0 %></dd></div>
+          <div><dt>Loja criada em</dt><dd><%= new Date(tenant.createdAt).toLocaleDateString('pt-BR') %></dd></div>
+        </dl>
+      </section>
+
+      <div class="flex gap-3">
+        <a href="<%= adminBase %>/" class="flex-1 text-center border border-gray-300 dark:border-gray-600 font-semibold py-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">Cancelar</a>
+        <button type="submit" class="flex-1 admin-btn-primary py-3 text-sm">Salvar alterações</button>
+      </div>
+    </form>
+    <% } %>
+
+  <%- include('partials/layout-end') %>
+  <script>lucide.createIcons();</script>
+</body>
+</html>

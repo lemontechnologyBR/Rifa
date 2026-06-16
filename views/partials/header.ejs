@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="pt-BR" x-data="{ dark: localStorage.getItem('darkMode') === 'true', menuOpen: false }" :class="{ 'dark': dark }">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+  <% const tb = (typeof tenant !== 'undefined' && tenant) ? '/' + tenant.slug : ''; %>
+  <% const brandName = (typeof tenant !== 'undefined' && tenant) ? tenant.nome : (platformName || 'VouRifar'); %>
+  <% const brandCor = (typeof rifaBrand !== 'undefined' && rifaBrand) ? rifaBrand.corPrimaria : ((typeof tenant !== 'undefined' && tenant) ? tenant.corPrimaria : (platformColor || '#10b981')); %>
+  <% const brandLogo = (typeof rifaBrand !== 'undefined' && rifaBrand && rifaBrand.logoUrl) ? rifaBrand.logoUrl : ((typeof tenant !== 'undefined' && tenant && tenant.logoUrl) ? tenant.logoUrl : null); %>
+  <% const brandCorDark = (typeof tenantCorDark !== 'undefined' && tenantCorDark) ? tenantCorDark : brandCor; %>
+  <% const brandVars = (typeof tenantCssVars !== 'undefined' && tenantCssVars) ? tenantCssVars : `--brand-from:${platformColor || '#10b981'};--brand-to:${platformColor || '#10b981'};--brand-accent:${platformColor || '#10b981'}`; %>
+  <title><%= titulo %> | <%= (typeof tenant !== 'undefined' && tenant) ? tenant.nome : (platformName || 'VouRifar') %></title>
+  <link rel="icon" href="<%= brandLogo || ((typeof platformFavicon !== 'undefined' && platformFavicon) ? platformFavicon : '/img/vourifar-icon.png') %>" type="image/png" sizes="32x32">
+  <% if (typeof pwaEnabled !== 'undefined' && pwaEnabled) { %>
+  <link rel="manifest" href="<%= pwaManifestUrl || '/manifest.webmanifest' %>">
+  <meta name="theme-color" content="<%= brandCor %>">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="<%= typeof pwaShortName !== 'undefined' ? pwaShortName : (platformName || 'VouRifar') %>">
+  <link rel="apple-touch-icon" href="/img/pwa/icon-192.png">
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register(<%= JSON.stringify(pwaSwUrl || '/sw.js') %>, {
+        scope: <%= JSON.stringify(pwaScope || '/') %>
+      }).then(function (reg) {
+        if (navigator.serviceWorker.controller) return;
+        return reg.update();
+      }).catch(function (err) {
+        console.error('[PWA] Service worker não registrou:', err);
+      });
+    }
+  </script>
+  <% } %>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/custom.css" id="css-custom">
+  <% if (typeof tenant !== 'undefined' && tenant) { %><link rel="stylesheet" href="/css/public.css?v=10" id="css-public"><% } %>
+  <%- include('ngrok-assets') %>
+  <script>
+    (function () {
+      if (localStorage.getItem('darkMode') === 'true') {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'] }
+        }
+      }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    :root{<%= brandVars %>}
+    body{font-family:'Plus Jakarta Sans',system-ui,sans-serif}
+    .mesh-bg{background-color:#f8fafc;background-image:radial-gradient(at 40% 20%,rgba(99,102,241,.12) 0,transparent 50%),radial-gradient(at 80% 0,rgba(139,92,246,.1) 0,transparent 50%),radial-gradient(at 0 50%,rgba(16,185,129,.08) 0,transparent 50%)}
+    .dark .mesh-bg{background-color:#0f172a;background-image:radial-gradient(at 40% 20%,rgba(99,102,241,.18) 0,transparent 50%),radial-gradient(at 80% 0,rgba(139,92,246,.12) 0,transparent 50%),linear-gradient(180deg,#0f172a 0%,#111827 100%)}
+    .glass-nav{background:rgba(255,255,255,.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+    .dark .glass-nav{background:rgba(17,24,39,.9)}
+    .btn-brand{background:linear-gradient(135deg,var(--brand-from),var(--brand-to));color:#fff;transition:all .2s}
+    .btn-brand:hover{transform:translateY(-1px);box-shadow:0 10px 25px -5px rgba(99,102,241,.4)}
+    .card-hover{transition:transform .25s ease,box-shadow .25s ease}
+    .card-hover:hover{transform:translateY(-4px);box-shadow:0 20px 40px -12px rgba(0,0,0,.15)}
+    .dark .card-hover:hover{box-shadow:0 20px 40px -12px rgba(0,0,0,.5)}
+    .progress-shine{background:linear-gradient(90deg,var(--brand-from),var(--brand-to),var(--brand-from));background-size:200% 100%;animation:shine 3s linear infinite}
+    @keyframes shine{0%{background-position:200% 0}100%{background-position:-200% 0}}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+    .animate-fade-up{animation:fadeUp .5s ease forwards}
+    .numero-disponivel{background:linear-gradient(145deg,#dcfce7,#bbf7d0);border:2px solid #22c55e;color:#15803d;font-weight:700}
+    .numero-reservado{background:linear-gradient(145deg,#fef9c3,#fde68a);border:2px solid #eab308;color:#a16207;font-weight:700}
+    .numero-vendido{background:linear-gradient(145deg,#fee2e2,#fecaca);border:2px solid #ef4444;color:#dc2626;font-weight:700}
+    .dark .numero-disponivel{background:linear-gradient(145deg,#14532d,#166534);border-color:#22c55e;color:#bbf7d0}
+    .dark .numero-reservado{background:linear-gradient(145deg,#713f12,#854d0e);border-color:#eab308;color:#fef08a}
+    .dark .numero-vendido{background:linear-gradient(145deg,#7f1d1d,#991b1b);border-color:#ef4444;color:#fecaca}
+    .numero-btn.selected{box-shadow:0 0 0 3px var(--brand-from),0 0 20px rgba(99,102,241,.5);transform:scale(1.08)}
+    .numero-btn{touch-action:manipulation;min-height:40px;min-width:40px;transition:all .15s ease}
+    @media(min-width:640px){.numero-btn{min-height:44px;min-width:44px}}
+    .modal-backdrop{backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+    .input-field{width:100%;border:1px solid #e5e7eb;border-radius:.75rem;padding:.625rem 1rem;transition:all .2s;background:#fff}
+    .dark .input-field{background:#374151;border-color:#4b5563;color:#f9fafb}
+    .input-field:focus{outline:none;border-color:var(--brand-from);box-shadow:0 0 0 3px rgba(99,102,241,.2)}
+    .badge-live{animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
+    .sticky-buy{box-shadow:0 -4px 20px rgba(0,0,0,.1)}
+    .dark .sticky-buy{box-shadow:0 -4px 20px rgba(0,0,0,.4)}
+    .dark .platform-logo .logo-vou{fill:#e2e8f0}
+    .platform-logo.theme-light .logo-vou{fill:#e2e8f0}
+  </style>
+  <% if (typeof tenant !== 'undefined' && tenant) { %>
+  <style id="tenant-brand-overrides">
+    :root{<%= brandVars %>}
+    .public-site .public-btn-primary,
+    .public-site .compra-qtd-panel .btn-pix-main,
+    .public-site .btn-pix-main{background:linear-gradient(135deg,<%= brandCor %>,<%= brandCorDark %>)!important;box-shadow:0 4px 14px -2px <%= brandCor %>66!important}
+    .public-site .public-btn-primary:hover{box-shadow:0 8px 20px -4px <%= brandCor %>80!important}
+    .public-site .public-progress-fill{background:linear-gradient(90deg,<%= brandCor %>,<%= brandCorDark %>)!important}
+    .public-site .text-emerald-600,.public-site .text-emerald-400,.public-site .text-emerald-700,.public-site .text-emerald-300,.public-site .dark .text-emerald-400,.public-site .dark .text-emerald-300{color:<%= brandCor %>!important}
+    .public-site .bg-emerald-500,.public-site .bg-emerald-600{background-color:<%= brandCor %>!important}
+    .public-site .border-emerald-500,.public-site .hover\:border-emerald-500:hover{border-color:<%= brandCor %>!important}
+    .public-site .hover\:text-emerald-700:hover,.public-site .dark .hover\:text-emerald-400:hover{color:<%= brandCor %>!important}
+    .public-site .text-indigo-600,.public-site .dark .text-indigo-400{color:<%= brandCor %>!important}
+    .public-site .public-link-brand{color:<%= brandCor %>!important}
+    .public-site .public-link-brand:hover{filter:brightness(.9)}
+    .public-site .public-rifa-card .public-btn-primary,
+    .public-site .public-rifa-card .public-progress-fill{background:linear-gradient(135deg,var(--brand-from),var(--brand-to))!important;box-shadow:0 4px 14px -2px color-mix(in srgb,var(--brand-from) 40%,transparent)!important}
+    .public-site .public-rifa-card .public-btn-primary:hover{box-shadow:0 8px 20px -4px color-mix(in srgb,var(--brand-from) 50%,transparent)!important}
+    .public-site .public-rifa-card .rifa-brand-badge{background:var(--brand-from)!important}
+    .public-site .public-rifa-card .rifa-brand-text,.public-site .public-rifa-card .rifa-brand-soft-text{color:var(--brand-from)!important}
+    .public-site .public-rifa-card:hover{border-color:color-mix(in srgb,var(--brand-from) 35%,#e5e7eb)!important}
+  </style>
+  <% } %>
+</head>
+<body class="mesh-bg min-h-screen flex flex-col transition-colors text-gray-900 dark:text-gray-100 <%= (typeof tenant !== 'undefined' && tenant) ? 'public-site' : '' %>">
+
+  <nav class="glass-nav border-b border-gray-200/60 dark:border-gray-700/60 sticky top-0 z-50 pt-safe">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <a href="<%= tb || '/' %>" class="flex items-center gap-2.5 group min-w-0 flex-1 sm:flex-initial">
+          <% if (brandLogo) { %>
+            <img src="<%= brandLogo %>" alt="<%= brandName %>" class="w-9 h-9 rounded-xl object-cover shrink-0">
+            <div class="leading-tight min-w-0">
+              <span class="font-extrabold text-lg block truncate max-w-[11rem] sm:max-w-none" style="color:<%= brandCor %>"><%= brandName %></span>
+              <% if (tenant.descricao) { %>
+                <span class="hidden sm:block text-[10px] text-gray-500 dark:text-gray-400 truncate max-w-[14rem]"><%= tenant.descricao %></span>
+              <% } %>
+            </div>
+          <% } else if (typeof tenant !== 'undefined' && tenant) { %>
+            <div class="w-9 h-9 rounded-xl shrink-0 flex items-center justify-center text-white font-bold text-sm" style="background:<%= brandCor %>"><%= brandName.charAt(0).toUpperCase() %></div>
+            <div class="leading-tight min-w-0">
+              <span class="font-extrabold text-lg block truncate max-w-[11rem] sm:max-w-none" style="color:<%= brandCor %>"><%= brandName %></span>
+              <% if (tenant.descricao) { %>
+                <span class="hidden sm:block text-[10px] text-gray-500 dark:text-gray-400 truncate max-w-[14rem]"><%= tenant.descricao %></span>
+              <% } %>
+            </div>
+          <% } else { %>
+            <%- include('vourifar-logo', { logoClass: 'h-10 w-auto max-h-10 shrink-0', logoTitle: platformName || 'VouRifar' }) %>
+          <% } %>
+        </a>
+
+        <div class="hidden md:flex items-center gap-1">
+          <% if (tb) { %>
+            <a href="<%= tb %>/" class="px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition">Rifas</a>
+            <a href="<%= tb %>/encerradas" class="px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition">Encerradas</a>
+            <a href="<%= tb %>/minhas-reservas" class="px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition">Minhas Reservas</a>
+          <% } else { %>
+            <a href="/" class="px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition">Início</a>
+            <a href="/demo" class="px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition">Demo</a>
+            <a href="/acessar" class="px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition">Painel</a>
+            <a href="/cadastro" class="px-3 py-2 rounded-lg text-sm font-semibold landing-btn-primary shadow-sm">Criar Sistema</a>
+          <% } %>
+          <button @click="dark=!dark;localStorage.setItem('darkMode',dark)" class="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition" title="Tema">
+            <i data-lucide="moon" class="w-5 h-5" x-show="!dark"></i>
+            <i data-lucide="sun" class="w-5 h-5" x-show="dark"></i>
+          </button>
+        </div>
+
+        <div class="flex md:hidden items-center gap-1 shrink-0">
+          <button @click="dark=!dark;localStorage.setItem('darkMode',dark)" class="p-2.5 rounded-lg text-gray-500 public-touch-target" aria-label="Alternar tema">
+            <i data-lucide="moon" class="w-5 h-5" x-show="!dark"></i>
+            <i data-lucide="sun" class="w-5 h-5" x-show="dark"></i>
+          </button>
+          <button @click="menuOpen=!menuOpen" class="p-2.5 rounded-lg text-gray-600 dark:text-gray-300 public-touch-target" aria-label="Menu">
+            <i data-lucide="menu" class="w-6 h-6" x-show="!menuOpen"></i>
+            <i data-lucide="x" class="w-6 h-6" x-show="menuOpen"></i>
+          </button>
+        </div>
+      </div>
+
+      <div x-show="menuOpen" x-transition class="md:hidden pb-4 border-t border-gray-100 dark:border-gray-800 pt-3 space-y-1">
+        <% if (tb) { %>
+          <a href="<%= tb %>/" class="block px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800">Rifas</a>
+          <a href="<%= tb %>/encerradas" class="block px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800">Encerradas</a>
+          <a href="<%= tb %>/minhas-reservas" class="block px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800">Minhas Reservas</a>
+          <a href="<%= tb %>/como-funciona" class="block px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800">Como funciona</a>
+          <a href="<%= tb %>/politica-de-privacidade" class="block px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800">Política de privacidade</a>
+        <% } else { %>
+          <a href="/" class="block px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800">Início</a>
+          <a href="/demo" class="block px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800">Demo</a>
+          <a href="/acessar" class="block px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800">Painel</a>
+          <a href="/cadastro" class="block px-3 py-2.5 rounded-xl landing-btn-primary text-sm font-semibold text-center mt-2">Criar Sistema</a>
+        <% } %>
+      </div>
+    </div>
+  </nav>
+
+  <main class="flex-1">

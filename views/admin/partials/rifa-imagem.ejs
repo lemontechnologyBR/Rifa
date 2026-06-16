@@ -1,0 +1,131 @@
+<% const imgUrl = typeof imagemUrl !== 'undefined' ? imagemUrl : (typeof rifa !== 'undefined' && rifa ? (rifa.imagemUrl || rifa.imagem_url || '') : ''); %>
+<div class="admin-rifa-imagem" data-upload-url="<%= adminBase %>/upload/imagem-rifa">
+  <label class="admin-label">Imagem da rifa</label>
+
+  <div class="admin-rifa-imagem-preview-wrap">
+    <div class="admin-rifa-imagem-preview admin-rifa-imagem-preview--empty" data-rifa-img-preview>
+      <i data-lucide="image" class="w-8 h-8 opacity-30"></i>
+      <span class="text-xs text-gray-400">Nenhuma imagem</span>
+    </div>
+    <img src="" alt="Preview da rifa" class="admin-rifa-imagem-preview hidden" data-rifa-img-el>
+  </div>
+
+  <div class="flex flex-wrap gap-2 mt-3">
+    <label class="admin-upload-btn cursor-pointer">
+      <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" class="hidden" data-rifa-img-file>
+      <i data-lucide="upload" class="w-4 h-4"></i>
+      <span data-rifa-img-btn-label>Enviar imagem</span>
+    </label>
+    <button type="button" class="admin-action-btn hidden" data-rifa-img-remove>
+      <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Remover
+    </button>
+  </div>
+  <p class="admin-hint" data-rifa-img-status>JPG, PNG, WebP ou GIF · até 5 MB</p>
+
+  <input type="hidden" name="imagem_url" value="<%= imgUrl %>" data-rifa-img-hidden>
+
+  <div class="mt-3">
+    <label class="admin-label text-xs">Ou cole uma URL externa</label>
+    <input type="text" inputmode="url" value="" placeholder="https://..." class="admin-input text-sm" data-rifa-img-url autocomplete="off">
+  </div>
+</div>
+
+<script>
+(function () {
+  if (window.__rifaImagemInit) return;
+  window.__rifaImagemInit = true;
+
+  function csrfToken() {
+    return document.querySelector('meta[name="csrf-token"]')?.content || '';
+  }
+
+  function isExternalUrl(val) {
+    return /^https?:\/\//i.test(val || '');
+  }
+
+  function setPreview(wrap, url) {
+    var empty = wrap.querySelector('[data-rifa-img-preview]');
+    var img = wrap.querySelector('[data-rifa-img-el]');
+    var removeBtn = wrap.querySelector('[data-rifa-img-remove]');
+    var hidden = wrap.querySelector('[data-rifa-img-hidden]');
+    var urlInput = wrap.querySelector('[data-rifa-img-url]');
+    if (hidden) hidden.value = url || '';
+    if (urlInput) urlInput.value = isExternalUrl(url) ? url : '';
+    if (url) {
+      if (empty) empty.classList.add('hidden');
+      if (img) { img.src = url; img.classList.remove('hidden'); }
+      if (removeBtn) removeBtn.classList.remove('hidden');
+    } else {
+      if (empty) empty.classList.remove('hidden');
+      if (img) { img.src = ''; img.classList.add('hidden'); }
+      if (removeBtn) removeBtn.classList.add('hidden');
+    }
+  }
+
+  document.addEventListener('change', function (e) {
+    var input = e.target.closest('[data-rifa-img-file]');
+    if (!input || !input.files || !input.files[0]) return;
+    var wrap = input.closest('.admin-rifa-imagem');
+    var status = wrap.querySelector('[data-rifa-img-status]');
+    var label = wrap.querySelector('[data-rifa-img-btn-label]');
+    var uploadUrl = wrap.dataset.uploadUrl;
+    var file = input.files[0];
+
+    if (status) status.textContent = 'Enviando…';
+    if (label) label.textContent = 'Enviando…';
+
+    var fd = new FormData();
+    fd.append('imagem', file);
+    fd.append('_csrf', csrfToken());
+
+    fetch(uploadUrl, {
+      method: 'POST',
+      body: fd,
+      credentials: 'same-origin',
+      headers: {
+        'X-CSRF-Token': csrfToken(),
+        'X-Requested-With': 'XMLHttpRequest',
+        'ngrok-skip-browser-warning': 'true'
+      }
+    })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (_ref) {
+        if (!_ref.ok) throw new Error(_ref.d.erro || 'Falha no upload');
+        setPreview(wrap, _ref.d.url);
+        if (status) status.textContent = 'Imagem enviada!';
+        if (label) label.textContent = 'Trocar imagem';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+      })
+      .catch(function (err) {
+        if (status) status.textContent = err.message;
+        if (label) label.textContent = 'Enviar imagem';
+      })
+      .finally(function () { input.value = ''; });
+  });
+
+  document.addEventListener('input', function (e) {
+    var urlInput = e.target.closest('[data-rifa-img-url]');
+    if (!urlInput) return;
+    var wrap = urlInput.closest('.admin-rifa-imagem');
+    var val = urlInput.value.trim();
+    if (val) setPreview(wrap, val);
+    else setPreview(wrap, wrap.querySelector('[data-rifa-img-hidden]')?.value || '');
+  });
+
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-rifa-img-remove]');
+    if (!btn) return;
+    var wrap = btn.closest('.admin-rifa-imagem');
+    setPreview(wrap, '');
+    var status = wrap.querySelector('[data-rifa-img-status]');
+    var label = wrap.querySelector('[data-rifa-img-btn-label]');
+    if (status) status.textContent = 'JPG, PNG, WebP ou GIF · até 5 MB';
+    if (label) label.textContent = 'Enviar imagem';
+  });
+
+  document.querySelectorAll('.admin-rifa-imagem').forEach(function (wrap) {
+    var url = wrap.querySelector('[data-rifa-img-hidden]')?.value?.trim();
+    if (url) setPreview(wrap, url);
+  });
+})();
+</script>

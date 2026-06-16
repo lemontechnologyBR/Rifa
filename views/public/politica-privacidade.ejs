@@ -1,0 +1,88 @@
+<%- include('../partials/header') %>
+
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 pb-safe">
+  <div class="text-center mb-10 animate-fade-up">
+    <div class="w-14 h-14 rounded-2xl public-btn-primary flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-500/20">
+      <i data-lucide="shield" class="w-7 h-7 text-white"></i>
+    </div>
+    <h1 class="text-3xl sm:text-4xl font-extrabold dark:text-white mb-2">Política de privacidade</h1>
+    <p class="text-gray-500 dark:text-gray-400">Como <%= tenant.nome %> trata seus dados pessoais.</p>
+  </div>
+
+  <div class="prose prose-sm dark:prose-invert max-w-none space-y-8 text-gray-600 dark:text-gray-400">
+    <section class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-100 dark:border-gray-700/60 p-6 shadow-sm">
+      <h2 class="text-lg font-bold dark:text-white mb-3">1. Quem somos</h2>
+      <p class="text-sm leading-relaxed">
+        Este sistema de rifas (<strong><%= tenant.nome %></strong>) utiliza a plataforma VouRifar para processar participações e pagamentos.
+        O responsável pelas rifas e pelo atendimento ao participante é o organizador.
+      </p>
+    </section>
+
+    <section class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-100 dark:border-gray-700/60 p-6 shadow-sm">
+      <h2 class="text-lg font-bold dark:text-white mb-3">2. Dados que coletamos</h2>
+      <ul class="text-sm leading-relaxed space-y-2 list-disc pl-5">
+        <li><strong>Nome completo</strong> — identificação do participante e emissão do comprovante.</li>
+        <li><strong>CPF</strong> — consulta de reservas, prevenção de fraudes e vínculo com compras anteriores.</li>
+        <li><strong>Telefone</strong> — contato sobre pagamento, sorteio ou confirmação da reserva.</li>
+        <li><strong>Dados da transação</strong> — rifa escolhida, números reservados, valores e status do pagamento.</li>
+      </ul>
+    </section>
+
+    <section class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-100 dark:border-gray-700/60 p-6 shadow-sm">
+      <h2 class="text-lg font-bold dark:text-white mb-3">3. Como usamos seus dados</h2>
+      <ul class="text-sm leading-relaxed space-y-2 list-disc pl-5">
+        <li>Processar reservas e pagamentos via PIX.</li>
+        <li>Exibir comprovantes e permitir consulta em Minhas Reservas.</li>
+        <li>Confirmar participação no sorteio e comunicar resultados.</li>
+        <li>Cumprir obrigações legais e prevenir uso indevido da plataforma.</li>
+      </ul>
+    </section>
+
+    <section class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-100 dark:border-gray-700/60 p-6 shadow-sm">
+      <h2 class="text-lg font-bold dark:text-white mb-3">4. Compartilhamento</h2>
+      <p class="text-sm leading-relaxed mb-3">
+        Seus dados podem ser compartilhados apenas quando necessário para:
+      </p>
+      <ul class="text-sm leading-relaxed space-y-2 list-disc pl-5">
+        <li>Infraestrutura da plataforma VouRifar, que hospeda e opera o sistema em nome do organizador.</li>
+        <li>Autoridades competentes, quando exigido por lei.</li>
+      </ul>
+      <p class="text-sm leading-relaxed mt-3">
+        Não vendemos seus dados pessoais a terceiros.
+      </p>
+    </section>
+
+    <section class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-100 dark:border-gray-700/60 p-6 shadow-sm">
+      <h2 class="text-lg font-bold dark:text-white mb-3">5. Retenção e segurança</h2>
+      <p class="text-sm leading-relaxed">
+        Mantemos os dados pelo tempo necessário para cumprir as finalidades descritas e obrigações legais.
+        Reservas não pagas expiram em 10 minutos; registros de transações confirmadas podem ser mantidos para histórico e auditoria.
+        Adotamos medidas técnicas razoáveis para proteger as informações contra acesso não autorizado.
+      </p>
+    </section>
+
+    <section class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-100 dark:border-gray-700/60 p-6 shadow-sm">
+      <h2 class="text-lg font-bold dark:text-white mb-3">6. Seus direitos</h2>
+      <p class="text-sm leading-relaxed">
+        Nos termos da LGPD, você pode solicitar acesso, correção ou exclusão de dados pessoais,
+        além de esclarecimentos sobre o tratamento realizado. Entre em contato com o organizador de
+        <strong><%= tenant.nome %></strong> para exercer esses direitos.
+      </p>
+    </section>
+
+    <section class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-100 dark:border-gray-700/60 p-6 shadow-sm">
+      <h2 class="text-lg font-bold dark:text-white mb-3">7. Alterações</h2>
+      <p class="text-sm leading-relaxed">
+        Esta política pode ser atualizada periodicamente. A data da última revisão será indicada abaixo.
+        Recomendamos revisar esta página antes de participar de novas rifas.
+      </p>
+      <p class="text-xs text-gray-400 mt-4">Última atualização: <%= new Date().toLocaleDateString('pt-BR') %></p>
+    </section>
+  </div>
+
+  <div class="mt-10 text-center">
+    <a href="<%= tenantBase %>/" class="btn-brand inline-block font-semibold px-6 py-3 rounded-xl shadow-md">Voltar às rifas</a>
+  </div>
+</div>
+
+<%- include('../partials/footer', { tenantPublic: true }) %>

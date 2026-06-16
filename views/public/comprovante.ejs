@@ -1,0 +1,113 @@
+<%- include('../partials/header') %>
+
+<% var tempoMin = (typeof tempoReservaMin !== 'undefined' && tempoReservaMin != null) ? tempoReservaMin : 10; %>
+<% var expiraEm = (typeof reservaExpiraEm !== 'undefined' && reservaExpiraEm) ? reservaExpiraEm : ''; %>
+
+<div class="max-w-2xl mx-auto px-4 py-6 sm:py-8 pb-safe">
+  <div class="bg-white dark:bg-gray-800/80 rounded-2xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-700/60 animate-fade-up" id="comprovante">
+    <div class="btn-brand p-6 text-center relative overflow-hidden">
+      <div class="absolute inset-0 bg-black/10"></div>
+      <div class="relative">
+        <i data-lucide="receipt" class="w-10 h-10 text-white/80 mx-auto mb-2"></i>
+        <h1 class="text-2xl font-extrabold text-white">Comprovante #<%= reserva.id %></h1>
+        <p class="text-sm text-white/80 mt-1">Pagamento via PIX</p>
+      </div>
+    </div>
+    <div class="p-6 space-y-4 dark:text-gray-300">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="bg-gray-50 dark:bg-gray-900/40 rounded-xl p-3"><span class="text-xs text-gray-500 block">Rifa</span><strong><%= reserva.rifa.titulo %></strong></div>
+        <div class="bg-gray-50 dark:bg-gray-900/40 rounded-xl p-3"><span class="text-xs text-gray-500 block">Participante</span><strong><%= reserva.usuario.nome %></strong></div>
+        <% if (reserva.usuario.cpf) { %>
+        <div class="bg-gray-50 dark:bg-gray-900/40 rounded-xl p-3"><span class="text-xs text-gray-500 block">CPF</span><strong><%= reserva.usuario.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4') %></strong></div>
+        <% } %>
+        <div class="bg-gray-50 dark:bg-gray-900/40 rounded-xl p-3 sm:col-span-2"><span class="text-xs text-gray-500 block">Números</span><strong class="text-indigo-600 dark:text-indigo-400 mobile-text-wrap text-sm sm:text-base"><%= reserva.numeros.join(', ') %></strong></div>
+        <div class="bg-gray-50 dark:bg-gray-900/40 rounded-xl p-3"><span class="text-xs text-gray-500 block">Total</span><strong>R$ <%= reserva.valorTotal.toFixed(2).replace('.',',') %></strong></div>
+      </div>
+      <p><strong>Status:</strong>
+        <% const st = reserva.statusPagamento;
+           const stClass = st === 'confirmado'
+             ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+             : st === 'expirado'
+             ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
+             : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300'; %>
+        <span class="capitalize px-2 py-0.5 rounded-full text-sm font-semibold <%= stClass %>">
+          <%= st %>
+        </span>
+      </p>
+
+      <% if (reserva.statusPagamento === 'pendente' && pagamento) { %>
+        <div class="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-3 border border-amber-200 dark:border-amber-800 text-sm text-amber-800 dark:text-amber-200">
+          ⏱️ Pague em até <strong><%= tempoMin %> minutos</strong> — expira em
+          <strong id="pix-timer">--:--</strong>
+        </div>
+      <% } %>
+
+      <% if (reserva.statusPagamento === 'expirado') { %>
+        <div class="bg-red-50 dark:bg-red-900/20 rounded-xl p-4 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-sm">
+          Esta reserva expirou após <%= tempoMin %> minutos sem pagamento. Os números foram liberados — faça uma nova compra se ainda quiser participar.
+        </div>
+      <% } else if (reserva.statusPagamento === 'pendente' && pagamento) { %>
+        <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-4 border border-yellow-200 dark:border-yellow-800">
+          <p class="font-semibold mb-1">💳 PIX</p>
+          <p class="text-xs text-gray-600 dark:text-gray-400 mb-3"><%= pagamento.instrucoes %></p>
+          <textarea readonly id="pix-copia-cola" class="input-field text-xs mobile-text-wrap" rows="4"><%= pagamento.copiaCola %></textarea>
+          <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('pix-copia-cola').value);alert('PIX copiado!')"
+            class="mt-2 w-full btn-brand text-sm py-2.5 rounded-xl">📋 Copiar código PIX</button>
+          <img src="<%= pagamento.qrCodeUrl %>" alt="QR Code PIX" class="mx-auto mt-3 rounded-xl max-w-[240px] shadow-md">
+          <p class="text-xs mt-2 text-center text-gray-500">Código: <%= pagamento.codigoPagamento %></p>
+          <% if (pagamento.chavePix) { %>
+            <p class="text-xs mt-2 text-gray-500 text-center">Chave PIX: <%= pagamento.chavePix %></p>
+          <% } %>
+          <p class="text-xs mt-2 text-center text-amber-600 dark:text-amber-400" id="status-pag-pix">⏳ Aguardando pagamento PIX…</p>
+          <script>
+            (function(){
+              var n = 0;
+              var iv = setInterval(function(){
+                n++;
+                if(n>60){clearInterval(iv);return;}
+                fetch('<%= tenantBase %>/api/reservas/<%= reserva.id %>/status', {
+                  credentials:'same-origin',
+                  headers:{'ngrok-skip-browser-warning':'true','X-Requested-With':'XMLHttpRequest'}
+                }).then(r=>r.json()).then(function(d){
+                  if(d.status==='expirado'){ clearInterval(iv); location.reload(); return; }
+                  if(d.status==='confirmado'){
+                    clearInterval(iv);
+                    var el=document.getElementById('status-pag-pix');
+                    if(el){el.textContent='✅ Pagamento confirmado!';el.className='text-xs mt-2 text-center text-emerald-600 font-bold';}
+                    location.reload();
+                  }
+                }).catch(function(){});
+              },5000);
+            })();
+          </script>
+          <script>
+            (function(){
+              var expira = new Date('<%= expiraEm %>').getTime();
+              var el = document.getElementById('pix-timer');
+              if (!el || isNaN(expira)) return;
+              function tick(){
+                var diff = expira - Date.now();
+                if (diff <= 0) { el.textContent = '00:00'; location.reload(); return; }
+                var min = Math.floor(diff / 60000);
+                var seg = Math.floor((diff % 60000) / 1000);
+                el.textContent = String(min).padStart(2,'0') + ':' + String(seg).padStart(2,'0');
+              }
+              tick();
+              setInterval(tick, 1000);
+            })();
+          </script>
+        </div>
+      <% } else if (reserva.statusPagamento === 'confirmado') { %>
+        <div class="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-4 text-center text-emerald-700 dark:text-emerald-300 font-semibold border border-emerald-200 dark:border-emerald-800">
+          ✅ Pagamento confirmado — seus números estão garantidos!
+        </div>
+      <% } %>
+    </div>
+    <div class="p-4 border-t dark:border-gray-700 flex flex-col sm:flex-row gap-3">
+      <button onclick="window.print()" class="flex-1 bg-gray-100 dark:bg-gray-700 dark:text-white py-3 sm:py-2.5 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition min-h-[48px]">Imprimir</button>
+      <a href="<%= tenantBase %>/minhas-reservas" class="flex-1 text-center btn-brand py-3 sm:py-2.5 rounded-xl font-semibold min-h-[48px] flex items-center justify-center">Minhas Reservas</a>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer', { tenantPublic: true }) %>

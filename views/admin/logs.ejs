@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="admin-panel">
+<head>
+  <%- include('partials/head', { titulo: 'Atividades — ' + tenant.nome, csrfToken }) %>
+</head>
+<body class="admin-panel">
+  <%- include('partials/nav', {
+    active: 'logs',
+    pageTitle: 'Atividades',
+    pageSubtitle: 'Histórico de ações no painel',
+    tenant,
+    adminBase,
+    tenantBase,
+    adminUsuario
+  }) %>
+
+    <div class="admin-panel-card overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-gray-100 dark:border-gray-700 bg-gray-50/80 dark:bg-slate-800/50">
+              <th class="text-left p-3 font-semibold text-xs uppercase tracking-wide text-gray-500">Data</th>
+              <th class="text-left p-3 font-semibold text-xs uppercase tracking-wide text-gray-500">Usuário</th>
+              <th class="text-left p-3 font-semibold text-xs uppercase tracking-wide text-gray-500">Ação</th>
+              <th class="text-left p-3 font-semibold text-xs uppercase tracking-wide text-gray-500">Detalhes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (logs.length === 0) { %>
+              <tr>
+                <td colspan="4" class="p-12 text-center text-gray-400">
+                  <i data-lucide="scroll-text" class="w-10 h-10 mx-auto mb-2 opacity-30"></i>
+                  Nenhum registro no log.
+                </td>
+              </tr>
+            <% } else { logs.forEach(function(l) { %>
+              <tr class="border-t border-gray-50 dark:border-gray-800 hover:bg-gray-50/50 dark:hover:bg-slate-800/30">
+                <td class="p-3 whitespace-nowrap text-gray-500"><%= new Date(l.createdAt).toLocaleString('pt-BR') %></td>
+                <td class="p-3 font-medium"><%= l.adminUsuario %></td>
+                <td class="p-3"><span class="inline-flex px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-xs font-semibold"><%= l.acao %></span></td>
+                <td class="p-3 text-gray-500"><%= l.detalhes || '—' %></td>
+              </tr>
+            <% }); } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  <%- include('partials/layout-end') %>
+  <script>lucide.createIcons();</script>
+</body>
+</html>

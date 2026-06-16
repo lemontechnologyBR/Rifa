@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-label="VouRifar">
+  <g transform="translate(-2 4)">
+    <path fill="#fff" stroke="#10b981" stroke-width="1.8" stroke-linejoin="round" d="
+      M 11 10 H 19 V 30 H 11 Q 8 30 8 27 L 8 23 Q 11 20 8 17 L 8 13 Q 8 10 11 10 Z
+      M 20 10 H 41 Q 44 10 44 13 L 44 17 Q 41 20 44 23 L 44 27 Q 44 30 41 30 H 20 Z"/>
+    <line x1="20" y1="12" x2="20" y2="28" stroke="#10b981" stroke-width="1.1" stroke-dasharray="1.8 1.8" stroke-linecap="round"/>
+    <circle cx="20" cy="14.5" r="0.9" fill="#10b981" opacity="0.85"/>
+    <circle cx="20" cy="20" r="0.9" fill="#10b981" opacity="0.85"/>
+    <circle cx="20" cy="25.5" r="0.9" fill="#10b981" opacity="0.85"/>
+    <line x1="10" y1="15" x2="16" y2="15" stroke="#10b981" stroke-width="1" stroke-linecap="round" opacity="0.45"/>
+    <line x1="10" y1="20" x2="16" y2="20" stroke="#10b981" stroke-width="1" stroke-linecap="round" opacity="0.45"/>
+    <line x1="10" y1="25" x2="16" y2="25" stroke="#10b981" stroke-width="1" stroke-linecap="round" opacity="0.45"/>
+    <line x1="24" y1="16" x2="39" y2="16" stroke="#10b981" stroke-width="1" stroke-linecap="round" opacity="0.3"/>
+    <line x1="24" y1="24" x2="39" y2="24" stroke="#10b981" stroke-width="1" stroke-linecap="round" opacity="0.3"/>
+  </g>
+</svg>

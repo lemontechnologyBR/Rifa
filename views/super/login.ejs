@@ -1,0 +1,22 @@
+<%- include('partials/layout-start') %>
+
+<div class="super-login-page">
+  <div class="super-login-card">
+    <div class="super-login-logo">
+      <img src="/img/vourifar-logo.png" alt="VouRifar" height="40">
+    </div>
+    <h1 class="super-login-title">Super Admin</h1>
+    <p class="super-login-sub">Painel de gestão da plataforma VouRifar</p>
+
+    <% if (erro) { %><div class="super-login-alert"><%= erro %></div><% } %>
+
+    <form method="POST" action="/super/login">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="text" name="usuario" required autocomplete="username" placeholder="Usuário" class="super-login-field">
+      <input type="password" name="senha" required autocomplete="current-password" placeholder="Senha" class="super-login-field">
+      <button type="submit" class="super-login-btn">Entrar</button>
+    </form>
+  </div>
+</div>
+
+<%- include('partials/layout-end') %>

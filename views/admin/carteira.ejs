@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="admin-panel">
+<head>
+  <%- include('partials/head', { titulo: 'Carteira — ' + tenant.nome, csrfToken }) %>
+</head>
+<body class="admin-panel">
+  <%- include('partials/nav', {
+    active: 'carteira',
+    pageTitle: 'Carteira',
+    pageSubtitle: 'Onde você recebe os pagamentos das rifas',
+    tenant,
+    adminBase,
+    tenantBase,
+    adminUsuario
+  }) %>
+
+    <% if (msg) { %>
+      <div class="admin-alert admin-alert-success"><i data-lucide="check-circle" class="w-4 h-4 shrink-0"></i><span><%= msg %></span></div>
+    <% } %>
+    <% if (erro) { %>
+      <div class="admin-alert admin-alert-error"><i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i><span><%= erro %></span></div>
+    <% } %>
+    <% if (typeof onboarding !== 'undefined' && onboarding) { %>
+      <div class="admin-alert admin-alert-success mb-4">
+        <i data-lucide="party-popper" class="w-4 h-4 shrink-0"></i>
+        <span><strong>Bem-vindo ao VouRifar!</strong> Primeiro passo: cadastre sua chave PIX abaixo para começar a vender.</span>
+      </div>
+    <% } %>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      <article class="admin-metric-card">
+        <p class="admin-metric-label mb-1">Saldo confirmado</p>
+        <p class="admin-metric-value text-emerald-600">R$ <%= resumo.saldoConfirmado.toFixed(2).replace('.', ',') %></p>
+        <p class="text-xs text-gray-400 mt-1"><%= resumo.cotasConfirmadas %> cota(s) pagas</p>
+      </article>
+      <article class="admin-metric-card">
+        <p class="admin-metric-label mb-1">Aguardando PIX</p>
+        <p class="admin-metric-value">R$ <%= resumo.pendente.toFixed(2).replace('.', ',') %></p>
+        <p class="text-xs text-gray-400 mt-1"><%= resumo.reservasPendentes %> reserva(s)</p>
+      </article>
+      <article class="admin-metric-card">
+        <p class="admin-metric-label mb-1">Chave PIX</p>
+        <% if (tenant.pixChave) { %>
+          <p class="text-sm font-bold mt-2 text-emerald-600 flex items-center gap-1.5">
+            <i data-lucide="check-circle-2" class="w-4 h-4"></i> Ativa
+          </p>
+          <p class="text-xs text-gray-500 mt-1 truncate" title="<%= tenant.pixChave %>"><%= pixTipoLabel %>: <%= tenant.pixChave %></p>
+        <% } else { %>
+          <p class="text-sm font-bold mt-2 text-amber-600 flex items-center gap-1.5">
+            <i data-lucide="circle-dashed" class="w-4 h-4"></i> Não cadastrada
+          </p>
+          <p class="text-xs text-gray-400 mt-1">Cadastre abaixo para receber</p>
+        <% } %>
+      </article>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
+      <form method="POST" action="<%= adminBase %>/carteira" class="admin-panel-card p-6 space-y-5 lg:col-span-3"
+        x-data="{
+          tipo: '<%= pixTipo %>',
+          pixAtiva: <%= tenant.pixChave ? 'true' : 'false' %>,
+          tipos: {
+            cpf: { label: 'CPF', placeholder: '000.000.000-00', hint: 'Somente números do CPF (11 dígitos).' },
+            cnpj: { label: 'CNPJ', placeholder: '00.000.000/0000-00', hint: 'CNPJ da empresa (14 dígitos).' },
+            email: { label: 'E-mail', placeholder: 'seu@email.com', hint: 'E-mail cadastrado como chave PIX no banco.' },
+            telefone: { label: 'Telefone', placeholder: '(11) 99999-8888', hint: 'Celular com DDD. Pode incluir +55.' },
+            aleatoria: { label: 'Chave aleatória', placeholder: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx', hint: 'Chave EVP (UUID) gerada no app do banco.' }
+          },
+          placeholder() { return this.tipos[this.tipo]?.placeholder || ''; },
+          hint() { return this.tipos[this.tipo]?.hint || ''; },
+          labelAtivo() { return this.tipos[this.tipo]?.label || 'Chave PIX'; }
+        }">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+        <div class="admin-config-section-head">
+          <div class="admin-config-section-icon pix"><img src="/img/pix.svg?v=2" alt="PIX" width="40" height="40"></div>
+          <div>
+            <h2 class="font-bold text-base">Sua chave PIX</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400">A VouRifar processa os pagamentos por você. Informe apenas onde quer receber.</p>
+          </div>
+        </div>
+
+        <div x-show="pixAtiva" x-cloak class="rounded-xl border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/30 dark:border-emerald-800/50 p-4">
+          <div class="flex items-start gap-3">
+            <div class="w-9 h-9 rounded-lg bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center shrink-0">
+              <i data-lucide="badge-check" class="w-5 h-5 text-emerald-600"></i>
+            </div>
+            <div class="min-w-0">
+              <p class="font-semibold text-emerald-800 dark:text-emerald-300 text-sm">Chave PIX ativa nesta loja</p>
+              <p class="text-sm text-emerald-700 dark:text-emerald-400 mt-0.5 break-all">
+                <% if (tenant.pixChave) { %>
+                  <span class="font-medium"><%= pixTipoLabel %></span>: <%= tenant.pixChave %>
+                <% } %>
+              </p>
+              <p class="text-xs text-emerald-600/80 dark:text-emerald-500 mt-1">Para trocar, escolha o tipo, informe a nova chave e salve.</p>
+            </div>
+          </div>
+        </div>
+
+        <div x-show="!pixAtiva" x-cloak class="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800/40 p-4">
+          <div class="flex items-start gap-3">
+            <div class="w-9 h-9 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0">
+              <i data-lucide="info" class="w-5 h-5 text-amber-600"></i>
+            </div>
+            <div>
+              <p class="font-semibold text-amber-800 dark:text-amber-300 text-sm">Nenhuma chave cadastrada</p>
+              <p class="text-xs text-amber-700 dark:text-amber-400 mt-0.5">Escolha o tipo da chave e informe o valor exatamente como está no seu banco.</p>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="admin-label" for="pix_tipo">Tipo da chave *</label>
+          <select id="pix_tipo" name="pix_tipo" required class="admin-input" x-model="tipo">
+            <option value="cpf">CPF</option>
+            <option value="cnpj">CNPJ</option>
+            <option value="email">E-mail</option>
+            <option value="telefone">Telefone (celular)</option>
+            <option value="aleatoria">Chave aleatória (EVP)</option>
+          </select>
+          <p class="admin-hint">Selecione o mesmo tipo cadastrado no seu banco — evita erros na hora de receber.</p>
+        </div>
+
+        <div>
+          <label class="admin-label" for="pix_chave">
+            <span x-text="labelAtivo()"></span> *
+          </label>
+          <input type="text" id="pix_chave" name="pix_chave" value="<%= tenant.pixChave || '' %>" required class="admin-input"
+            :placeholder="placeholder()"
+            autocomplete="off"
+            spellcheck="false">
+          <p class="admin-hint" x-text="hint()"></p>
+          <p class="admin-hint mt-1">100% do valor da cota cai nesta chave. A taxa de 5% é cobrada do comprador.</p>
+        </div>
+
+        <button type="submit" class="admin-btn-primary px-6 py-3 text-sm">
+          <i data-lucide="save" class="w-4 h-4 inline-block mr-1 -mt-0.5"></i>
+          <span x-text="pixAtiva ? 'Atualizar chave PIX' : 'Salvar chave PIX'"></span>
+        </button>
+      </form>
+
+      <aside class="lg:col-span-2 space-y-4">
+        <div class="admin-panel-card p-5">
+          <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Tipos de chave</p>
+          <ul class="text-sm text-gray-500 dark:text-gray-400 space-y-2">
+            <li><strong class="text-gray-700 dark:text-gray-300">CPF / CNPJ</strong> — documento titular da conta</li>
+            <li><strong class="text-gray-700 dark:text-gray-300">E-mail</strong> — endereço cadastrado no banco</li>
+            <li><strong class="text-gray-700 dark:text-gray-300">Telefone</strong> — celular com DDD</li>
+            <li><strong class="text-gray-700 dark:text-gray-300">Aleatória</strong> — código EVP gerado no app</li>
+          </ul>
+        </div>
+
+        <div class="admin-panel-card p-5">
+          <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Como funciona</p>
+          <ol class="text-sm text-gray-500 dark:text-gray-400 space-y-2 list-decimal list-inside">
+            <li>Comprador paga via PIX (valor da cota + 5%)</li>
+            <li>O pagamento é confirmado automaticamente</li>
+            <li>Seu valor líquido cai na chave PIX acima</li>
+          </ol>
+        </div>
+
+        <div class="admin-tip !mb-0">
+          <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+          <span>Cada loja VouRifar usa uma chave PIX exclusiva. A mesma chave não pode ser cadastrada em duas lojas.</span>
+        </div>
+      </aside>
+    </div>
+
+  <%- include('partials/layout-end') %>
+  <script>lucide.createIcons();</script>
+</body>
+</html>

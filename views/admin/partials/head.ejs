@@ -1,0 +1,50 @@
+<meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="csrf-token" content="<%= csrfToken %>">
+<title><%= (typeof titulo !== 'undefined' ? titulo : 'Painel') %> | VouRifar</title>
+  <link rel="icon" href="/img/vourifar-icon.png" type="image/png" sizes="32x32">
+<script>
+  (function () {
+    if (localStorage.getItem('adminDarkMode') === 'true') {
+      document.documentElement.classList.add('dark');
+    }
+  })();
+  function toggleAdminTheme() {
+    const willBeDark = !document.documentElement.classList.contains('dark');
+    localStorage.setItem('adminDarkMode', willBeDark);
+    document.documentElement.classList.toggle('dark', willBeDark);
+    location.reload();
+  }
+</script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] } } }
+  };
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<link rel="stylesheet" href="/css/admin.css" id="css-admin">
+<script>
+(function () {
+  var tunnel = /ngrok-free\.(app|dev)|\.ngrok\.io|\.ngrok-free\.app/i.test(location.hostname);
+  if (!tunnel) return;
+  fetch('/css/admin.css', {
+    credentials: 'same-origin',
+    headers: { 'ngrok-skip-browser-warning': 'true', 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/css,*/*' }
+  })
+    .then(function (r) { return r.text(); })
+    .then(function (css) {
+      if (!css || css.trim().charAt(0) === '<') return;
+      if (document.querySelector('style[data-ngrok-css="/css/admin.css"]')) return;
+      var el = document.createElement('style');
+      el.setAttribute('data-ngrok-css', '/css/admin.css');
+      el.textContent = css;
+      document.head.appendChild(el);
+    })
+    .catch(function () {});
+})();
+</script>
+<%- include('../../partials/ngrok-logo-fix') %>

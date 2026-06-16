@@ -1,0 +1,24 @@
+<section class="admin-panel-card p-6 space-y-4"
+  x-data="{
+    cor: <%= JSON.stringify((rifa && (rifa.corPrimaria || rifa.cor_primaria)) || tenant.corPrimaria || '#10b981') %>,
+    setCor(hex) { this.cor = hex; }
+  }">
+  <div class="admin-config-section-head">
+    <div class="admin-config-section-icon violet"><i data-lucide="palette" class="w-5 h-5"></i></div>
+    <div>
+      <h2 class="font-bold text-base">Aparência desta rifa</h2>
+      <p class="text-sm text-gray-500 dark:text-gray-400">Cor dos botões na página pública desta rifa. Logo e redes ficam em Minha conta.</p>
+    </div>
+  </div>
+
+  <div class="admin-color-presets">
+    <% ['#10b981','#6366f1','#8b5cf6','#ec4899','#f59e0b','#ef4444','#0ea5e9','#14b8a6'].forEach(function(c) { %>
+      <button type="button" class="admin-color-swatch" style="background:<%= c %>" @click="setCor('<%= c %>')" :class="{ 'is-active': cor === '<%= c %>' }" title="<%= c %>"></button>
+    <% }); %>
+  </div>
+  <div class="flex flex-wrap items-center gap-3">
+    <input type="color" name="cor_primaria" x-model="cor" class="admin-color-input">
+    <input type="text" x-model="cor" class="admin-input w-32 font-mono text-sm uppercase" maxlength="7">
+    <span class="text-sm text-gray-500">Cor dos botões</span>
+  </div>
+</section>

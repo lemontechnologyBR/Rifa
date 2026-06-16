@@ -1,0 +1,53 @@
+<%- include('partials/page-start') %>
+<%- include('partials/alerts') %>
+
+<section class="super-panel">
+  <div class="super-panel-head">
+    <div>
+      <h2 class="super-panel-title">Organizadores</h2>
+      <p class="super-panel-sub"><%= total %> cadastro<%= total !== 1 ? 's' : '' %> · página <%= page %> de <%= paginas %></p>
+    </div>
+    <form method="GET" action="/super/organizadores" class="super-filters">
+      <input type="text" name="q" value="<%= busca %>" placeholder="Buscar nome, e-mail ou sistema…" class="super-input">
+      <button type="submit" class="super-btn super-btn--primary"><i data-lucide="search" class="w-4 h-4"></i> Filtrar</button>
+      <% if (busca) { %><a href="/super/organizadores" class="super-btn super-btn--ghost">Limpar</a><% } %>
+    </form>
+  </div>
+  <div class="super-table-wrap">
+    <table class="super-table">
+      <thead>
+        <tr><th>Nome</th><th>E-mail</th><th>Sistema</th><th>Login</th><th>Cadastro</th><th>Ações</th></tr>
+      </thead>
+      <tbody>
+        <% if (!organizadores.length) { %><tr><td colspan="6" class="super-empty">Nenhum organizador encontrado.</td></tr><% } %>
+        <% organizadores.forEach(function(o) { %>
+          <tr>
+            <td class="super-tenant-name"><%= o.nome %></td>
+            <td><%= o.email %></td>
+            <td>
+              <a href="/<%= o.tenant.slug %>/" target="_blank" rel="noopener" class="super-action-link"><%= o.tenant.nome %></a>
+              <span class="super-tenant-email">/<%= o.tenant.slug %></span>
+            </td>
+            <td><span class="super-badge <%= o.viaGoogle ? 'super-badge--pix-ok' : 'super-badge--pix-no' %>"><%= o.viaGoogle ? 'Google' : 'E-mail' %></span></td>
+            <td><%= o.createdAtFmt %></td>
+            <td><a href="/<%= o.tenant.slug %>/admin" target="_blank" rel="noopener" class="super-action-link">Painel</a></td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+  <% if (paginas > 1) { %>
+    <div class="super-pagination">
+      <span><%= total %> organizadores</span>
+      <div class="super-pagination-links">
+        <% if (page > 1) { %><a class="super-page-link" href="/super/organizadores?page=<%= page - 1 %><%= busca ? '&q=' + encodeURIComponent(busca) : '' %>">←</a><% } %>
+        <% for (var p = Math.max(1, page - 2); p <= Math.min(paginas, page + 2); p++) { %>
+          <a class="super-page-link <%= p === page ? 'is-active' : '' %>" href="/super/organizadores?page=<%= p %><%= busca ? '&q=' + encodeURIComponent(busca) : '' %>"><%= p %></a>
+        <% } %>
+        <% if (page < paginas) { %><a class="super-page-link" href="/super/organizadores?page=<%= page + 1 %><%= busca ? '&q=' + encodeURIComponent(busca) : '' %>">→</a><% } %>
+      </div>
+    </div>
+  <% } %>
+</section>
+
+<%- include('partials/page-end') %>

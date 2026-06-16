@@ -1,0 +1,35 @@
+<%- include('../partials/header') %>
+
+<div class="max-w-3xl mx-auto px-4 py-12">
+  <div class="bg-white dark:bg-gray-800/80 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700/60 overflow-hidden animate-fade-up">
+    <div class="bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-500 py-12 text-center relative overflow-hidden">
+      <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%23ffffff\" fill-opacity=\"0.1\"%3E%3Cpath d=\"M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4z\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-50"></div>
+      <i data-lucide="trophy" class="w-20 h-20 text-white mx-auto relative drop-shadow-lg"></i>
+    </div>
+
+    <div class="p-8 text-center">
+      <h1 class="text-3xl font-extrabold dark:text-white mb-2">Resultado do Sorteio</h1>
+      <p class="text-gray-500 dark:text-gray-400 mb-8"><%= rifa.titulo %></p>
+
+      <div class="bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-indigo-900/30 dark:to-violet-900/30 border-2 border-indigo-200 dark:border-indigo-800 rounded-2xl p-8 mb-6">
+        <p class="text-sm text-indigo-600 dark:text-indigo-400 font-semibold uppercase tracking-wide mb-2">Número Sorteado</p>
+        <p class="text-6xl sm:text-7xl font-black bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent"><%= rifa.numeroSorteado %></p>
+      </div>
+
+      <div class="bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/30 dark:to-green-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-6">
+        <p class="text-sm text-emerald-600 dark:text-emerald-400 font-semibold mb-1">🎉 Ganhador(a)</p>
+        <p class="text-2xl font-bold text-emerald-700 dark:text-emerald-300"><%= rifa.ganhadorNome || 'Não informado' %></p>
+      </div>
+
+      <p class="text-gray-400 text-sm mt-6">
+        Sorteio realizado em <%= rifa.dataSorteio ? new Date(rifa.dataSorteio).toLocaleString('pt-BR') : '—' %>
+      </p>
+
+      <a href="<%= tenantBase %>/encerradas" class="inline-flex items-center gap-2 mt-8 btn-brand font-semibold px-6 py-3 rounded-xl shadow-md">
+        <i data-lucide="arrow-left" class="w-4 h-4"></i> Ver outras rifas
+      </a>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>
