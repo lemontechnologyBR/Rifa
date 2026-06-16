@@ -51,10 +51,18 @@ const WooviService = {
           pixKey: tenant.pixChave
         })
       });
+      console.log(`[Woovi] Subconta registrada: ${tenant.pixChave}`);
     } catch (err) {
-      const msg = err.message.toLowerCase();
-      if (msg.includes('exist') || msg.includes('já') || msg.includes('already')) return;
-      throw err;
+      const msg = String(err.message || '').toLowerCase();
+      const jaExiste = msg.includes('exist') || msg.includes('já') || msg.includes('already')
+        || msg.includes('cadastr') || msg.includes('duplic') || msg.includes('duplicate')
+        || msg.includes('register') || msg.includes('found') || msg.includes('409');
+      if (jaExiste) {
+        console.log(`[Woovi] Subconta já existente para: ${tenant.pixChave}`);
+        return;
+      }
+      console.error(`[Woovi] Falha ao registrar subconta (${tenant.pixChave}):`, err.message);
+      throw new Error(`Não foi possível registrar a chave PIX na Woovi: ${err.message}`);
     }
   },
 
@@ -101,10 +109,33 @@ const WooviService = {
       if (cliente.cpf) body.customer.taxID = cliente.cpf.replace(/\D/g, '');
     }
 
-    const data = await this._request('/charge', {
-      method: 'POST',
-      body: JSON.stringify(body)
-    });
+    let data;
+    try {
+      data = await this._request('/charge', {
+        method: 'POST',
+        body: JSON.stringify(body)
+      });
+    } catch (err) {
+      const msg = String(err.message || '').toLowerCase();
+      // Se Woovi rejeitar por "conta virtual", força novo registro e tenta uma vez mais
+      if (msg.includes('conta virtual') || msg.includes('virtual account') || msg.includes('subaccount')) {
+        console.warn(`[Woovi] Retry: subconta inválida para ${tenant.pixChave} — re-registrando...`);
+        await this._request('/subaccount', {
+          method: 'POST',
+          body: JSON.stringify({
+            name: `${tenant.nome || tenant.slug}`.slice(0, 80),
+            pixKey: tenant.pixChave
+          })
+        }).catch((e) => console.error('[Woovi] Re-registro subconta falhou:', e.message));
+
+        data = await this._request('/charge', {
+          method: 'POST',
+          body: JSON.stringify(body)
+        });
+      } else {
+        throw err;
+      }
+    }
 
     const charge = data.charge || data;
     return {

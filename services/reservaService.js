@@ -101,7 +101,8 @@ const ReservaService = {
 
   async montarPagamentoWoovi(reserva, rifa, tenant, usuario) {
     const correlationID = reserva.codigoPagamento || `reserva-${reserva.id}`;
-    const valorComTaxa = reserva.valorTotal * 1.05;
+    const { MULTIPLICADOR_TAXA, TAXA_PLATAFORMA } = require('../lib/config');
+    const valorComTaxa = reserva.valorTotal * MULTIPLICADOR_TAXA;
 
     const charge = await WooviService.criarCobranca(tenant, {
       correlationID,
@@ -131,7 +132,7 @@ const ReservaService = {
       metodo: 'woovi',
       valor: valorComTaxa,
       valorOrganizador: reserva.valorTotal,
-      taxaPlataforma: reserva.valorTotal * 0.05,
+      taxaPlataforma: reserva.valorTotal * TAXA_PLATAFORMA,
       codigoPagamento: reserva.codigoPagamento,
       chavePix: tenant.pixChave,
       copiaCola: charge.brCode,

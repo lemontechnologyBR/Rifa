@@ -2,7 +2,7 @@
  * Listagem pública — modal de compra por quantidade + PIX real
  */
 (function () {
-  const TAXA = 0.05;
+  const TAXA = 0.10;
   const modal = document.getElementById('modal-participar');
   if (!modal) return;
 

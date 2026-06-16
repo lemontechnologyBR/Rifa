@@ -136,7 +136,7 @@ const superAdminController = {
         ...v,
         createdAtFmt: fmtDateTime(v.createdAt),
         valorFmt: fmtMoney(v.valorTotal),
-        taxaFmt: fmtMoney(v.valorTotal * 0.05),
+        taxaFmt: fmtMoney(v.valorTotal * require('../lib/config').TAXA_PLATAFORMA),
         cotas: v._count?.reservaNumeros || 0
       })),
       paginas: listagem.paginas,

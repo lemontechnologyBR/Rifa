@@ -4,7 +4,7 @@
 const prisma = require('../lib/prisma');
 const { slugify, isSlugReservado } = require('../lib/reservedSlugs');
 
-const TAXA_PLATAFORMA = 0.05;
+const { TAXA_PLATAFORMA } = require('../lib/config');
 
 function buildWhere({ busca, status } = {}) {
   const where = {};

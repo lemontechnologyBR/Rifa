@@ -346,7 +346,8 @@ const RifaService = {
       : 0;
 
     const faturamentoBruto = Number(receita._sum.valorTotal || 0);
-    const taxaPlataformaCompradores = faturamentoBruto * 0.05;
+    const { TAXA_PLATAFORMA } = require('../lib/config');
+    const taxaPlataformaCompradores = faturamentoBruto * TAXA_PLATAFORMA;
     const vendasPorDia = reservasPorDia.reverse().map((v) => ({
       dia: v.dia,
       total: Number(v.total || 0),
