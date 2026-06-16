@@ -70,7 +70,7 @@ app.get('/sitemap.xml', async (req, res) => {
       select: {
         id: true,
         status: true,
-        updatedAt: true,
+        createdAt: true,
         tenant: { select: { slug: true, status: true } }
       },
       orderBy: { createdAt: 'desc' },
@@ -92,7 +92,7 @@ app.get('/sitemap.xml', async (req, res) => {
 
     for (const r of rifas) {
       if (!r.tenant || r.tenant.status !== 'ativo') continue;
-      const d = r.updatedAt ? r.updatedAt.toISOString().split('T')[0] : now;
+      const d = r.createdAt ? r.createdAt.toISOString().split('T')[0] : now;
       const prio = r.status === 'ativa' ? '0.9' : '0.5';
       const freq = r.status === 'ativa' ? 'daily' : 'monthly';
       urls.push(`<url><loc>${appUrl}/${r.tenant.slug}/rifas/${r.id}</loc><lastmod>${d}</lastmod><changefreq>${freq}</changefreq><priority>${prio}</priority></url>`);
