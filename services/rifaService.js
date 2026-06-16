@@ -104,7 +104,7 @@ const RifaService = {
           descricao: descricao || '',
           imagemUrl: imagem_url || '',
           corPrimaria: cor_primaria || null,
-          valorCota: (() => { const v = parseFloat(valor_cota); if (v < 5) throw new Error('O valor mínimo da cota é R$ 5,00.'); return v; })(),
+          valorCota: parseFloat(valor_cota),
           totalNumeros: parseInt(total_numeros),
           dataSorteio: new Date(data_sorteio),
           chavePix: pixFinal,
@@ -165,7 +165,7 @@ const RifaService = {
         descricao: dados.descricao || '',
         imagemUrl: dados.imagem_url || '',
         corPrimaria: dados.cor_primaria || null,
-        valorCota: (() => { const v = parseFloat(dados.valor_cota); if (v < 5) throw new Error('O valor mínimo da cota é R$ 5,00.'); return v; })(),
+        valorCota: parseFloat(dados.valor_cota),
         dataSorteio: new Date(dados.data_sorteio),
         chavePix: dados.chave_pix,
         metaMinimaPct: dados.meta_minima_pct ? parseFloat(dados.meta_minima_pct) : null

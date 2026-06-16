@@ -115,10 +115,13 @@
     return { subtotal, taxa, total: subtotal + taxa };
   }
 
+  const COMPRA_MIN_REAIS = 5;
+  const QTD_MIN_COMPRA = VALOR_COTA > 0 ? Math.ceil(COMPRA_MIN_REAIS / VALOR_COTA) : 1;
+
   function clampQtd(val) {
     const n = parseInt(val, 10);
-    if (Number.isNaN(n) || n < 1) return 1;
-    return Math.min(n, maxQtd);
+    if (Number.isNaN(n) || n < 1) return QTD_MIN_COMPRA;
+    return Math.min(Math.max(n, QTD_MIN_COMPRA), maxQtd);
   }
 
   function setQtd(val) {
@@ -129,6 +132,11 @@
 
   function atualizarResumoPagina() {
     const { subtotal, taxa, total } = calcularComTaxa(calcularSubtotal(qtdCotas));
+
+    const avisoMin = document.getElementById('aviso-compra-minima');
+    if (avisoMin) avisoMin.classList.toggle('hidden', subtotal >= COMPRA_MIN_REAIS);
+    if (btnIniciar) btnIniciar.disabled = subtotal < COMPRA_MIN_REAIS;
+    if (btnMobile) btnMobile.disabled = subtotal < COMPRA_MIN_REAIS;
 
     const set = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
     set('label-qtd-cotas', String(qtdCotas));

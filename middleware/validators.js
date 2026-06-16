@@ -40,7 +40,7 @@ const validarPerfil = [
 
 const validarRifa = [
   body('titulo').trim().isLength({ min: 3, max: 200 }).withMessage('Título inválido.'),
-  body('valor_cota').isFloat({ min: 5 }).withMessage('O valor mínimo da cota é R$ 5,00.'),
+  body('valor_cota').isFloat({ min: 0.01 }).withMessage('Valor da cota inválido.'),
   body('total_numeros').optional().isInt({ min: 1, max: 10000 }).withMessage('Total de números inválido.'),
   body('data_sorteio').notEmpty().withMessage('Data do sorteio obrigatória.'),
   body('chave_pix').optional({ checkFalsy: true }).isLength({ max: 200 }).withMessage('Chave PIX inválida.'),

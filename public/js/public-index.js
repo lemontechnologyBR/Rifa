@@ -71,9 +71,17 @@
     return { subtotal, taxa, total: subtotal + taxa };
   }
 
+  const COMPRA_MIN_REAIS = 5;
+
+  function qtdMinima() {
+    if (!rifaAtual || rifaAtual.valorCota <= 0) return 1;
+    return Math.ceil(COMPRA_MIN_REAIS / rifaAtual.valorCota);
+  }
+
   function clampQtd(val) {
     const n = parseInt(val, 10);
-    if (Number.isNaN(n) || n < 1) return 1;
+    const min = qtdMinima();
+    if (Number.isNaN(n) || n < min) return min;
     return Math.min(n, maxQtd);
   }
 
@@ -89,9 +97,13 @@
     if (els.subtotal) els.subtotal.textContent = 'R$ ' + fmt(subtotal);
     if (els.taxa) els.taxa.textContent = 'R$ ' + fmt(taxa);
     if (els.valorTotal) els.valorTotal.textContent = 'R$ ' + fmt(total);
-    if (els.btnMenos) els.btnMenos.disabled = qtdCotas <= 1;
+    const min = qtdMinima();
+    if (els.btnMenos) els.btnMenos.disabled = qtdCotas <= min;
     if (els.btnMais) els.btnMais.disabled = qtdCotas >= maxQtd;
-    if (els.btnPix) els.btnPix.disabled = maxQtd === 0 || comprando;
+    const abaixoMin = subtotal < COMPRA_MIN_REAIS;
+    if (els.btnPix) els.btnPix.disabled = maxQtd === 0 || comprando || abaixoMin;
+    const avisoMin = document.getElementById('modal-aviso-compra-minima');
+    if (avisoMin) avisoMin.classList.toggle('hidden', !abaixoMin);
   }
 
   function parseFaixas(raw) {

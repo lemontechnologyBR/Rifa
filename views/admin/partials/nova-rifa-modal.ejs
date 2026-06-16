@@ -41,8 +41,7 @@
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="admin-label">Valor da cota (R$) *</label>
-            <input type="number" name="valor_cota" step="0.01" min="5" required x-model.number="valorCota" class="admin-input">
-            <p class="text-xs text-gray-400 mt-1">Mínimo R$ 5,00 por cota</p>
+            <input type="number" name="valor_cota" step="0.01" min="0.01" required x-model.number="valorCota" class="admin-input">
           </div>
           <div>
             <label class="admin-label">Total de cotas *</label>

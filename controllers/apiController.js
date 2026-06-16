@@ -79,7 +79,6 @@ const apiController = {
 
       const rifa = await RifaService.buscarPorId(req.params.id, tenant.id);
       if (!rifa || rifa.status !== 'ativa') return res.status(404).json({ erro: 'Rifa não encontrada.' });
-      if (rifa.valorCota < 5) return res.status(400).json({ erro: 'Esta rifa tem valor de cota abaixo do mínimo permitido (R$ 5,00).' });
 
       if (!nome || !telefone || !cpf) return res.status(400).json({ erro: 'Nome, CPF e telefone são obrigatórios.' });
       const usuario = await AuthService.buscarOuCriarConvidado({ nome, telefone, cpf, chavePix: chave_pix });
@@ -87,6 +86,7 @@ const apiController = {
       const nums = numeros.map(Number);
       const bonusUsado = await IndicacaoService.consumirBonus(usuario.id, nums.length);
       const valorTotal = RifaService.calcularValor(rifa.faixasDesconto, rifa.valorCota, nums.length, bonusUsado);
+      if (valorTotal < 5) return res.status(400).json({ erro: `Compra mínima de R$ 5,00. Selecione pelo menos ${Math.ceil(5 / rifa.valorCota)} cotas.` });
       const codigoIndicacao = req.session.codigoIndicacao || req.body.codigo_indicacao || null;
 
       const { reservaId } = await NumeroService.confirmarCompra(
