@@ -105,8 +105,6 @@
     if (els.btnMais) els.btnMais.disabled = qtdCotas >= maxQtd;
     const abaixoMin = subtotal < COMPRA_MIN_REAIS;
     if (els.btnPix) els.btnPix.disabled = maxQtd === 0 || comprando || abaixoMin;
-    const avisoMin = document.getElementById('modal-aviso-compra-minima');
-    if (avisoMin) avisoMin.classList.toggle('hidden', !abaixoMin);
   }
 
   function parseFaixas(raw) {

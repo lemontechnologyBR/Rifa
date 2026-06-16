@@ -89,17 +89,13 @@
               class="landing-field w-full px-4 py-3 rounded-xl text-lg font-bold mb-4">
 
             <div class="space-y-2 text-sm">
-              <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
-                <span class="text-gray-500 dark:text-gray-400">Valor da cota</span>
-                <span class="font-semibold text-gray-900 dark:text-white">R$ <span x-text="fmt(valorCota)"></span></span>
-              </div>
-              <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
-                <span class="text-gray-500 dark:text-gray-400">Comissão plataforma (10%)</span>
-                <span class="font-semibold text-amber-600 dark:text-amber-400">− R$ <span x-text="fmt(comissao)"></span></span>
-              </div>
               <div class="landing-bar-buyer flex justify-between py-3 rounded-xl px-4">
                 <span class="font-medium">Comprador paga</span>
                 <span class="font-bold text-lg">R$ <span x-text="fmt(compradorPaga)"></span></span>
+              </div>
+              <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700 px-1">
+                <span class="text-gray-500 dark:text-gray-400">− Comissão plataforma (10%)</span>
+                <span class="font-semibold text-amber-600 dark:text-amber-400">R$ <span x-text="fmt(comissao)"></span></span>
               </div>
               <div class="landing-bar-organizer flex justify-between py-3 rounded-xl px-4">
                 <span class="font-medium">Organizador recebe</span>
@@ -251,8 +247,8 @@
           <h3 class="font-bold text-lg mb-2">Comprador seleciona cotas</h3>
           <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Vê o valor exato no resumo:</p>
           <div class="space-y-1 text-sm">
-            <div class="text-gray-500">R$ 10,00 × 90% = R$ 9,00 para você</div>
-            <div class="font-bold text-lg text-slate-800 dark:text-white">= R$ 9,00 líquido por cota</div>
+            <div class="text-gray-500">R$ 10,00 — valor exato da cota</div>
+            <div class="font-bold text-lg text-slate-800 dark:text-white">= R$ 10,00 total no PIX</div>
           </div>
           <p class="text-xs text-emerald-600 dark:text-emerald-400 mt-3">Valor exato, sem surpresas</p>
         </div>
