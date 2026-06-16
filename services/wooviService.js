@@ -63,6 +63,9 @@ const WooviService = {
       throw new Error('Informe sua chave PIX na Carteira para receber pagamentos.');
     }
 
+    // Garante que a subconta Woovi existe para esta chave PIX antes de criar o split
+    await this.ensureSubconta(tenant);
+
     const valueCents = Math.round(Number(valorReais) * 100);
     const organizerCentsRaw = Math.round(Number(valorOrganizadorReais ?? valorReais) * 100);
     if (valueCents < 1) throw new Error('Valor da cobrança inválido.');
