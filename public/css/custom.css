@@ -67,6 +67,11 @@
 .dark .landing-page h3 {
   color: #f9fafb;
 }
+.landing-page .landing-cta-dark h1,
+.landing-page .landing-cta-dark h2,
+.landing-page .landing-cta-dark h3 {
+  color: #ffffff;
+}
 .landing-page .landing-subtitle {
   color: #4b5563;
 }
