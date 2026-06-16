@@ -172,6 +172,8 @@ async function bootstrap() {
     ReservaService.limparExpiradas().catch((err) => console.error('Limpeza reservas expiradas:', err.message));
   }, 60 * 1000);
 
+  require('./jobs/syncPagamentos').iniciar();
+
   app.listen(PORT, () => {
     console.log('');
     console.log('VouRifar — Plataforma de Rifas');

@@ -21,9 +21,6 @@
         <span class="admin-panel-card px-3 py-2"><strong><%= stats.disponiveis %></strong> disponíveis</span>
       </div>
       <div class="flex gap-2 flex-wrap">
-        <button type="button" id="btn-sinc-pagamentos" class="admin-action-btn flex items-center gap-1.5" title="Verifica pagamentos pendentes na Woovi e confirma automaticamente">
-          <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Sincronizar PIX
-        </button>
         <a href="<%= adminBase %>/rifas/<%= rifa.id %>/editar" class="admin-action-btn">Editar rifa</a>
         <a href="<%= adminBase %>/rifas/<%= rifa.id %>/exportar" class="admin-btn-primary px-4 py-2 text-sm">Exportar CSV</a>
       </div>
@@ -83,31 +80,6 @@
     </div>
 
   <%- include('partials/layout-end') %>
-  <script>
-    lucide.createIcons();
-
-    document.getElementById('btn-sinc-pagamentos')?.addEventListener('click', async function () {
-      const btn = this;
-      btn.disabled = true;
-      btn.innerHTML = '<svg class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg> Verificando...';
-      try {
-        const r = await fetch('<%= tenantBase %>/api/pagamentos/sincronizar', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
-        const data = await r.json();
-        const confirmados = (data.resultados || []).filter(x => x.acao === 'confirmado').length;
-        if (confirmados > 0) {
-          alert(`✅ ${confirmados} pagamento(s) confirmado(s)! A página será recarregada.`);
-          location.reload();
-        } else {
-          alert(`Verificado: ${data.total || 0} reserva(s) pendente(s) consultada(s) — nenhum novo pagamento encontrado na Woovi.`);
-        }
-      } catch (e) {
-        alert('Erro ao sincronizar: ' + e.message);
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Sincronizar PIX';
-        lucide.createIcons();
-      }
-    });
-  </script>
+  <script>lucide.createIcons();</script>
 </body>
 </html>
