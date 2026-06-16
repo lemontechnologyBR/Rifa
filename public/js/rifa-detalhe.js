@@ -114,7 +114,7 @@
     return { subtotal, taxa: 0, total: subtotal };
   }
 
-  const COMPRA_MIN_REAIS = 5;
+  const COMPRA_MIN_REAIS = 6.50;
   const QTD_MIN_COMPRA = VALOR_COTA > 0 ? Math.ceil(COMPRA_MIN_REAIS / VALOR_COTA) : 1;
 
   function clampQtd(val) {
