@@ -1,16 +1,14 @@
-version: '3.8'
-
 services:
+
   rifas:
-    build: .
+    image: ghcr.io/lemontechnologybr/rifa:latest
     restart: unless-stopped
-    ports:
-      - "${PORT:-3000}:3000"
     env_file:
       - .env
     environment:
-      DATABASE_URL: file:/app/database/rifas.db
       NODE_ENV: production
+      DATABASE_URL: file:/app/database/rifas.db
+      APP_URL: https://vourifar.com.br
       RUN_SEED: ${RUN_SEED:-false}
     volumes:
       - rifas-data:/app/database
@@ -21,6 +19,24 @@ services:
       timeout: 5s
       retries: 3
       start_period: 45s
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=vourifar_proxy"
+      - "traefik.http.routers.vourifar.rule=Host(`vourifar.com.br`) || Host(`www.vourifar.com.br`)"
+      - "traefik.http.routers.vourifar.entrypoints=websecure"
+      - "traefik.http.routers.vourifar.tls.certresolver=letsencrypt"
+      - "traefik.http.services.vourifar.loadbalancer.server.port=3000"
+      - "traefik.http.middlewares.vourifar-www-redirect.redirectregex.regex=^https://www\\.vourifar\\.com\\.br/(.*)"
+      - "traefik.http.middlewares.vourifar-www-redirect.redirectregex.replacement=https://vourifar.com.br/$${1}"
+      - "traefik.http.middlewares.vourifar-www-redirect.redirectregex.permanent=true"
+      - "traefik.http.routers.vourifar.middlewares=vourifar-www-redirect"
+
+networks:
+  proxy:
+    external: true
+    name: vourifar_proxy
 
 volumes:
   rifas-data:
