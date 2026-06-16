@@ -20,23 +20,22 @@ services:
       retries: 3
       start_period: 45s
     networks:
-      - proxy
+      - pix-tips_proxy
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=vourifar_proxy"
+      - "traefik.docker.network=pix-tips_proxy"
       - "traefik.http.routers.vourifar.rule=Host(`vourifar.com.br`) || Host(`www.vourifar.com.br`)"
       - "traefik.http.routers.vourifar.entrypoints=websecure"
       - "traefik.http.routers.vourifar.tls.certresolver=letsencrypt"
       - "traefik.http.services.vourifar.loadbalancer.server.port=3000"
-      - "traefik.http.middlewares.vourifar-www-redirect.redirectregex.regex=^https://www\\.vourifar\\.com\\.br/(.*)"
-      - "traefik.http.middlewares.vourifar-www-redirect.redirectregex.replacement=https://vourifar.com.br/$${1}"
-      - "traefik.http.middlewares.vourifar-www-redirect.redirectregex.permanent=true"
-      - "traefik.http.routers.vourifar.middlewares=vourifar-www-redirect"
+      - "traefik.http.middlewares.vourifar-www.redirectregex.regex=^https://www\\.vourifar\\.com\\.br/(.*)"
+      - "traefik.http.middlewares.vourifar-www.redirectregex.replacement=https://vourifar.com.br/$${1}"
+      - "traefik.http.middlewares.vourifar-www.redirectregex.permanent=true"
+      - "traefik.http.routers.vourifar.middlewares=vourifar-www"
 
 networks:
-  proxy:
+  pix-tips_proxy:
     external: true
-    name: vourifar_proxy
 
 volumes:
   rifas-data:
