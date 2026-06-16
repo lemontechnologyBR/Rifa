@@ -32,7 +32,8 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label class="text-sm font-medium text-gray-600">Valor da cota *</label>
-          <input type="number" name="valor_cota" step="0.01" required value="<%= rifa ? (rifa.valorCota ?? rifa.valor_cota ?? '') : '' %>" class="w-full border rounded-xl px-4 py-2 mt-1">
+          <input type="number" name="valor_cota" step="0.01" min="5" required value="<%= rifa ? (rifa.valorCota ?? rifa.valor_cota ?? '') : '' %>" class="w-full border rounded-xl px-4 py-2 mt-1">
+          <p class="text-xs text-gray-400 mt-1">Mínimo R$ 5,00 por cota</p>
         </div>
         <% if (!rifa || !rifa.id) { %>
           <div>

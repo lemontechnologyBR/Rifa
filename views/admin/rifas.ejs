@@ -34,7 +34,7 @@
     this.resetWizard();
     this.modalNovaRifa = true;
   },
-  validStep1() { return this.titulo.trim().length >= 3 && this.valorCota > 0 && this.totalCotas >= 1; },
+  validStep1() { return this.titulo.trim().length >= 3 && this.valorCota >= 5 && this.totalCotas >= 1; },
   validStep2() { return !!this.dataSorteio; },
   nextStep() {
     if (this.wizardStep === 1 && !this.validStep1()) return alert('Preencha nome, valor e total de cotas.');
