@@ -127,7 +127,7 @@
           <span id="valor-cota-label">R$ 0,10</span> por cota
         </span>
         <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gold/10 border border-gold/30 text-gold text-xs font-medium">
-          Taxa 5% incluída no total
+          Taxa 10% incluída no total
         </span>
       </div>
     </section>
@@ -178,7 +178,7 @@
           <dd id="res-preco-unit">R$ 0,10</dd>
         </div>
         <div class="flex justify-between text-gray-400">
-          <dt>Taxa plataforma (5%)</dt>
+          <dt>Taxa plataforma (10%)</dt>
           <dd class="text-amber-400" id="res-taxa-unit">R$ 0,01 / cota</dd>
         </div>
         <div class="flex justify-between text-gray-300">
@@ -190,7 +190,7 @@
           <dd id="res-subtotal">R$ 5,90</dd>
         </div>
         <div class="flex justify-between text-gray-400">
-          <dt>Taxa 5%</dt>
+          <dt>Taxa 10%</dt>
           <dd class="text-amber-400" id="res-taxa-total">R$ 0,30</dd>
         </div>
         <div class="border-t border-emerald-500/30 pt-4 flex justify-between items-center">
@@ -198,7 +198,7 @@
           <dd class="text-2xl font-extrabold text-emerald-400" id="res-total">R$ 6,20</dd>
         </div>
       </dl>
-      <p class="text-xs text-gray-500 mt-3 text-center">Valor final com 5% da plataforma</p>
+      <p class="text-xs text-gray-500 mt-3 text-center">Valor final com 10% da plataforma</p>
     </section>
 
     <!-- 4. Botão principal -->
@@ -235,7 +235,7 @@
      */
     const CONFIG = {
       valorCota: 0.10,
-      taxaPct: 0.05,
+      taxaPct: 0.10,
       qtdInicial: 59,
       qtdMin: 1,
       qtdMax: 5000,
@@ -288,8 +288,8 @@
     /**
      * Cálculo exato:
      * subtotal = qtd × valorCota
-     * taxa = subtotal × 5%
-     * total = subtotal + taxa  (= subtotal × 1.05)
+     * taxa = subtotal × 10%
+     * total = subtotal + taxa  (= subtotal × 1.10)
      */
     function calcular(qtd) {
       const subtotal = round2(qtd * CONFIG.valorCota);
@@ -337,7 +337,7 @@
         'Rifa: ' + CONFIG.rifaNome + '\n' +
         'Cotas: ' + c.qtd + '\n' +
         'Subtotal: ' + fmt(c.subtotal) + '\n' +
-        'Taxa (5%): ' + fmt(c.taxa) + '\n' +
+        'Taxa (10%): ' + fmt(c.taxa) + '\n' +
         'Total a pagar: ' + fmt(c.total) + '\n\n' +
         'Em produção, você veria o QR Code PIX aqui.'
       );

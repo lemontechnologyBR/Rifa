@@ -37,7 +37,7 @@ async function main() {
 
   const correlationID = `vourifar-test-${Date.now()}`;
   const valorCota = 1000; // R$ 10,00
-  const valorComTaxa = 1050; // R$ 10,50 (+5%)
+  const valorComTaxa = 1100; // R$ 11,00 (+10%)
   console.log('\n[2] Cobranca com split (simula compra de cota R$10):');
   const charge = await api('/charge', {
     method: 'POST',
