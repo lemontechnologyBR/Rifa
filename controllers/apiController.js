@@ -154,19 +154,68 @@ const apiController = {
   },
 
   async webhookWoovi(req, res) {
+    // Responde 200 imediatamente para evitar retry da Woovi
+    res.json({ ok: true });
     try {
       const WooviService = require('../services/wooviService');
+      const event = req.body?.event || req.body?.type || '';
       const correlationID = WooviService.extrairCorrelationId(req.body);
+      console.log(`[Webhook Woovi] evento="${event}" correlationID="${correlationID}" body=${JSON.stringify(req.body).slice(0, 300)}`);
+
+      // Ignora eventos que não sejam de pagamento confirmado
+      const eventosConfirmacao = ['OPENPIX:CHARGE_COMPLETED', 'OPENPIX:CHARGE_COMPLETED_NOT_SAME_CUSTOMER_PAYER', 'charge.completed'];
+      if (event && !eventosConfirmacao.some(e => event.toUpperCase().includes(e.split(':').pop()))) {
+        console.log(`[Webhook Woovi] evento ignorado: ${event}`);
+        return;
+      }
+
       if (!correlationID) {
-        return res.status(400).json({ erro: 'Payload Woovi inválido.' });
+        console.warn('[Webhook Woovi] Payload sem correlationID:', JSON.stringify(req.body).slice(0, 200));
+        return;
       }
       const reserva = await ReservaService.confirmarViaWoovi(correlationID);
-      res.json({ sucesso: true, reservaId: reserva.id, status: 'confirmado' });
+      console.log(`[Webhook Woovi] Reserva #${reserva.id} confirmada via correlationID=${correlationID}`);
     } catch (err) {
-      if (err.message.includes('não encontrada') || err.message.includes('confirmado')) {
-        return res.json({ sucesso: true, message: err.message });
+      if (!err.message.includes('não encontrada') && !err.message.includes('confirmado')) {
+        console.error('[Webhook Woovi] Erro ao confirmar:', err.message);
       }
-      res.status(400).json({ erro: err.message });
+    }
+  },
+
+  /** Verifica pagamentos pendentes na API Woovi e confirma automaticamente */
+  async sincronizarPagamentos(req, res) {
+    try {
+      const WooviService = require('../services/wooviService');
+      const prisma = require('../lib/prisma');
+
+      const pendentes = await prisma.reserva.findMany({
+        where: {
+          statusPagamento: 'pendente',
+          wooviCorrelationId: { not: null }
+        },
+        take: 20,
+        orderBy: { createdAt: 'desc' }
+      });
+
+      const resultados = [];
+      for (const r of pendentes) {
+        try {
+          const status = await WooviService.consultarStatus(r.wooviCorrelationId);
+          if (status === 'COMPLETED' || status === 'paid' || status === 'CONFIRMED') {
+            await ReservaService.confirmarViaWoovi(r.wooviCorrelationId);
+            resultados.push({ id: r.id, acao: 'confirmado' });
+            console.log(`[Sinc Woovi] Reserva #${r.id} confirmada retroativamente`);
+          } else {
+            resultados.push({ id: r.id, acao: 'pendente', status });
+          }
+        } catch (e) {
+          resultados.push({ id: r.id, acao: 'erro', msg: e.message });
+        }
+      }
+
+      res.json({ total: pendentes.length, resultados });
+    } catch (err) {
+      res.status(500).json({ erro: err.message });
     }
   },
 

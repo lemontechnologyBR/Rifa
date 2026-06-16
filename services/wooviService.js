@@ -182,6 +182,19 @@ const WooviService = {
   extrairCorrelationId(payload) {
     const charge = payload?.charge || payload?.data?.charge || payload;
     return charge?.correlationID || payload?.correlationID || null;
+  },
+
+  /** Consulta status de uma cobrança na API Woovi. Retorna 'COMPLETED', 'ACTIVE', 'EXPIRED', etc. */
+  async consultarStatus(correlationID) {
+    if (!this.isPlatformConfigured()) return null;
+    try {
+      const data = await this._request(`/charge/${encodeURIComponent(correlationID)}`);
+      const charge = data?.charge || data;
+      return charge?.status || null;
+    } catch (err) {
+      console.error(`[Woovi] consultarStatus(${correlationID}):`, err.message);
+      return null;
+    }
   }
 };
 
