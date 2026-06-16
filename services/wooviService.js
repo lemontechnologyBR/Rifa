@@ -64,11 +64,22 @@ const WooviService = {
     }
 
     const valueCents = Math.round(Number(valorReais) * 100);
-    const organizerCents = Math.round(Number(valorOrganizadorReais ?? valorReais) * 100);
+    const organizerCentsRaw = Math.round(Number(valorOrganizadorReais ?? valorReais) * 100);
     if (valueCents < 1) throw new Error('Valor da cobrança inválido.');
-    if (organizerCents < 1 || organizerCents > valueCents) {
+    if (organizerCentsRaw < 1 || organizerCentsRaw >= valueCents) {
       throw new Error('Valor do organizador inválido.');
     }
+
+    // Woovi exige strict: split.value < charge.value - taxa_woovi
+    // Reservamos margem para a taxa da Woovi (padrão R$0,50 ou 2% — o maior).
+    // Configure WOOVI_TAXA_CENTS no .env conforme o plano da sua conta Woovi.
+    const wooviFeeFixed = parseInt(process.env.WOOVI_TAXA_CENTS || '50'); // default R$0,50
+    const wooviFeeEstimCents = Math.max(wooviFeeFixed, Math.ceil(valueCents * 0.02));
+    const organizerCents = Math.min(
+      organizerCentsRaw,
+      valueCents - wooviFeeEstimCents - 1  // -1 para garantir strict <
+    );
+    if (organizerCents < 1) throw new Error('Valor da cota muito baixo para cobrar via PIX com split.');
 
     const body = {
       correlationID: String(correlationID),
@@ -76,8 +87,7 @@ const WooviService = {
       comment: String(comentario || 'Pagamento de rifa').replace(/[^\w\s\-.,@]/g, '').slice(0, 120),
       splits: [{
         pixKey: tenant.pixChave,
-        value: organizerCents,
-        splitType: 'SPLIT_SUB_ACCOUNT'
+        value: organizerCents
       }]
     };
 
