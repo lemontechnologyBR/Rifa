@@ -36,7 +36,7 @@
   <div class="space-y-3 mb-6">
     <% rifas.forEach(function(r) {
       const pct = r.stats.total > 0 ? Math.round((r.stats.vendidos / r.stats.total) * 100) : 0;
-      const linkPublico = tenantBase + '/rifas/' + r.id;
+      const linkPublico = (typeof baseUrl !== 'undefined' ? baseUrl : '') + tenantBase + '/rifas/' + r.id;
       const statusClass = r.status === 'ativa' ? 'admin-badge-ativa' : r.status === 'finalizada' ? 'admin-badge-finalizada' : 'admin-badge-cancelada';
       const statusLabel = r.status === 'finalizada' ? 'encerrada' : r.status;
     %>
