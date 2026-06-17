@@ -27,11 +27,17 @@
       </div>
     <% } %>
 
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
       <article class="admin-metric-card">
         <p class="admin-metric-label mb-1">Saldo confirmado</p>
         <p class="admin-metric-value text-emerald-600">R$ <%= resumo.saldoConfirmado.toFixed(2).replace('.', ',') %></p>
         <p class="text-xs text-gray-400 mt-1"><%= resumo.cotasConfirmadas %> cota(s) pagas</p>
+      </article>
+      <article class="admin-metric-card">
+        <% const saldoSaque = resumo.saldoConfirmado * 0.95; %>
+        <p class="admin-metric-label mb-1">Disponível para saque</p>
+        <p class="admin-metric-value text-violet-600">R$ <%= saldoSaque.toFixed(2).replace('.', ',') %></p>
+        <p class="text-xs text-gray-400 mt-1">95% do saldo confirmado</p>
       </article>
       <article class="admin-metric-card">
         <p class="admin-metric-label mb-1">Aguardando PIX</p>
@@ -52,6 +58,41 @@
           <p class="text-xs text-gray-400 mt-1">Cadastre abaixo para receber</p>
         <% } %>
       </article>
+    </div>
+
+    <%
+      const saldoDisp = resumo.saldoConfirmado * 0.95;
+      const podeAutoSaque = saldoDisp >= 500;
+    %>
+    <div class="admin-panel-card p-5 mb-6 border-l-4 <%= podeAutoSaque ? 'border-emerald-500' : 'border-amber-400' %>">
+      <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+        <div class="flex items-start gap-3 flex-1">
+          <div class="w-10 h-10 rounded-xl <%= podeAutoSaque ? 'bg-emerald-100 dark:bg-emerald-900/40' : 'bg-amber-100 dark:bg-amber-900/30' %> flex items-center justify-center shrink-0">
+            <i data-lucide="<%= podeAutoSaque ? 'arrow-down-to-line' : 'clock' %>" class="w-5 h-5 <%= podeAutoSaque ? 'text-emerald-600' : 'text-amber-600' %>"></i>
+          </div>
+          <div>
+            <p class="font-bold text-sm <%= podeAutoSaque ? 'text-emerald-800 dark:text-emerald-300' : 'text-amber-800 dark:text-amber-300' %>">
+              <% if (podeAutoSaque) { %>
+                ✅ Saque automático disponível — R$ <%= saldoDisp.toFixed(2).replace('.', ',') %>
+              <% } else { %>
+                ⏳ Acumule R$ 500,00 para saque gratuito — faltam R$ <%= Math.max(0, 500 - saldoDisp).toFixed(2).replace('.', ',') %>
+              <% } %>
+            </p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <% if (podeAutoSaque) { %>
+                Seu saldo na Woovi é sacado automaticamente todo dia às <strong>19h</strong> para sua chave PIX cadastrada — sem custo.
+              <% } else { %>
+                Saques abaixo de R$ 500,00 têm taxa de <strong>R$ 1,00</strong> cobrada pela Woovi. Acumule R$ 500,00 para saque diário gratuito.
+              <% } %>
+            </p>
+          </div>
+        </div>
+        <a href="https://app.woovi.com" target="_blank" rel="noopener"
+           class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm font-semibold hover:bg-gray-200 dark:hover:bg-gray-700 transition shrink-0">
+          <i data-lucide="external-link" class="w-4 h-4"></i>
+          Acessar Woovi
+        </a>
+      </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
@@ -152,12 +193,46 @@
 
         <div class="admin-panel-card p-5">
           <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Como funciona</p>
-          <ol class="text-sm text-gray-500 dark:text-gray-400 space-y-2 list-decimal list-inside">
-            <li>Comprador paga o valor exato da cota via PIX</li>
-            <li>A plataforma confirma o pagamento automaticamente</li>
-            <li>95% do valor cai direto na sua chave PIX</li>
-            <li>A plataforma retém 5% como comissão</li>
+          <ol class="text-sm text-gray-500 dark:text-gray-400 space-y-2.5 list-none">
+            <li class="flex items-start gap-2.5">
+              <span class="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
+              <span>Comprador paga o <strong class="text-gray-700 dark:text-gray-200">valor exato</strong> da cota via PIX</span>
+            </li>
+            <li class="flex items-start gap-2.5">
+              <span class="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">2</span>
+              <span>Pagamento confirmado automaticamente — cota reservada</span>
+            </li>
+            <li class="flex items-start gap-2.5">
+              <span class="w-5 h-5 rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-400 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
+              <span><strong class="text-gray-700 dark:text-gray-200">95%</strong> acumula na sua subconta Woovi — a plataforma retém 5%</span>
+            </li>
+            <li class="flex items-start gap-2.5">
+              <span class="w-5 h-5 rounded-full bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-400 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">4</span>
+              <span>Com <strong class="text-gray-700 dark:text-gray-200">R$ 500+</strong> na subconta: saque automático todo dia às <strong class="text-gray-700 dark:text-gray-200">19h grátis</strong> para sua chave PIX</span>
+            </li>
+            <li class="flex items-start gap-2.5">
+              <span class="w-5 h-5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">$</span>
+              <span>Abaixo de R$ 500: saque manual pela Woovi com taxa de <strong class="text-gray-700 dark:text-gray-200">R$ 1,00</strong></span>
+            </li>
           </ol>
+        </div>
+
+        <div class="admin-panel-card p-5">
+          <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Regras de saque</p>
+          <ul class="text-sm space-y-2">
+            <li class="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
+              <i data-lucide="check-circle-2" class="w-4 h-4 shrink-0"></i>
+              <span><strong>Grátis</strong> — saldo ≥ R$ 500,00 (automático às 19h)</span>
+            </li>
+            <li class="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+              <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
+              <span><strong>R$ 1,00</strong> — saque manual abaixo de R$ 500,00</span>
+            </li>
+            <li class="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+              <i data-lucide="clock" class="w-4 h-4 shrink-0"></i>
+              <span>Saldo mínimo de saque: R$ 1,01</span>
+            </li>
+          </ul>
         </div>
 
         <div class="admin-tip !mb-0">
