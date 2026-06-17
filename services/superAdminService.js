@@ -78,7 +78,7 @@ const SuperAdminService = {
       prisma.organizador.findMany({
         where,
         include: {
-          tenant: { select: { id: true, nome: true, slug: true, status: true } }
+          tenant: { select: { id: true, nome: true, slug: true, status: true, pixChave: true } }
         },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limite,
@@ -87,7 +87,37 @@ const SuperAdminService = {
       prisma.organizador.count({ where })
     ]);
 
-    return { organizadores, total, paginas: Math.max(1, Math.ceil(total / limite)), page };
+    // Calcular saldo confirmado e pendente por tenant
+    const tenantIds = organizadores.map(o => o.tenant.id);
+    let saldoMap = {};
+
+    if (tenantIds.length) {
+      const rifas = await prisma.rifa.findMany({
+        where: { tenantId: { in: tenantIds } },
+        select: {
+          tenantId: true,
+          reservas: {
+            where: { statusPagamento: { in: ['confirmado', 'pendente'] } },
+            select: { valorTotal: true, statusPagamento: true }
+          }
+        }
+      });
+
+      for (const rifa of rifas) {
+        if (!saldoMap[rifa.tenantId]) saldoMap[rifa.tenantId] = { confirmado: 0, pendente: 0 };
+        for (const res of rifa.reservas) {
+          if (res.statusPagamento === 'confirmado') saldoMap[rifa.tenantId].confirmado += res.valorTotal;
+          else saldoMap[rifa.tenantId].pendente += res.valorTotal;
+        }
+      }
+    }
+
+    const organizadoresComSaldo = organizadores.map(o => ({
+      ...o,
+      saldo: saldoMap[o.tenant.id] || { confirmado: 0, pendente: 0 }
+    }));
+
+    return { organizadores: organizadoresComSaldo, total, paginas: Math.max(1, Math.ceil(total / limite)), page };
   },
 
   async obterInfoPlataforma() {

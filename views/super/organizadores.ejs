@@ -16,11 +16,28 @@
   <div class="super-table-wrap">
     <table class="super-table">
       <thead>
-        <tr><th>Nome</th><th>E-mail</th><th>Sistema</th><th>Login</th><th>Cadastro</th><th>Ações</th></tr>
+        <tr>
+          <th>Nome</th>
+          <th>E-mail</th>
+          <th>Sistema</th>
+          <th>Saldo confirmado</th>
+          <th>Pendente</th>
+          <th>Disponível (95%)</th>
+          <th>Login</th>
+          <th>Cadastro</th>
+          <th>Ações</th>
+        </tr>
       </thead>
       <tbody>
-        <% if (!organizadores.length) { %><tr><td colspan="6" class="super-empty">Nenhum organizador encontrado.</td></tr><% } %>
-        <% organizadores.forEach(function(o) { %>
+        <% if (!organizadores.length) { %>
+          <tr><td colspan="9" class="super-empty">Nenhum organizador encontrado.</td></tr>
+        <% } %>
+        <% organizadores.forEach(function(o) {
+          const saldoConf = o.saldo ? o.saldo.confirmado : 0;
+          const saldoPend = o.saldo ? o.saldo.pendente : 0;
+          const saldoDisp = saldoConf * 0.95;
+          const temPix = !!(o.tenant.pixChave);
+        %>
           <tr>
             <td class="super-tenant-name"><%= o.nome %></td>
             <td><%= o.email %></td>
@@ -28,9 +45,57 @@
               <a href="/<%= o.tenant.slug %>/" target="_blank" rel="noopener" class="super-action-link"><%= o.tenant.nome %></a>
               <span class="super-tenant-email">/<%= o.tenant.slug %></span>
             </td>
-            <td><span class="super-badge <%= o.viaGoogle ? 'super-badge--pix-ok' : 'super-badge--pix-no' %>"><%= o.viaGoogle ? 'Google' : 'E-mail' %></span></td>
+
+            <!-- Saldo confirmado -->
+            <td>
+              <% if (saldoConf > 0) { %>
+                <span class="font-bold text-emerald-600 dark:text-emerald-400">
+                  R$ <%= saldoConf.toFixed(2).replace('.', ',') %>
+                </span>
+              <% } else { %>
+                <span class="text-gray-400">R$ 0,00</span>
+              <% } %>
+            </td>
+
+            <!-- Pendente -->
+            <td>
+              <% if (saldoPend > 0) { %>
+                <span class="text-amber-600 dark:text-amber-400">
+                  R$ <%= saldoPend.toFixed(2).replace('.', ',') %>
+                </span>
+              <% } else { %>
+                <span class="text-gray-400">—</span>
+              <% } %>
+            </td>
+
+            <!-- Disponível para saque (95%) -->
+            <td>
+              <% if (saldoDisp >= 50) { %>
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold
+                  <%= saldoDisp >= 500 ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300' : 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300' %>">
+                  <%= saldoDisp >= 500 ? '✓' : '$' %> R$ <%= saldoDisp.toFixed(2).replace('.', ',') %>
+                </span>
+              <% } else if (saldoDisp > 0) { %>
+                <span class="text-gray-400 text-xs">R$ <%= saldoDisp.toFixed(2).replace('.', ',') %></span>
+              <% } else { %>
+                <span class="text-gray-400">—</span>
+              <% } %>
+            </td>
+
+            <td>
+              <span class="super-badge <%= o.viaGoogle ? 'super-badge--pix-ok' : 'super-badge--pix-no' %>">
+                <%= o.viaGoogle ? 'Google' : 'E-mail' %>
+              </span>
+            </td>
             <td><%= o.createdAtFmt %></td>
-            <td><a href="/<%= o.tenant.slug %>/admin" target="_blank" rel="noopener" class="super-action-link">Painel</a></td>
+            <td>
+              <div class="flex items-center gap-2">
+                <a href="/<%= o.tenant.slug %>/admin" target="_blank" rel="noopener" class="super-action-link">Painel</a>
+                <% if (!temPix) { %>
+                  <span class="text-[10px] text-red-500 font-bold">Sem PIX</span>
+                <% } %>
+              </div>
+            </td>
           </tr>
         <% }); %>
       </tbody>
