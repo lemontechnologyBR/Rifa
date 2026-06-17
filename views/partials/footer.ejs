@@ -12,7 +12,7 @@
             <div class="landing-footer-brand">
               <%- include('vourifar-logo', { logoClass: 'h-11 sm:h-12 w-auto', logoTitle: platformName || 'VouRifar' }) %>
               <p class="landing-footer-tagline">
-                Plataforma justa para rifas online — cotas ilimitadas, gratuito para começar e comissão de 8% sobre o arrecadado.
+                Plataforma justa para sorteios online — cotas ilimitadas, gratuito para começar e comissão de 8% sobre o arrecadado.
               </p>
             </div>
 
@@ -21,7 +21,7 @@
               <nav class="landing-footer-nav" aria-label="Links do produto">
                 <a href="/demo" class="landing-footer-link">
                   <i data-lucide="ticket" class="w-4 h-4"></i>
-                  Rifas demo
+                  Sorteios demo
                 </a>
                 <a href="/cadastro" class="landing-footer-link">
                   <i data-lucide="rocket" class="w-4 h-4"></i>
@@ -84,7 +84,7 @@
         <div class="public-footer-divider" aria-hidden="true"></div>
 
         <div class="public-footer-meta">
-          <p class="public-footer-copy">Quer criar suas rifas? <a href="/" class="public-footer-link">Clique Aqui</a></p>
+          <p class="public-footer-copy">Quer criar seus sorteios? <a href="/" class="public-footer-link">Clique Aqui</a></p>
           <p class="public-footer-powered">Powered by Lemon Technology🍋‍🟩</p>
           <a href="<%= tb %>/politica-de-privacidade" class="public-footer-legal">Termos e condições de uso para participante</a>
         </div>
@@ -95,17 +95,17 @@
             <div class="w-8 h-8 rounded-lg btn-brand flex items-center justify-center"><i data-lucide="ticket" class="w-4 h-4 text-white"></i></div>
             <span class="font-bold text-lg"><%= brandName %></span>
           </div>
-          <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">Rifas online com pagamento PIX.</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">Sorteios online com pagamento PIX.</p>
         </div>
         <div>
           <h4 class="font-semibold text-sm mb-3 dark:text-gray-200">Links</h4>
           <div class="space-y-2 text-sm text-gray-500 dark:text-gray-400">
             <% if (tb) { %>
-              <a href="<%= tb %>/" class="block hover:text-indigo-600 transition">Rifas Ativas</a>
+              <a href="<%= tb %>/" class="block hover:text-indigo-600 transition">Sorteios Ativos</a>
               <a href="<%= tb %>/encerradas" class="block hover:text-indigo-600 transition">Ganhadores</a>
               <a href="<%= tb %>/minhas-reservas" class="block hover:text-indigo-600 transition">Minhas Reservas</a>
             <% } else { %>
-              <a href="/demo" class="block hover:text-indigo-600 transition">Rifas Demo</a>
+              <a href="/demo" class="block hover:text-indigo-600 transition">Sorteios Demo</a>
               <a href="/acessar" class="block hover:text-indigo-600 transition">Acessar painel</a>
               <a href="/cadastro" class="block hover:text-indigo-600 transition">Criar Sistema</a>
             <% } %>

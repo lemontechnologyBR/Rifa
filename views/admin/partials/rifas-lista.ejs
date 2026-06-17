@@ -3,10 +3,10 @@
     <div class="admin-onboard-icon">
       <i data-lucide="rocket" class="w-7 h-7"></i>
     </div>
-    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-1">Comece sua primeira rifa</h3>
-    <p class="text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto">Em poucos minutos suas rifas estarão no ar para receber PIX.</p>
+    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-1">Comece seu primeiro sorteio</h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto">Em poucos minutos seus sorteios estarão no ar para receber PIX.</p>
     <button type="button" @click="openWizard()" class="admin-btn-primary inline-flex items-center gap-2 px-6 py-3 text-sm mt-4">
-      <i data-lucide="plus" class="w-4 h-4"></i> Criar primeira rifa
+      <i data-lucide="plus" class="w-4 h-4"></i> Criar primeiro sorteio
     </button>
     <div class="admin-onboard-steps">
       <div class="admin-onboard-step">
@@ -19,7 +19,7 @@
       <div class="admin-onboard-step">
         <span class="admin-onboard-step-num">2</span>
         <div>
-          <p class="font-semibold text-sm">Crie a rifa</p>
+          <p class="font-semibold text-sm">Crie o sorteio</p>
           <p class="text-xs text-gray-500 dark:text-gray-400">Nome, valor da cota e sorteio</p>
         </div>
       </div>
@@ -69,7 +69,7 @@
           </div>
           <div class="flex flex-wrap gap-2 lg:justify-end">
             <a href="<%= adminBase %>/rifas/<%= r.id %>/editar" class="admin-action-btn">
-              <i data-lucide="pencil" class="w-3.5 h-3.5"></i> Editar rifa
+              <i data-lucide="pencil" class="w-3.5 h-3.5"></i> Editar sorteio
             </a>
             <a href="<%= adminBase %>/rifas/<%= r.id %>/participantes" class="admin-action-btn">
               <i data-lucide="list-ordered" class="w-3.5 h-3.5"></i> Números
@@ -79,7 +79,7 @@
             </button>
             <% if (r.status === 'ativa') { %>
               <form method="POST" action="<%= adminBase %>/rifas/<%= r.id %>/sortear" class="inline"
-                onsubmit="return confirm('Finalizar sorteio da rifa <%= r.titulo.replace(/'/g, "\\'") %>? Esta ação não pode ser desfeita.')">
+                onsubmit="return confirm('Realizar sorteio de <%= r.titulo.replace(/'/g, "\\'") %>? Esta ação não pode ser desfeita.')">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <button type="submit" class="admin-action-btn border-amber-300 text-amber-700 dark:border-amber-700 dark:text-amber-300">
                   <i data-lucide="trophy" class="w-3.5 h-3.5"></i> Sortear

@@ -34,7 +34,7 @@
       <div x-show="wizardStep === 1" class="p-6 space-y-4">
         <p class="text-sm text-gray-500 dark:text-gray-400">Defina o prêmio e quantas cotas serão vendidas.</p>
         <div>
-          <label class="admin-label">Nome da rifa *</label>
+          <label class="admin-label">Nome do sorteio *</label>
           <input type="text" name="titulo" required x-model="titulo" placeholder="Ex: iPhone 15 Pro Max 256GB" class="admin-input">
         </div>
         <%- include('rifa-imagem', { adminBase, imagemUrl: '' }) %>
@@ -67,9 +67,9 @@
       </div>
 
       <div x-show="wizardStep === 3" x-cloak class="p-6 space-y-4">
-        <p class="text-sm text-gray-500 dark:text-gray-400">Confira os dados antes de publicar a rifa.</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400">Confira os dados antes de publicar o sorteio.</p>
         <dl class="admin-config-dl">
-          <div><dt>Rifa</dt><dd x-text="titulo"></dd></div>
+          <div><dt>Nome</dt><dd x-text="titulo"></dd></div>
           <div><dt>Cota</dt><dd>R$ <span x-text="fmt(valorCota)"></span> · <span x-text="fmtInt(totalCotas)"></span> cotas</dd></div>
           <div><dt>Sorteio</dt><dd x-text="dataSorteio ? new Date(dataSorteio).toLocaleString('pt-BR') : '—'"></dd></div>
           <div><dt>Recebimento</dt><dd>Chave PIX da Carteira</dd></div>
@@ -86,7 +86,7 @@
         </button>
         <button type="submit" x-show="wizardStep === 3" class="flex-1 admin-btn-primary py-3 text-sm">
           <i data-lucide="rocket" class="w-4 h-4 inline-block mr-1 -mt-0.5"></i>
-          Publicar rifa
+          Publicar sorteio
         </button>
         <button type="button" x-show="wizardStep === 1" @click="modalNovaRifa = false" class="py-3 px-4 rounded-xl border border-gray-200 dark:border-gray-600 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800">
           Cancelar

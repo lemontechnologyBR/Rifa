@@ -6,8 +6,8 @@
 <body class="admin-panel">
   <%- include('partials/nav', {
     active: 'rifas',
-    pageTitle: rifa && rifa.id ? 'Editar rifa' : 'Nova rifa',
-    pageSubtitle: rifa && rifa.titulo ? rifa.titulo : 'Preencha os dados da rifa',
+    pageTitle: rifa && rifa.id ? 'Editar sorteio' : 'Novo sorteio',
+    pageSubtitle: rifa && rifa.titulo ? rifa.titulo : 'Preencha os dados do sorteio',
     tenant, adminBase, tenantBase, adminUsuario
   }) %>
 
@@ -117,7 +117,7 @@
         <% if (rifa && rifa.id) { %>
           <a href="<%= adminBase %>/rifas/<%= rifa.id %>/participantes" class="flex-1 text-center border border-gray-300 font-semibold py-3 rounded-xl hover:bg-gray-50 transition">Participantes</a>
         <% } %>
-        <button type="submit" class="flex-1 admin-btn-primary py-3 text-sm"><%= rifa && rifa.id ? 'Salvar alterações' : 'Criar rifa' %></button>
+        <button type="submit" class="flex-1 admin-btn-primary py-3 text-sm"><%= rifa && rifa.id ? 'Salvar alterações' : 'Criar sorteio' %></button>
       </div>
     </form>
     </div>

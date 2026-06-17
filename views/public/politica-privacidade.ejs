@@ -13,8 +13,8 @@
     <section class="bg-white dark:bg-gray-800/80 rounded-2xl border border-gray-100 dark:border-gray-700/60 p-6 shadow-sm">
       <h2 class="text-lg font-bold dark:text-white mb-3">1. Quem somos</h2>
       <p class="text-sm leading-relaxed">
-        Este sistema de rifas (<strong><%= tenant.nome %></strong>) utiliza a plataforma VouRifar para processar participações e pagamentos.
-        O responsável pelas rifas e pelo atendimento ao participante é o organizador.
+        Este sistema de sorteios (<strong><%= tenant.nome %></strong>) utiliza a plataforma VouRifar para processar participações e pagamentos.
+        O responsável pelos sorteios e pelo atendimento ao participante é o organizador.
       </p>
     </section>
 
@@ -24,7 +24,7 @@
         <li><strong>Nome completo</strong> — identificação do participante e emissão do comprovante.</li>
         <li><strong>CPF</strong> — consulta de reservas, prevenção de fraudes e vínculo com compras anteriores.</li>
         <li><strong>Telefone</strong> — contato sobre pagamento, sorteio ou confirmação da reserva.</li>
-        <li><strong>Dados da transação</strong> — rifa escolhida, números reservados, valores e status do pagamento.</li>
+        <li><strong>Dados da transação</strong> — sorteio escolhido, números reservados, valores e status do pagamento.</li>
       </ul>
     </section>
 
@@ -74,14 +74,14 @@
       <h2 class="text-lg font-bold dark:text-white mb-3">7. Alterações</h2>
       <p class="text-sm leading-relaxed">
         Esta política pode ser atualizada periodicamente. A data da última revisão será indicada abaixo.
-        Recomendamos revisar esta página antes de participar de novas rifas.
+        Recomendamos revisar esta página antes de participar de novos sorteios.
       </p>
       <p class="text-xs text-gray-400 mt-4">Última atualização: <%= new Date().toLocaleDateString('pt-BR') %></p>
     </section>
   </div>
 
   <div class="mt-10 text-center">
-    <a href="<%= tenantBase %>/" class="btn-brand inline-block font-semibold px-6 py-3 rounded-xl shadow-md">Voltar às rifas</a>
+    <a href="<%= tenantBase %>/" class="btn-brand inline-block font-semibold px-6 py-3 rounded-xl shadow-md">Voltar aos sorteios</a>
   </div>
 </div>
 

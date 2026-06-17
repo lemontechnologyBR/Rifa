@@ -15,7 +15,7 @@
     </div>
     <div class="p-6 space-y-4 dark:text-gray-300">
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div class="bg-gray-50 dark:bg-gray-900/40 rounded-xl p-3"><span class="text-xs text-gray-500 block">Rifa</span><strong><%= reserva.rifa.titulo %></strong></div>
+        <div class="bg-gray-50 dark:bg-gray-900/40 rounded-xl p-3"><span class="text-xs text-gray-500 block">Sorteio</span><strong><%= reserva.rifa.titulo %></strong></div>
         <div class="bg-gray-50 dark:bg-gray-900/40 rounded-xl p-3"><span class="text-xs text-gray-500 block">Participante</span><strong><%= reserva.usuario.nome %></strong></div>
         <% if (reserva.usuario.cpf) { %>
         <div class="bg-gray-50 dark:bg-gray-900/40 rounded-xl p-3"><span class="text-xs text-gray-500 block">CPF</span><strong><%= reserva.usuario.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4') %></strong></div>

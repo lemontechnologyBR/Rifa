@@ -168,7 +168,7 @@
 
         <dl class="admin-config-dl mt-2">
           <div><dt>Status</dt><dd><%= tenant.status === 'ativo' ? 'Ativa' : 'Suspensa' %></dd></div>
-          <div><dt>Rifas criadas</dt><dd><%= typeof totalRifas !== 'undefined' ? totalRifas : 0 %></dd></div>
+          <div><dt>Sorteios criados</dt><dd><%= typeof totalRifas !== 'undefined' ? totalRifas : 0 %></dd></div>
           <div><dt>Loja criada em</dt><dd><%= new Date(tenant.createdAt).toLocaleDateString('pt-BR') %></dd></div>
         </dl>
       </section>

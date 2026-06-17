@@ -6,12 +6,12 @@
       <i data-lucide="help-circle" class="w-7 h-7 text-white"></i>
     </div>
     <h1 class="text-3xl sm:text-4xl font-extrabold dark:text-white mb-2">Como funciona</h1>
-    <p class="text-gray-500 dark:text-gray-400">Participar das rifas de <%= tenant.nome %> é simples e seguro.</p>
+    <p class="text-gray-500 dark:text-gray-400">Participar dos sorteios de <%= tenant.nome %> é simples e seguro.</p>
   </div>
 
   <div class="space-y-4 mb-10">
     <% [
-      { icon: 'search', title: '1. Escolha a rifa', text: 'Navegue pelas rifas ativas e abra a que mais te interessar. Veja prêmio, valor da cota e data do sorteio.' },
+      { icon: 'search', title: '1. Escolha o sorteio', text: 'Navegue pelos sorteios ativos e abra o que mais te interessar. Veja prêmio, valor da cota e data do sorteio.' },
       { icon: 'hash', title: '2. Defina a quantidade', text: 'Informe quantas cotas deseja comprar. Os números são sorteados automaticamente entre os disponíveis — você não precisa escolher na grade.' },
       { icon: 'user', title: '3. Preencha seus dados', text: 'Informe nome, CPF e telefone. O CPF é usado para consultar suas reservas em Minhas Reservas.' },
       { icon: 'wallet', title: '4. Pague via PIX', text: 'Após reservar, você recebe o QR Code ou código copia e cola. O pagamento é confirmado automaticamente após a compensação.' },
@@ -40,7 +40,7 @@
   </div>
 
   <div class="flex flex-col sm:flex-row gap-3 justify-center">
-    <a href="<%= tenantBase %>/" class="btn-brand text-center font-semibold px-6 py-3 rounded-xl shadow-md">Ver rifas ativas</a>
+    <a href="<%= tenantBase %>/" class="btn-brand text-center font-semibold px-6 py-3 rounded-xl shadow-md">Ver sorteios ativos</a>
     <a href="<%= tenantBase %>/minhas-reservas" class="text-center font-semibold px-6 py-3 rounded-xl border border-gray-200 dark:border-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 transition">Minhas reservas</a>
   </div>
 </div>

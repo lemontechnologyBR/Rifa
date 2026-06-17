@@ -194,11 +194,11 @@
         Informações
       </h3>
       <p class="text-sm text-gray-400 leading-relaxed mb-4">
-        Participe da rifa LT 33 e concorra a uma Strada dos Sonhos zero km. Pagamento via PIX com confirmação pelo organizador. Após a confirmação, você recebe os números das cotas por WhatsApp.
+        Participe do sorteio LT 33 e concorra a uma Strada dos Sonhos zero km. Pagamento via PIX com confirmação pelo organizador. Após a confirmação, você recebe os números das cotas por WhatsApp.
       </p>
       <button type="button" id="btn-compartilhar" class="w-full py-3 rounded-xl border border-white/10 text-sm font-semibold text-gray-300 hover:bg-white/5 transition flex items-center justify-center gap-2">
         <i data-lucide="share-2" class="w-4 h-4"></i>
-        Compartilhar rifa
+        Compartilhar sorteio
       </button>
     </section>
 
@@ -297,7 +297,7 @@
       const c = calcular(getQtd());
       alert(
         'Simulação PIX\n\n' +
-        'Rifa: ' + CONFIG.rifaNome + '\n' +
+        'Sorteio: ' + CONFIG.rifaNome + '\n' +
         'Cotas: ' + c.qtd + '\n' +
         'Total a pagar: ' + fmt(c.total) + '\n\n' +
         'Em produção, você veria o QR Code PIX aqui.'
@@ -307,7 +307,7 @@
     els.btnCompartilhar.addEventListener('click', () => {
       const url = window.location.href;
       if (navigator.share) {
-        navigator.share({ title: CONFIG.rifaNome, text: 'Participe desta rifa!', url }).catch(() => {});
+        navigator.share({ title: CONFIG.rifaNome, text: 'Participe deste sorteio!', url }).catch(() => {});
       } else {
         alert('Compartilhe este link:\n\n' + url);
       }

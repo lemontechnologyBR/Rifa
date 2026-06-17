@@ -27,7 +27,7 @@
   },
   openWizard() {
     if (!this.carteiraOk) {
-      alert('Configure sua chave PIX na Carteira antes de criar rifas.');
+      alert('Configure sua chave PIX na Carteira antes de criar sorteios.');
       window.location.href = '<%= adminBase %>/carteira';
       return;
     }
@@ -54,7 +54,7 @@
   <%- include('partials/nav', {
     active: 'rifas',
     pageTitle: 'Rifas',
-    pageSubtitle: totalRifas ? totalRifas + ' rifa' + (totalRifas !== 1 ? 's' : '') + ' cadastrada' + (totalRifas !== 1 ? 's' : '') : 'Gerencie suas rifas',
+    pageSubtitle: totalRifas ? totalRifas + ' sorteio' + (totalRifas !== 1 ? 's' : '') + ' cadastrado' + (totalRifas !== 1 ? 's' : '') : 'Gerencie seus sorteios',
     tenant,
     adminBase,
     tenantBase,
@@ -90,7 +90,7 @@
           alert('Link copiado!\n\n' + url);
         }).catch(function () { prompt('Copie o link:', url); });
       } else {
-        prompt('Copie o link da rifa:', url);
+        prompt('Copie o link do sorteio:', url);
       }
     }
 

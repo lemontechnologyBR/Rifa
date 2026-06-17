@@ -47,7 +47,7 @@
       <aside class="hidden lg:block lg:col-span-2 lg:sticky lg:top-24">
         <h2 class="text-2xl font-extrabold mb-3 leading-tight">Configure seu sistema em poucos passos</h2>
         <p class="landing-subtitle text-sm leading-relaxed mb-8">
-          Crie sua loja de rifas, receba PIX automaticamente e compartilhe o link público com seus compradores.
+          Crie sua loja de sorteios, receba PIX automaticamente e compartilhe o link público com seus compradores.
         </p>
         <ol class="onboarding-side-steps space-y-4">
           <li class="onboarding-side-step" :class="{ 'is-active': step === 1, 'is-done': step > 1 }">
@@ -88,9 +88,9 @@
                 </div>
               </template>
             </div>
-            <h1 class="text-xl sm:text-2xl font-extrabold mt-4" x-text="step === 1 ? 'Crie sua conta' : step === 2 ? 'Configure sua loja' : 'Tudo pronto para começar'"></h1>
+            <h1 class="text-xl sm:text-2xl font-extrabold mt-4"               x-text="step === 1 ? 'Crie sua conta' : step === 2 ? 'Configure sua loja' : 'Tudo pronto para começar'"></h1>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1"
-              x-text="step === 1 ? 'Dados do organizador responsável pelo sistema.' : step === 2 ? 'Como seus compradores vão encontrar suas rifas.' : 'Confira os dados antes de criar o sistema.'"></p>
+              x-text="step === 1 ? 'Dados do organizador responsável pelo sistema.' : step === 2 ? 'Como seus compradores vão encontrar seus sorteios.' : 'Confira os dados antes de criar o sistema.'"></p>
           </div>
 
           <% if (erro) { %>
@@ -151,7 +151,7 @@
             <div x-show="step === 2" x-cloak class="space-y-4">
               <div>
                 <label class="onboarding-label">Nome do sistema *</label>
-                <input type="text" required x-model="nomeLoja" @input="onLojaInput()" class="landing-field w-full rounded-xl px-4 py-3 text-sm" placeholder="Rifas do João">
+                <input type="text" required x-model="nomeLoja" @input="onLojaInput()" class="landing-field w-full rounded-xl px-4 py-3 text-sm" placeholder="Sorteios do João">
               </div>
               <div>
                 <label class="onboarding-label">Endereço público (slug) *</label>
@@ -186,7 +186,7 @@
                   </li>
                   <li class="onboarding-next-item">
                     <span class="onboarding-next-icon"><i data-lucide="ticket" class="w-4 h-4"></i></span>
-                    <span>Criar sua primeira rifa em poucos cliques</span>
+                    <span>Criar seu primeiro sorteio em poucos cliques</span>
                   </li>
                   <li class="onboarding-next-item">
                     <span class="onboarding-next-icon"><i data-lucide="share-2" class="w-4 h-4"></i></span>

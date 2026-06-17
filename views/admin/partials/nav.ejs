@@ -23,7 +23,7 @@
       </a>
       <a href="<%= adminBase %>/rifas" class="admin-sidebar-link <%= typeof active !== 'undefined' && active === 'rifas' ? 'is-active' : '' %>">
         <i data-lucide="ticket" class="w-[18px] h-[18px]"></i>
-        Rifas
+        Sorteios
       </a>
       <a href="<%= adminBase %>/carteira" class="admin-sidebar-link <%= typeof active !== 'undefined' && active === 'carteira' ? 'is-active' : '' %>">
         <i data-lucide="wallet" class="w-[18px] h-[18px]"></i>
@@ -77,18 +77,18 @@
       <div class="admin-topbar-actions">
         <a href="<%= tenantBase %>" target="_blank" class="admin-btn-secondary hidden sm:inline-flex">
           <i data-lucide="external-link" class="w-4 h-4"></i>
-          Ver rifas
+          Ver sorteios
         </a>
         <% if (typeof openModal !== 'undefined') { %>
           <button type="button" @click="$dispatch('open-nova-rifa')" class="admin-btn-primary inline-flex items-center gap-2 px-4 py-2.5 text-sm">
             <i data-lucide="plus" class="w-4 h-4"></i>
-            <span class="hidden sm:inline">Nova rifa</span>
-            <span class="sm:hidden">Nova</span>
+            <span class="hidden sm:inline">Novo sorteio</span>
+            <span class="sm:hidden">Novo</span>
           </button>
         <% } else { %>
           <a href="<%= adminBase %>/rifas?nova=1" class="admin-btn-primary inline-flex items-center gap-2 px-4 py-2.5 text-sm">
             <i data-lucide="plus" class="w-4 h-4"></i>
-            <span class="hidden sm:inline">Nova rifa</span>
+            <span class="hidden sm:inline">Novo sorteio</span>
           </a>
         <% } %>
       </div>

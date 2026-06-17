@@ -13,7 +13,7 @@
     <p class="super-metric-hint"><%= metricas.totalOrganizadores %> organizadores</p>
   </article>
   <article class="super-metric">
-    <p class="super-metric-label">Rifas ativas</p>
+    <p class="super-metric-label">Sorteios ativos</p>
     <p class="super-metric-value"><%= metricas.rifasAtivas %></p>
     <p class="super-metric-hint"><%= metricas.totalRifas %> no total</p>
   </article>
@@ -39,7 +39,7 @@
     </div>
     <div class="super-shortcuts">
       <a href="/super/sistemas" class="super-shortcut"><i data-lucide="store" class="w-5 h-5"></i><span>Sistemas</span></a>
-      <a href="/super/rifas" class="super-shortcut"><i data-lucide="ticket" class="w-5 h-5"></i><span>Rifas</span></a>
+      <a href="/super/rifas" class="super-shortcut"><i data-lucide="ticket" class="w-5 h-5"></i><span>Sorteios</span></a>
       <a href="/super/vendas" class="super-shortcut"><i data-lucide="receipt" class="w-5 h-5"></i><span>Vendas</span></a>
       <a href="/super/organizadores" class="super-shortcut"><i data-lucide="users" class="w-5 h-5"></i><span>Organizadores</span></a>
       <a href="/super/plataforma" class="super-shortcut"><i data-lucide="globe" class="w-5 h-5"></i><span>Plataforma</span></a>
@@ -57,7 +57,7 @@
         <li class="super-recent-item">
           <p class="super-recent-name"><%= t.nome %></p>
           <p class="super-recent-meta">/<%= t.slug %> · <%= t.createdAtFmt %><% if (t.orgEmail) { %> · <%= t.orgEmail %><% } %></p>
-          <p class="super-recent-meta"><%= t._count.rifas %> rifa<%= t._count.rifas !== 1 ? 's' : '' %> · <%= t.status %></p>
+          <p class="super-recent-meta"><%= t._count.rifas %> sorteio<%= t._count.rifas !== 1 ? 's' : '' %> · <%= t.status %></p>
         </li>
       <% }); %>
     </ul>

@@ -4,11 +4,11 @@
 <section class="super-panel">
   <div class="super-panel-head">
     <div>
-      <h2 class="super-panel-title">Rifas na plataforma</h2>
-      <p class="super-panel-sub"><%= total %> rifa<%= total !== 1 ? 's' : '' %> · página <%= page %> de <%= paginas %></p>
+      <h2 class="super-panel-title">Sorteios na plataforma</h2>
+      <p class="super-panel-sub"><%= total %> sorteio<%= total !== 1 ? 's' : '' %> · página <%= page %> de <%= paginas %></p>
     </div>
     <form method="GET" action="/super/rifas" class="super-filters">
-      <input type="text" name="q" value="<%= busca %>" placeholder="Buscar rifa ou sistema…" class="super-input">
+      <input type="text" name="q" value="<%= busca %>" placeholder="Buscar sorteio ou sistema…" class="super-input">
       <select name="status" class="super-select">
         <option value="todos" <%= statusFiltro === 'todos' ? 'selected' : '' %>>Todas</option>
         <option value="ativa" <%= statusFiltro === 'ativa' ? 'selected' : '' %>>Ativas</option>
@@ -21,10 +21,10 @@
   <div class="super-table-wrap">
     <table class="super-table">
       <thead>
-        <tr><th>Rifa</th><th>Sistema</th><th>Cota</th><th>Reservas</th><th>Sorteio</th><th>Status</th><th>Ações</th></tr>
+        <tr><th>Sorteio</th><th>Sistema</th><th>Cota</th><th>Reservas</th><th>Data Sorteio</th><th>Status</th><th>Ações</th></tr>
       </thead>
       <tbody>
-        <% if (!rifas.length) { %><tr><td colspan="7" class="super-empty">Nenhuma rifa encontrada.</td></tr><% } %>
+        <% if (!rifas.length) { %><tr><td colspan="7" class="super-empty">Nenhum sorteio encontrado.</td></tr><% } %>
         <% rifas.forEach(function(r) { %>
           <tr>
             <td class="super-tenant-name"><%= r.titulo %></td>
@@ -33,7 +33,7 @@
             <td><%= r._count.reservas %></td>
             <td><%= r.sorteioFmt %></td>
             <td><span class="super-badge super-badge--<%= r.status === 'ativa' ? 'ativo' : 'suspenso' %>"><%= r.status %></span></td>
-            <td><a href="/<%= r.tenant.slug %>/rifas/<%= r.id %>" target="_blank" rel="noopener" class="super-action-link">Ver rifa</a></td>
+            <td><a href="/<%= r.tenant.slug %>/rifas/<%= r.id %>" target="_blank" rel="noopener" class="super-action-link">Ver sorteio</a></td>
           </tr>
         <% }); %>
       </tbody>
@@ -41,7 +41,7 @@
   </div>
   <% if (paginas > 1) { %>
     <div class="super-pagination">
-      <span><%= total %> rifas</span>
+      <span><%= total %> sorteios</span>
       <div class="super-pagination-links">
         <% if (page > 1) { %><a class="super-page-link" href="/super/rifas?page=<%= page - 1 %><%= busca ? '&q=' + encodeURIComponent(busca) : '' %><%= statusFiltro !== 'todos' ? '&status=' + statusFiltro : '' %>">←</a><% } %>
         <% for (var p = Math.max(1, page - 2); p <= Math.min(paginas, page + 2); p++) { %>
