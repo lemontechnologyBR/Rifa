@@ -40,6 +40,22 @@
   const iniciais = nomeExibido.split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase();
 %>
 
+<!-- ══ MINI-HERO DA LOJA ══════════════════════════════════════════ -->
+<% if (tenant.descricao) { %>
+<div class="border-b border-gray-200/60 dark:border-gray-700/50 bg-gray-50/80 dark:bg-gray-900/60">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-3">
+    <% if (tenant.logotipoUrl) { %>
+      <img src="<%= tenant.logotipoUrl %>" alt="<%= tenant.nome %>" class="w-8 h-8 rounded-lg object-cover shrink-0">
+    <% } else { %>
+      <div class="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center text-white text-xs font-bold" style="background:<%= corPrimaria %>">
+        <%= nomeExibido.charAt(0).toUpperCase() %>
+      </div>
+    <% } %>
+    <p class="text-sm text-gray-600 dark:text-gray-300 truncate"><%= tenant.descricao %></p>
+  </div>
+</div>
+<% } %>
+
 <!-- ══ SORTEIOS ══════════════════════════════════════════════════ -->
 <div class="public-site max-w-5xl mx-auto px-4 sm:px-6 py-8 pb-20 pb-safe">
 
