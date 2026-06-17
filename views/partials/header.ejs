@@ -132,7 +132,7 @@
             <div class="leading-tight min-w-0">
               <span class="font-extrabold text-lg block truncate max-w-[11rem] sm:max-w-none" style="color:<%= brandCor %>"><%= brandName %></span>
               <% if (tenant.descricao) { %>
-                <span class="hidden sm:block text-[10px] text-gray-500 dark:text-gray-400 truncate max-w-[14rem]"><%= tenant.descricao %></span>
+                <span class="block text-[10px] text-gray-500 dark:text-gray-400 truncate max-w-[10rem] sm:max-w-[16rem]"><%= tenant.descricao %></span>
               <% } %>
             </div>
           <% } else if (typeof tenant !== 'undefined' && tenant) { %>
@@ -140,7 +140,7 @@
             <div class="leading-tight min-w-0">
               <span class="font-extrabold text-lg block truncate max-w-[11rem] sm:max-w-none" style="color:<%= brandCor %>"><%= brandName %></span>
               <% if (tenant.descricao) { %>
-                <span class="hidden sm:block text-[10px] text-gray-500 dark:text-gray-400 truncate max-w-[14rem]"><%= tenant.descricao %></span>
+                <span class="block text-[10px] text-gray-500 dark:text-gray-400 truncate max-w-[10rem] sm:max-w-[16rem]"><%= tenant.descricao %></span>
               <% } %>
             </div>
           <% } else { %>
