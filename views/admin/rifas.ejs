@@ -13,9 +13,9 @@
   carteiraOk: <%= tenant.pixChave ? 'true' : 'false' %>,
   get taxaCota() { return Math.max(0, this.valorCota) * 0; },
   get compradorPaga() { return Math.max(0, this.valorCota); },
-  get faturamentoTotal() { return Math.max(0, this.valorCota) * 0.90 * Math.max(0, this.totalCotas); },
+  get faturamentoTotal() { return Math.max(0, this.valorCota) * 0.92 * Math.max(0, this.totalCotas); },
   get volumeCompradores() { return this.compradorPaga * Math.max(0, this.totalCotas); },
-  get taxaPlataformaTotal() { return Math.max(0, this.valorCota) * 0.10 * Math.max(0, this.totalCotas); },
+  get taxaPlataformaTotal() { return Math.max(0, this.valorCota) * 0.08 * Math.max(0, this.totalCotas); },
   fmt(v) { return (Math.max(0, v) || 0).toFixed(2).replace('.', ','); },
   fmtInt(v) { return Math.max(0, Math.round(v) || 0).toLocaleString('pt-BR'); },
   resetWizard() {
