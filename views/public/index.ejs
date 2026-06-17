@@ -130,18 +130,29 @@
             </div>
 
             <!-- Barra de progresso -->
-            <div class="mb-5">
-              <div class="flex justify-between text-[11px] text-gray-400 mb-1.5">
-                <span>Cotas vendidas</span>
-                <span class="font-black <%= isQuente ? 'text-orange-500' : 'rifa-brand-text' %>"><%= pct %>%</span>
+            <div class="mb-5 rounded-2xl p-4 <%= isQuente ? 'bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800/40' : isMeio ? 'bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40' : 'bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700' %>">
+              <div class="flex justify-between items-center mb-3">
+                <span class="text-xs font-bold uppercase tracking-wide <%= isQuente ? 'text-orange-600 dark:text-orange-400' : isMeio ? 'text-emerald-700 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400' %>">
+                  <%= isQuente ? '🔥 Quase esgotando!' : isMeio ? '📈 Vendendo bem' : '🎟️ Cotas vendidas' %>
+                </span>
+                <span class="text-2xl font-black <%= isQuente ? 'text-orange-500' : isMeio ? 'text-emerald-600 dark:text-emerald-400' : 'rifa-brand-text' %>"><%= pct %>%</span>
               </div>
-              <div class="h-2.5 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
-                <div class="h-full rounded-full transition-all duration-700 <%= isQuente ? 'progress-hot' : isMeio ? 'progress-mid' : 'progress-low' %>"
-                     style="width:<%= pct %>%"></div>
+              <div class="h-5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden shadow-inner">
+                <div class="h-full rounded-full transition-all duration-700 flex items-center justify-end pr-2 <%= isQuente ? 'progress-hot' : isMeio ? 'progress-mid' : 'progress-low' %>"
+                     style="width:<%= Math.max(pct, 4) %>%; min-width:<%= pct > 0 ? '1.5rem' : '0' %>">
+                  <% if (pct >= 15) { %>
+                    <span class="text-[10px] font-black text-white/90"><%= pct %>%</span>
+                  <% } %>
+                </div>
               </div>
-              <% if (isQuente) { %>
-                <p class="text-[10px] text-orange-500 font-bold mt-1">⚡ Restam apenas <%= rifa.stats.disponiveis.toLocaleString('pt-BR') %> cotas!</p>
-              <% } %>
+              <div class="flex justify-between text-xs mt-2 <%= isQuente ? 'text-orange-500 dark:text-orange-400' : 'text-gray-400 dark:text-gray-500' %>">
+                <span><%= vendidos.toLocaleString('pt-BR') %> vendidas</span>
+                <% if (isQuente) { %>
+                  <span class="font-bold">⚡ só <%= rifa.stats.disponiveis.toLocaleString('pt-BR') %> restam!</span>
+                <% } else { %>
+                  <span><%= rifa.stats.disponiveis.toLocaleString('pt-BR') %> disponíveis</span>
+                <% } %>
+              </div>
             </div>
 
             <!-- Botões -->
