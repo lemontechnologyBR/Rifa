@@ -67,10 +67,26 @@
 .dark .landing-page h3 {
   color: #f9fafb;
 }
+/* Seções com fundo escuro: texto branco */
+.landing-page .landing-dark-section h1,
+.landing-page .landing-dark-section h2,
+.landing-page .landing-dark-section h3,
+.landing-page .landing-dark-section p:not([style]),
 .landing-page .landing-cta-dark h1,
 .landing-page .landing-cta-dark h2,
 .landing-page .landing-cta-dark h3 {
   color: #ffffff;
+}
+/* Seções claras: garantir texto escuro (light) / claro (dark) */
+.landing-page .landing-light-section h1,
+.landing-page .landing-light-section h2,
+.landing-page .landing-light-section h3 {
+  color: #111827;
+}
+.dark .landing-page .landing-light-section h1,
+.dark .landing-page .landing-light-section h2,
+.dark .landing-page .landing-light-section h3 {
+  color: #f9fafb;
 }
 .landing-page .landing-subtitle {
   color: #4b5563;
