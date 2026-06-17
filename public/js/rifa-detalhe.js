@@ -337,19 +337,19 @@
         ${pixBadge}
         <p>Reserva <strong>#${data.reservaId}</strong></p>
         <p><strong>${nums.length}</strong> cota(s) — números: <strong>${numsDisplay}</strong></p>
-        <p>Total PIX: <strong>R$ ${(data.valorTotal * 1.05).toFixed(2).replace('.', ',')}</strong></p>
+        <p>Total PIX: <strong>R$ ${(data.valorTotal || 0).toFixed(2).replace('.', ',')}</strong></p>
         ${data.bonusUsado ? `<p class="text-green-600">${data.bonusUsado} cota(s) bônus aplicada(s)</p>` : ''}
         <div class="bg-amber-50 dark:bg-amber-900/30 rounded-xl p-3 mt-3 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-sm text-center">
           ⏱️ Pague em até <strong>${minutosReserva} min</strong> — expira em <strong id="pix-expira-timer">--:--</strong>
         </div>
-        <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-3 mt-3 text-left text-sm">
-          <p class="font-semibold mb-2">${data.instrucoes || 'PIX Copia e Cola:'}</p>
-          <textarea readonly class="w-full text-xs p-2 rounded border dark:bg-gray-800 dark:text-white" rows="3" id="pix-copia-cola">${data.copiaCola || data.payloadPix}</textarea>
-          <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('pix-copia-cola').value);showToast('PIX copiado!','success')"
-            class="mt-2 w-full bg-blue-600 text-white text-xs py-2 rounded-lg">📋 Copiar PIX</button>
-          <img src="${data.qrCodeUrl}" alt="QR Code PIX" class="mx-auto mt-2 rounded-lg max-w-[220px]">
-          <p class="text-xs mt-2 text-gray-500">Código: ${data.codigoPagamento}</p>
-          <p id="status-pagamento" class="text-xs mt-2 text-yellow-600 font-semibold">⏳ Aguardando pagamento...</p>
+        <div class="bg-white dark:bg-gray-900 rounded-xl p-4 mt-3 text-center">
+          <p class="text-xs text-gray-400 uppercase font-bold tracking-wide mb-3">Escaneie o QR Code</p>
+          ${data.qrCodeUrl ? `<img src="${data.qrCodeUrl}" alt="QR Code PIX" class="mx-auto rounded-2xl shadow-lg border-4 border-white dark:border-gray-800 mb-3" style="max-width:200px;width:100%">` : ''}
+          <div class="flex items-center gap-2 my-2"><div class="flex-1 h-px bg-gray-200 dark:bg-gray-700"></div><span class="text-xs text-gray-400">ou</span><div class="flex-1 h-px bg-gray-200 dark:bg-gray-700"></div></div>
+          <textarea readonly class="sr-only" id="pix-copia-cola">${data.copiaCola || data.payloadPix || ''}</textarea>
+          <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('pix-copia-cola').value).then(function(){var b=document.querySelector('#modal-sucesso .pix-copy-btn');if(b){b.textContent='✅ Copiado!';b.style.background='#059669';setTimeout(function(){b.textContent='📋 Copiar código PIX';b.style.background='';},2000);}}).catch(function(){showToast('Copie manualmente','error');})"
+            class="pix-copy-btn w-full btn-brand text-sm py-2.5 rounded-xl font-semibold">📋 Copiar código PIX</button>
+          <p id="status-pagamento" class="text-xs mt-3 text-amber-600 dark:text-amber-400 font-semibold">⏳ Aguardando pagamento...</p>
         </div>`;
       document.getElementById('link-comprovante').href = `${tenantPath}/comprovante/${data.reservaId}`;
       document.getElementById('modal-sucesso').classList.remove('hidden');

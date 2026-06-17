@@ -242,7 +242,9 @@
       numerosReservados = [];
       modal.classList.add('hidden');
       document.body.classList.remove('modal-open');
-      window.location.href = tenantBase + '/comprovante/' + data.reservaId;
+
+      // Mostrar modal de sucesso com QR Code em vez de redirecionar
+      exibirModalSucesso(data);
     } catch (err) {
       await liberarReserva();
       showToast(err.message, 'error');
@@ -251,4 +253,79 @@
       atualizarResumo();
     }
   });
+  function exibirModalSucesso(data) {
+    const ms = document.getElementById('modal-sucesso-index');
+    if (!ms) { window.location.href = tenantBase + '/comprovante/' + data.reservaId; return; }
+
+    const nums = data.numeros || [];
+    const numsDisplay = nums.length <= 18
+      ? nums.join(', ')
+      : nums.slice(0, 16).join(', ') + '… (+' + (nums.length - 16) + ')';
+
+    const expiraEm = data.expiraEm ? new Date(data.expiraEm).getTime() : Date.now() + 10 * 60 * 1000;
+
+    ms.querySelector('#ms-nums').textContent = numsDisplay;
+    ms.querySelector('#ms-total').textContent = 'R$ ' + (data.valorTotal || 0).toFixed(2).replace('.', ',');
+    ms.querySelector('#ms-qtd').textContent = nums.length;
+    ms.querySelector('#ms-id').textContent = '#' + data.reservaId;
+
+    const qrImg = ms.querySelector('#ms-qrcode');
+    if (qrImg && data.qrCodeUrl) { qrImg.src = data.qrCodeUrl; qrImg.classList.remove('hidden'); }
+
+    const pixData = data.copiaCola || data.payloadPix || '';
+    const copyBtn = ms.querySelector('#ms-copiar');
+    if (copyBtn) {
+      copyBtn.onclick = function() {
+        navigator.clipboard.writeText(pixData).then(function() {
+          copyBtn.textContent = '✅ Copiado!';
+          copyBtn.style.background = '#059669';
+          setTimeout(function(){ copyBtn.textContent = '📋 Copiar código PIX'; copyBtn.style.background = ''; }, 2000);
+        }).catch(function(){ alert('Copie manualmente: ' + pixData); });
+      };
+    }
+
+    const linkComp = ms.querySelector('#ms-ver-comprovante');
+    if (linkComp) linkComp.href = tenantBase + '/comprovante/' + data.reservaId;
+
+    ms.classList.remove('hidden');
+    document.body.classList.add('modal-open');
+
+    // Countdown expiração
+    const timerEl = ms.querySelector('#ms-timer');
+    if (timerEl) {
+      const iv = setInterval(function() {
+        const diff = expiraEm - Date.now();
+        if (diff <= 0) { timerEl.textContent = '00:00'; clearInterval(iv); return; }
+        const min = Math.floor(diff / 60000);
+        const seg = Math.floor((diff % 60000) / 1000);
+        timerEl.textContent = String(min).padStart(2, '0') + ':' + String(seg).padStart(2, '0');
+      }, 1000);
+    }
+
+    // Polling status
+    let poll = 0;
+    const statusEl = ms.querySelector('#ms-status-pix');
+    const pollIv = setInterval(function() {
+      poll++;
+      if (poll > 60) { clearInterval(pollIv); return; }
+      fetch(tenantBase + '/api/reservas/' + data.reservaId + '/status', {
+        credentials: 'same-origin',
+        headers: { 'ngrok-skip-browser-warning': 'true', 'X-Requested-With': 'XMLHttpRequest' }
+      }).then(function(r){ return r.json(); }).then(function(d) {
+        if (d.status === 'confirmado') {
+          clearInterval(pollIv);
+          if (statusEl) { statusEl.textContent = '✅ Pagamento confirmado!'; statusEl.className = 'text-sm font-bold text-emerald-600 text-center mt-2'; }
+          setTimeout(function(){ window.location.href = tenantBase + '/comprovante/' + data.reservaId; }, 1500);
+        }
+        if (d.status === 'expirado') { clearInterval(pollIv); location.reload(); }
+      }).catch(function(){});
+    }, 5000);
+
+    ms.querySelector('#ms-fechar')?.addEventListener('click', function() {
+      clearInterval(pollIv);
+      ms.classList.add('hidden');
+      document.body.classList.remove('modal-open');
+      location.reload();
+    });
+  }
 })();
