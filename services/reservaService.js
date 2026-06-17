@@ -164,7 +164,7 @@ const ReservaService = {
       copiaCola: payload,
       payloadPix: payload,
       qrCodeUrl: `https://chart.googleapis.com/chart?chs=250x250&cht=qr&chl=${encodeURIComponent(payload)}`,
-      instrucoes: 'Realize o PIX e aguarde confirmação manual do administrador.'
+      instrucoes: 'Escaneie o QR Code ou copie o código — confirmação automática em instantes.'
     };
   },
 

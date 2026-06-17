@@ -49,15 +49,11 @@
       <% } else if (reserva.statusPagamento === 'pendente' && pagamento) { %>
         <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-4 border border-yellow-200 dark:border-yellow-800">
           <p class="font-semibold mb-1">💳 PIX</p>
-          <p class="text-xs text-gray-600 dark:text-gray-400 mb-3"><%= pagamento.instrucoes %></p>
+          <p class="text-xs text-gray-600 dark:text-gray-400 mb-3">Escaneie o QR Code ou copie o código — confirmação <strong>automática</strong> em instantes.</p>
           <textarea readonly id="pix-copia-cola" class="input-field text-xs mobile-text-wrap" rows="4"><%= pagamento.copiaCola %></textarea>
           <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('pix-copia-cola').value);alert('PIX copiado!')"
             class="mt-2 w-full btn-brand text-sm py-2.5 rounded-xl">📋 Copiar código PIX</button>
           <img src="<%= pagamento.qrCodeUrl %>" alt="QR Code PIX" class="mx-auto mt-3 rounded-xl max-w-[240px] shadow-md">
-          <p class="text-xs mt-2 text-center text-gray-500">Código: <%= pagamento.codigoPagamento %></p>
-          <% if (pagamento.chavePix) { %>
-            <p class="text-xs mt-2 text-gray-500 text-center">Chave PIX: <%= pagamento.chavePix %></p>
-          <% } %>
           <p class="text-xs mt-2 text-center text-amber-600 dark:text-amber-400" id="status-pag-pix">⏳ Aguardando pagamento PIX…</p>
           <script>
             (function(){
