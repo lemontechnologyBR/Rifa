@@ -64,6 +64,7 @@ admin.get('/', requireOrganizador, organizadorController.dashboard);
 admin.get('/rifas', requireOrganizador, organizadorController.listarRifas);
 admin.get('/carteira', requireOrganizador, organizadorController.carteiraForm);
 admin.post('/carteira', requireOrganizador, organizadorController.salvarCarteira);
+admin.post('/carteira/saque', requireOrganizador, organizadorController.solicitarSaque);
 admin.get('/config', requireOrganizador, organizadorController.configForm);
 admin.post('/config', requireOrganizador, organizadorController.salvarConfig);
 admin.get('/logs', requireOrganizador, organizadorController.logs);

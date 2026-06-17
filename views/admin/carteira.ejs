@@ -62,36 +62,42 @@
 
     <%
       const saldoDisp = resumo.saldoConfirmado * 0.95;
-      const podeAutoSaque = saldoDisp >= 500;
+      const saqueGratis = saldoDisp >= 500;
+      const podeSacar = saldoDisp >= 50;
+      const taxaSaque = saqueGratis ? 0 : 2.50;
+      const saldoLiquido = podeSacar ? (saqueGratis ? saldoDisp : saldoDisp - taxaSaque) : 0;
     %>
-    <div class="admin-panel-card p-5 mb-6 border-l-4 <%= podeAutoSaque ? 'border-emerald-500' : 'border-amber-400' %>">
+    <div class="admin-panel-card p-5 mb-6 border-l-4 <%= saqueGratis ? 'border-emerald-500' : podeSacar ? 'border-violet-400' : 'border-gray-300 dark:border-gray-700' %>">
       <div class="flex flex-col sm:flex-row sm:items-center gap-4">
         <div class="flex items-start gap-3 flex-1">
-          <div class="w-10 h-10 rounded-xl <%= podeAutoSaque ? 'bg-emerald-100 dark:bg-emerald-900/40' : 'bg-amber-100 dark:bg-amber-900/30' %> flex items-center justify-center shrink-0">
-            <i data-lucide="<%= podeAutoSaque ? 'arrow-down-to-line' : 'clock' %>" class="w-5 h-5 <%= podeAutoSaque ? 'text-emerald-600' : 'text-amber-600' %>"></i>
+          <div class="w-10 h-10 rounded-xl <%= saqueGratis ? 'bg-emerald-100 dark:bg-emerald-900/40' : podeSacar ? 'bg-violet-100 dark:bg-violet-900/30' : 'bg-gray-100 dark:bg-gray-800' %> flex items-center justify-center shrink-0">
+            <i data-lucide="<%= saqueGratis ? 'arrow-down-to-line' : podeSacar ? 'wallet' : 'clock' %>" class="w-5 h-5 <%= saqueGratis ? 'text-emerald-600' : podeSacar ? 'text-violet-600' : 'text-gray-400' %>"></i>
           </div>
           <div>
-            <p class="font-bold text-sm <%= podeAutoSaque ? 'text-emerald-800 dark:text-emerald-300' : 'text-amber-800 dark:text-amber-300' %>">
-              <% if (podeAutoSaque) { %>
-                ✅ Saque automático disponível — R$ <%= saldoDisp.toFixed(2).replace('.', ',') %>
-              <% } else { %>
-                ⏳ Acumule R$ 500,00 para saque gratuito — faltam R$ <%= Math.max(0, 500 - saldoDisp).toFixed(2).replace('.', ',') %>
-              <% } %>
-            </p>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              <% if (podeAutoSaque) { %>
-                Seu saldo na Woovi é sacado automaticamente todo dia às <strong>19h</strong> para sua chave PIX cadastrada — sem custo.
-              <% } else { %>
-                Saques abaixo de R$ 500,00 têm taxa de <strong>R$ 1,00</strong> cobrada pela Woovi. Acumule R$ 500,00 para saque diário gratuito.
-              <% } %>
-            </p>
+            <% if (saqueGratis) { %>
+              <p class="font-bold text-sm text-emerald-800 dark:text-emerald-300">✅ Saque gratuito disponível — R$ <%= saldoDisp.toFixed(2).replace('.', ',') %></p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Saldo acima de R$ 500,00 — <strong>saque sem taxa</strong>. Você receberá R$ <strong><%= saldoDisp.toFixed(2).replace('.', ',') %></strong> na sua chave PIX.</p>
+            <% } else if (podeSacar) { %>
+              <p class="font-bold text-sm text-violet-800 dark:text-violet-300">💰 Saque disponível — R$ <%= saldoDisp.toFixed(2).replace('.', ',') %></p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Taxa de saque: <strong>R$ 2,50</strong>. Você receberá <strong>R$ <%= saldoLiquido.toFixed(2).replace('.', ',') %></strong> na sua chave PIX. Saques acima de R$ 500,00 são gratuitos.</p>
+            <% } else { %>
+              <p class="font-bold text-sm text-gray-600 dark:text-gray-400">⏳ Saldo insuficiente para saque</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Mínimo para saque: <strong>R$ 50,00</strong>. Disponível: R$ <%= saldoDisp.toFixed(2).replace('.', ',') %>. Faltam R$ <%= Math.max(0, 50 - saldoDisp).toFixed(2).replace('.', ',') %>.</p>
+            <% } %>
           </div>
         </div>
-        <a href="https://app.woovi.com" target="_blank" rel="noopener"
-           class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm font-semibold hover:bg-gray-200 dark:hover:bg-gray-700 transition shrink-0">
-          <i data-lucide="external-link" class="w-4 h-4"></i>
-          Acessar Woovi
-        </a>
+        <% if (podeSacar && tenant.pixChave) { %>
+        <form method="POST" action="<%= adminBase %>/carteira/saque" onsubmit="return confirm('Confirmar saque de R$ <%= saldoLiquido.toFixed(2).replace('.', ',') %> para sua chave PIX?')">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit"
+            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl <%= saqueGratis ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-violet-600 hover:bg-violet-700' %> text-white text-sm font-bold transition shrink-0 shadow">
+            <i data-lucide="arrow-down-to-line" class="w-4 h-4"></i>
+            Sacar agora
+          </button>
+        </form>
+        <% } else if (!tenant.pixChave) { %>
+        <span class="text-xs text-gray-400 shrink-0">Configure a chave PIX para sacar</span>
+        <% } %>
       </div>
     </div>
 
@@ -117,7 +123,7 @@
           <div class="admin-config-section-icon pix"><img src="/img/pix.svg?v=2" alt="PIX" width="40" height="40"></div>
           <div>
             <h2 class="font-bold text-base">Sua chave PIX</h2>
-            <p class="text-sm text-gray-500 dark:text-gray-400">A VouRifar processa os pagamentos por você. Informe apenas onde quer receber.</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">A plataforma processa os pagamentos por você. Informe apenas onde quer receber.</p>
           </div>
         </div>
 
@@ -204,15 +210,15 @@
             </li>
             <li class="flex items-start gap-2.5">
               <span class="w-5 h-5 rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-400 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
-              <span><strong class="text-gray-700 dark:text-gray-200">95%</strong> acumula na sua subconta Woovi — a plataforma retém 5%</span>
+              <span><strong class="text-gray-700 dark:text-gray-200">95%</strong> acumula no seu saldo — a plataforma retém 5%</span>
             </li>
             <li class="flex items-start gap-2.5">
               <span class="w-5 h-5 rounded-full bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-400 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">4</span>
-              <span>Com <strong class="text-gray-700 dark:text-gray-200">R$ 500+</strong> na subconta: saque automático todo dia às <strong class="text-gray-700 dark:text-gray-200">19h grátis</strong> para sua chave PIX</span>
+              <span>Clique em <strong class="text-gray-700 dark:text-gray-200">"Sacar agora"</strong> para receber na sua chave PIX</span>
             </li>
             <li class="flex items-start gap-2.5">
-              <span class="w-5 h-5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">$</span>
-              <span>Abaixo de R$ 500: saque manual pela Woovi com taxa de <strong class="text-gray-700 dark:text-gray-200">R$ 1,00</strong></span>
+              <span class="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">✓</span>
+              <span>Saldo <strong class="text-gray-700 dark:text-gray-200">≥ R$ 500,00</strong>: saque gratuito. Abaixo: taxa de <strong class="text-gray-700 dark:text-gray-200">R$ 2,50</strong></span>
             </li>
           </ol>
         </div>
@@ -222,22 +228,22 @@
           <ul class="text-sm space-y-2">
             <li class="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
               <i data-lucide="check-circle-2" class="w-4 h-4 shrink-0"></i>
-              <span><strong>Grátis</strong> — saldo ≥ R$ 500,00 (automático às 19h)</span>
+              <span><strong>Grátis</strong> — saldo ≥ R$ 500,00</span>
             </li>
             <li class="flex items-center gap-2 text-amber-700 dark:text-amber-400">
               <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
-              <span><strong>R$ 1,00</strong> — saque manual abaixo de R$ 500,00</span>
+              <span><strong>R$ 2,50</strong> — saque abaixo de R$ 500,00</span>
             </li>
             <li class="flex items-center gap-2 text-gray-500 dark:text-gray-400">
-              <i data-lucide="clock" class="w-4 h-4 shrink-0"></i>
-              <span>Saldo mínimo de saque: R$ 1,01</span>
+              <i data-lucide="arrow-up" class="w-4 h-4 shrink-0"></i>
+              <span>Saldo mínimo para saque: <strong>R$ 50,00</strong></span>
             </li>
           </ul>
         </div>
 
         <div class="admin-tip !mb-0">
           <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600 shrink-0"></i>
-          <span>Cada loja VouRifar usa uma chave PIX exclusiva. A mesma chave não pode ser cadastrada em duas lojas.</span>
+          <span>Cada conta usa uma chave PIX exclusiva. A mesma chave não pode ser cadastrada em dois sistemas.</span>
         </div>
       </aside>
     </div>

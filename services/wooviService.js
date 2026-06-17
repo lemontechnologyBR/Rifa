@@ -195,6 +195,44 @@ const WooviService = {
       console.error(`[Woovi] consultarStatus(${correlationID}):`, err.message);
       return null;
     }
+  },
+
+  /**
+   * Solicita saque integral da subconta do organizador para a chave PIX cadastrada.
+   * Endpoint: POST /subaccount/{pixKey}/withdraw
+   * Retorna os dados da transação ou lança erro com mensagem amigável.
+   */
+  async sacarSubconta(tenant) {
+    if (!this.isConfigured(tenant)) {
+      throw new Error('Configure sua chave PIX antes de solicitar o saque.');
+    }
+
+    const pixKey = encodeURIComponent(tenant.pixChave);
+    try {
+      const data = await this._request(`/subaccount/${pixKey}/withdraw`, {
+        method: 'POST',
+        body: JSON.stringify({})
+      });
+      const tx = data?.transaction || data;
+      console.log(`[Woovi] Saque subconta ${tenant.pixChave}: status=${tx?.status}, valor=${tx?.value}`);
+      return {
+        status: tx?.status || 'CREATED',
+        value: tx?.value || 0,
+        correlationID: tx?.correlationID || null
+      };
+    } catch (err) {
+      const msg = String(err.message || '').toLowerCase();
+      if (msg.includes('not_enough_balance') || msg.includes('saldo insuficiente') || msg.includes('balance')) {
+        throw new Error('Saldo insuficiente para saque. Verifique o saldo disponível.');
+      }
+      if (msg.includes('withdraw_blocked') || msg.includes('blocked')) {
+        throw new Error('Saque bloqueado. Verifique se a chave PIX está válida e ativa no seu banco.');
+      }
+      if (msg.includes('pix_key_info_not_found') || msg.includes('invalid_pix_key')) {
+        throw new Error('Chave PIX inválida ou não encontrada. Atualize sua chave PIX na Carteira.');
+      }
+      throw new Error(`Não foi possível processar o saque: ${err.message}`);
+    }
   }
 };
 

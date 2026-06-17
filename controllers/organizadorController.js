@@ -196,6 +196,35 @@ const organizadorController = {
     }
   },
 
+  async solicitarSaque(req, res) {
+    try {
+      const WooviService = require('../services/wooviService');
+      const CarteiraService = require('../services/carteiraService');
+      const { ORGANIZADOR_PERCENTUAL } = require('../lib/config');
+
+      if (!WooviService.isConfigured(req.tenant)) {
+        return res.redirect(`/${req.tenant.slug}/admin/carteira?erro=${encodeURIComponent('Configure sua chave PIX antes de sacar.')}`);
+      }
+
+      // Verificar saldo mínimo (R$50 disponível para saque)
+      const resumo = await CarteiraService.obterResumo(req.tenant.id);
+      const saldoDisp = resumo.saldoConfirmado * ORGANIZADOR_PERCENTUAL;
+
+      if (saldoDisp < 50) {
+        return res.redirect(`/${req.tenant.slug}/admin/carteira?erro=${encodeURIComponent(`Saldo insuficiente. Mínimo para saque: R$ 50,00. Disponível: R$ ${saldoDisp.toFixed(2).replace('.', ',')}.`)}`);
+      }
+
+      const tx = await WooviService.sacarSubconta(req.tenant);
+
+      const valorFmt = tx.value ? `R$ ${(tx.value / 100).toFixed(2).replace('.', ',')}` : '';
+      const msg = `Saque solicitado com sucesso! ${valorFmt ? 'Valor: ' + valorFmt + '. ' : ''}O valor chegará na sua chave PIX em instantes.`;
+
+      res.redirect(`/${req.tenant.slug}/admin/carteira?msg=${encodeURIComponent(msg)}`);
+    } catch (err) {
+      res.redirect(`/${req.tenant.slug}/admin/carteira?erro=${encodeURIComponent(err.message)}`);
+    }
+  },
+
   novaRifaForm(req, res) {
     res.redirect(`/${req.tenant.slug}/admin/rifas?nova=1`);
   },
