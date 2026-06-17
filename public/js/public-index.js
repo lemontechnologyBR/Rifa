@@ -103,8 +103,19 @@
     const min = qtdMinima();
     if (els.btnMenos) els.btnMenos.disabled = qtdCotas <= min;
     if (els.btnMais) els.btnMais.disabled = qtdCotas >= maxQtd;
-    const abaixoMin = subtotal < COMPRA_MIN_REAIS;
+    const abaixoMin = subtotal < COMPRA_MIN_REAIS - 0.001;
     if (els.btnPix) els.btnPix.disabled = maxQtd === 0 || comprando || abaixoMin;
+
+    const avisoEl = document.getElementById('modal-aviso-compra-minima');
+    if (avisoEl) {
+      if (abaixoMin && maxQtd > 0) {
+        const falta = COMPRA_MIN_REAIS - subtotal;
+        avisoEl.textContent = `Mínimo R$ ${COMPRA_MIN_REAIS.toFixed(2).replace('.', ',')} — faltam R$ ${falta.toFixed(2).replace('.', ',')}`;
+        avisoEl.classList.remove('hidden');
+      } else {
+        avisoEl.classList.add('hidden');
+      }
+    }
   }
 
   function parseFaixas(raw) {
