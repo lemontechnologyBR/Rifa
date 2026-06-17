@@ -86,7 +86,7 @@ const apiController = {
       const nums = numeros.map(Number);
       const bonusUsado = await IndicacaoService.consumirBonus(usuario.id, nums.length);
       const valorTotal = RifaService.calcularValor(rifa.faixasDesconto, rifa.valorCota, nums.length, bonusUsado);
-      if (valorTotal < 6.50) return res.status(400).json({ erro: `Compra mínima de R$ 6,50. Selecione pelo menos ${Math.ceil(6.50 / rifa.valorCota)} cotas.` });
+      if (valorTotal < 10.50) return res.status(400).json({ erro: `Compra mínima de R$ 10,50. Selecione pelo menos ${Math.ceil(10.50 / rifa.valorCota)} cotas.` });
       const codigoIndicacao = req.session.codigoIndicacao || req.body.codigo_indicacao || null;
 
       const { reservaId } = await NumeroService.confirmarCompra(

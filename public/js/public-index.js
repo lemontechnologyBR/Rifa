@@ -70,7 +70,7 @@
     return { subtotal, taxa: 0, total: subtotal };
   }
 
-  const COMPRA_MIN_REAIS = 6.50;
+  const COMPRA_MIN_REAIS = 10.50;
 
   function qtdMinima() {
     if (!rifaAtual || rifaAtual.valorCota <= 0) return 1;
