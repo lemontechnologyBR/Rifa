@@ -52,16 +52,15 @@
   -webkit-background-clip: text; background-clip: text; color: transparent;
   animation: shimmer 4s linear infinite;
 }
+/* Badge flutuante: glassmorphism fixo — independe de dark/light */
 .landing-notify {
-  backdrop-filter: blur(12px);
-  background: rgba(255,255,255,0.92);
-  border: 1px solid rgba(16,185,129,0.25);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  backdrop-filter: blur(16px) saturate(1.6);
+  -webkit-backdrop-filter: blur(16px) saturate(1.6);
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.22);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.15);
 }
-.dark .landing-notify {
-  background: rgba(17,24,39,0.85);
-  border-color: rgba(16,185,129,0.3);
-}
+.landing-notify p { color: #fff !important; }
 .prize-emoji-card {
   transition: transform .2s, box-shadow .2s;
 }
@@ -141,12 +140,13 @@
         <!-- Direita: elementos flutuantes + números -->
         <div class="relative flex items-center justify-center min-h-[420px]">
 
-          <!-- Card central: arrecadação -->
+          <!-- Card central: PIX direto -->
           <div class="relative z-10 text-center pop-in pop-in-1">
             <div class="inline-flex flex-col items-center justify-center w-52 h-52 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 shadow-2xl shadow-emerald-500/40 float-a">
-              <span class="text-5xl font-black text-white leading-none">95%</span>
-              <span class="text-emerald-100 text-sm font-bold mt-1">é seu</span>
-              <span class="text-emerald-200 text-xs mt-0.5">do arrecadado</span>
+              <span class="text-4xl mb-1">💸</span>
+              <span class="text-3xl font-black text-white leading-none">PIX</span>
+              <span class="text-emerald-100 text-sm font-bold mt-1">automático</span>
+              <span class="text-emerald-200 text-xs mt-1 px-3 text-center">direto na sua chave</span>
             </div>
           </div>
 
@@ -156,8 +156,8 @@
               <div class="flex items-center gap-2.5">
                 <span class="text-2xl">💰</span>
                 <div>
-                  <p class="text-xs font-bold text-gray-800 dark:text-white">PIX confirmado!</p>
-                  <p class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">+ R$ 10,00 recebido</p>
+                  <p class="text-xs font-bold">PIX confirmado!</p>
+                  <p class="text-[11px] font-semibold" style="color:#6ee7b7">+ R$ 10,00 recebido</p>
                 </div>
               </div>
             </div>
@@ -169,8 +169,8 @@
               <div class="flex items-center gap-2.5">
                 <span class="text-2xl">🎉</span>
                 <div>
-                  <p class="text-xs font-bold text-gray-800 dark:text-white">Cota vendida!</p>
-                  <p class="text-[11px] text-violet-600 dark:text-violet-400 font-semibold">Nº 0437 reservado</p>
+                  <p class="text-xs font-bold">Cota vendida!</p>
+                  <p class="text-[11px] font-semibold" style="color:#c4b5fd">Nº 0437 reservado</p>
                 </div>
               </div>
             </div>
@@ -182,8 +182,8 @@
               <div class="flex items-center gap-2.5">
                 <span class="text-2xl">🏆</span>
                 <div>
-                  <p class="text-xs font-bold text-gray-800 dark:text-white">Sorteio encerrado</p>
-                  <p class="text-[11px] text-amber-600 dark:text-amber-400 font-semibold">R$ 4.750 arrecadado</p>
+                  <p class="text-xs font-bold">Sorteio encerrado</p>
+                  <p class="text-[11px] font-semibold" style="color:#fcd34d">R$ 4.750 arrecadado</p>
                 </div>
               </div>
             </div>
@@ -195,8 +195,8 @@
               <div class="flex items-center gap-2.5">
                 <span class="text-2xl">🏦</span>
                 <div>
-                  <p class="text-xs font-bold text-gray-800 dark:text-white">Saque realizado</p>
-                  <p class="text-[11px] text-sky-600 dark:text-sky-400 font-semibold">PIX na hora</p>
+                  <p class="text-xs font-bold">Saque realizado</p>
+                  <p class="text-[11px] font-semibold" style="color:#7dd3fc">PIX na hora</p>
                 </div>
               </div>
             </div>
