@@ -238,6 +238,77 @@ body .glass-nav {
     <% } %>
 
     <% } %>
+
+    <!-- ══ ENCERRADAS ══════════════════════════════════════════ -->
+    <% if (typeof rifasEncerradas !== 'undefined' && rifasEncerradas.length > 0) { %>
+    <div style="margin-top:32px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:16px;">🏁</span>
+          <h2 style="font-size:16px;font-weight:900;color:#fff;margin:0;">Encerradas</h2>
+          <span style="font-size:12px;color:#6b7280;">concluídas</span>
+        </div>
+        <a href="<%= tenantBase %>/encerradas" style="font-size:12px;color:#22c55e;font-weight:700;text-decoration:none;">Ver todas →</a>
+      </div>
+
+      <% rifasEncerradas.forEach(function(rifa) { %>
+      <a href="<%= tenantBase %>/rifas/<%= rifa.id %>" style="display:flex;align-items:stretch;background:#1a1a2e;border:1px solid rgba(255,255,255,.07);border-radius:12px;overflow:hidden;margin-bottom:8px;text-decoration:none;transition:border-color .15s;" onmouseover="this.style.borderColor='rgba(255,255,255,.2)'" onmouseout="this.style.borderColor='rgba(255,255,255,.07)'">
+        <!-- Thumb -->
+        <div style="width:90px;height:76px;flex-shrink:0;overflow:hidden;">
+          <% if (rifa.imagemUrl) { %>
+            <img src="<%= rifa.imagemUrl %>" alt="<%= rifa.titulo %>" style="width:100%;height:100%;object-fit:cover;display:block;filter:grayscale(30%);">
+          <% } else { %>
+            <div style="width:100%;height:100%;background:#111827;display:flex;align-items:center;justify-content:center;font-size:1.8rem;">🏆</div>
+          <% } %>
+        </div>
+        <!-- Info -->
+        <div style="flex:1;padding:10px 14px;display:flex;flex-direction:column;justify-content:center;min-width:0;">
+          <h3 style="font-size:13px;font-weight:800;color:#9ca3af;margin:0 0 3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><%= rifa.titulo %></h3>
+          <p style="font-size:11px;color:#6b7280;margin:0 0 6px;"><%= new Date(rifa.dataSorteio).toLocaleDateString('pt-BR') %></p>
+          <% if (rifa.ganhadorNome) { %>
+            <span style="font-size:11px;color:#22c55e;font-weight:700;">🏆 Ganhador: <%= rifa.ganhadorNome %></span>
+          <% } %>
+          <span style="display:inline-block;background:rgba(107,114,128,.15);border:1px solid rgba(107,114,128,.2);color:#6b7280;padding:2px 8px;border-radius:9999px;font-size:10px;font-weight:800;margin-top:4px;width:fit-content;">Concluído</span>
+        </div>
+      </a>
+      <% }) %>
+    </div>
+    <% } %>
+
+    <!-- ══ GANHADORES ══════════════════════════════════════════ -->
+    <%
+      const ganhadores = (typeof rifasEncerradas !== 'undefined' ? rifasEncerradas : [])
+        .filter(function(r){ return r.ganhadorNome; })
+        .map(function(r){ return { nome: r.ganhadorNome, titulo: r.titulo, numero: r.numeroSorteado, data: r.updatedAt || r.dataSorteio }; });
+    %>
+    <% if (ganhadores.length > 0) { %>
+    <div style="margin-top:32px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+        <span style="font-size:16px;">🎉</span>
+        <h2 style="font-size:16px;font-weight:900;color:#fff;margin:0;">Ganhadores</h2>
+        <span style="font-size:12px;color:#6b7280;">sortudos</span>
+      </div>
+
+      <% ganhadores.forEach(function(g) { %>
+      <div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.05);">
+        <!-- Avatar -->
+        <div style="width:46px;height:46px;border-radius:50%;background:#1e2535;border:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i data-lucide="user" style="width:22px;height:22px;color:#6b7280;"></i>
+        </div>
+        <!-- Info -->
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:800;color:#fff;font-size:14px;margin-bottom:2px;"><%= g.nome %> ***</div>
+          <div style="font-size:12px;color:#9ca3af;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:4px;"><%= g.titulo %></div>
+          <% if (g.numero) { %>
+            <div style="font-size:11px;color:#22c55e;font-weight:700;">Número da sorte: <strong><%= g.numero %></strong></div>
+          <% } %>
+          <div style="font-size:11px;color:#6b7280;margin-top:2px;">Data: <strong style="color:#9ca3af;"><%= new Date(g.data).toLocaleDateString('pt-BR') %></strong></div>
+        </div>
+      </div>
+      <% }) %>
+    </div>
+    <% } %>
+
   </div>
 </div>
 

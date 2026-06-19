@@ -18,13 +18,12 @@ const publicController = {
     if (!req.tenant) return res.redirect('/');
 
     const page = parseInt(req.query.page) || 1;
-    const { rifas, total, paginas } = await RifaService.listar({
-      tenantId: req.tenant.id,
-      status: 'ativa',
-      page,
-      limite: 9
-    });
+    const [{ rifas, total, paginas }, encerradasRes] = await Promise.all([
+      RifaService.listar({ tenantId: req.tenant.id, status: 'ativa', page, limite: 9 }),
+      RifaService.listar({ tenantId: req.tenant.id, status: 'finalizada', page: 1, limite: 5 })
+    ]);
     const rifasComBrand = anexarBrandingRifas(rifas, req.tenant);
+    const rifasEncerradas = encerradasRes.rifas || [];
 
     if (rifasComBrand.length === 1 && rifasComBrand[0].brand) {
       const r0 = rifasComBrand[0];
@@ -66,6 +65,7 @@ const publicController = {
         ...(req.tenant.instagram ? { sameAs: [`https://instagram.com/${req.tenant.instagram}`] } : {})
       },
       rifas: rifasComBrand, page, paginas, total,
+      rifasEncerradas,
       ...tenantLocals(req)
     });
   },
