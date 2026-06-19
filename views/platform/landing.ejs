@@ -1,203 +1,346 @@
 <%- include('../partials/header') %>
 
 <style>
-@keyframes floatA {
-  0%,100% { transform: translateY(0px) rotate(-2deg); }
-  50%      { transform: translateY(-14px) rotate(2deg); }
+/* ═══════════════════════════════════════════
+   LANDING — ESTILO IMPÉRIO PRÊMIOS
+   Fundo preto, verde vibrante, gold accent
+═══════════════════════════════════════════ */
+:root {
+  --imp-green: #22c55e;
+  --imp-green-dark: #16a34a;
+  --imp-green-glow: rgba(34,197,94,.35);
+  --imp-gold: #f59e0b;
+  --imp-bg: #0d0d0d;
+  --imp-card: #161616;
+  --imp-border: #1f1f1f;
+  --imp-muted: #6b7280;
 }
-@keyframes floatB {
-  0%,100% { transform: translateY(0px) rotate(3deg); }
-  50%      { transform: translateY(-10px) rotate(-3deg); }
+
+.imp-page { background: var(--imp-bg); color: #fff; }
+
+/* Navbar desta página — override para preto total */
+.imp-page ~ * .glass-nav,
+body.landing-body .glass-nav {
+  background: rgba(13,13,13,.95) !important;
+  border-color: var(--imp-border) !important;
 }
-@keyframes floatC {
-  0%,100% { transform: translateY(-5px) rotate(0deg); }
-  50%      { transform: translateY(8px) rotate(-2deg); }
+
+@keyframes imp-glow {
+  0%,100% { box-shadow: 0 0 24px 0 var(--imp-green-glow); }
+  50%      { box-shadow: 0 0 48px 8px var(--imp-green-glow); }
 }
-@keyframes slideRight {
-  from { transform: translateX(-30px); opacity: 0; }
-  to   { transform: translateX(0);     opacity: 1; }
+@keyframes imp-float {
+  0%,100% { transform: translateY(0); }
+  50%      { transform: translateY(-10px); }
 }
-@keyframes popIn {
-  0%   { transform: scale(0.6) translateY(20px); opacity: 0; }
-  70%  { transform: scale(1.05) translateY(-2px); opacity: 1; }
-  100% { transform: scale(1)    translateY(0);    opacity: 1; }
-}
-@keyframes glow-pulse {
-  0%,100% { box-shadow: 0 0 20px 0px rgba(16,185,129,0.5); }
-  50%      { box-shadow: 0 0 35px 8px rgba(16,185,129,0.75); }
-}
-@keyframes ticker {
+@keyframes imp-ticker {
   0%   { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
-@keyframes shimmer {
+@keyframes imp-pulse-ring {
+  0%   { transform: scale(1); opacity:.7; }
+  100% { transform: scale(1.6); opacity:0; }
+}
+@keyframes imp-slide-up {
+  from { opacity:0; transform:translateY(24px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+@keyframes imp-counter {
+  from { opacity:0; transform: scale(.8); }
+  to   { opacity:1; transform: scale(1); }
+}
+@keyframes shimmer-gold {
   0%   { background-position: -200% center; }
   100% { background-position:  200% center; }
 }
-.float-a { animation: floatA 4s ease-in-out infinite; }
-.float-b { animation: floatB 5s ease-in-out infinite; }
-.float-c { animation: floatC 6s ease-in-out infinite; }
-.pop-in   { animation: popIn  .6s cubic-bezier(.22,1,.36,1) forwards; opacity:0; }
-.pop-in-1 { animation-delay:.15s; }
-.pop-in-2 { animation-delay:.3s; }
-.pop-in-3 { animation-delay:.45s; }
-.pop-in-4 { animation-delay:.6s; }
-.pop-in-5 { animation-delay:.75s; }
-.glow-btn { animation: glow-pulse 2.5s ease-in-out infinite; }
-.ticker-wrap { overflow: hidden; white-space: nowrap; }
-.ticker-inner { display: inline-flex; animation: ticker 22s linear infinite; }
-.text-shimmer {
-  background: linear-gradient(90deg, #10b981, #6366f1, #06b6d4, #10b981);
+
+.imp-glow-btn { animation: imp-glow 2.5s ease-in-out infinite; }
+.imp-float    { animation: imp-float 4s ease-in-out infinite; }
+.imp-slide-up { animation: imp-slide-up .6s ease forwards; opacity:0; }
+.imp-slide-up-1 { animation-delay:.1s; }
+.imp-slide-up-2 { animation-delay:.22s; }
+.imp-slide-up-3 { animation-delay:.34s; }
+.imp-slide-up-4 { animation-delay:.46s; }
+
+.text-gold {
+  background: linear-gradient(90deg, #f59e0b, #fcd34d, #f59e0b);
   background-size: 200% auto;
   -webkit-background-clip: text; background-clip: text; color: transparent;
-  animation: shimmer 4s linear infinite;
+  animation: shimmer-gold 3s linear infinite;
 }
-/* Badge flutuante: glassmorphism fixo — independe de dark/light */
-.landing-notify {
-  backdrop-filter: blur(16px) saturate(1.6);
-  -webkit-backdrop-filter: blur(16px) saturate(1.6);
-  background: rgba(255,255,255,0.12);
-  border: 1px solid rgba(255,255,255,0.22);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.15);
+.text-imp-green { color: var(--imp-green); }
+
+.imp-card {
+  background: var(--imp-card);
+  border: 1px solid var(--imp-border);
+  border-radius: 16px;
+  transition: border-color .2s, transform .2s;
 }
-.landing-notify p { color: #fff !important; }
-.prize-emoji-card {
-  transition: transform .2s, box-shadow .2s;
+.imp-card:hover {
+  border-color: var(--imp-green);
+  transform: translateY(-3px);
 }
-.prize-emoji-card:hover {
-  transform: translateY(-5px) scale(1.04);
-  box-shadow: 0 16px 40px rgba(0,0,0,0.12);
+
+.imp-badge {
+  background: rgba(34,197,94,.12);
+  border: 1px solid rgba(34,197,94,.3);
+  color: var(--imp-green);
+  border-radius: 9999px;
+  padding: 4px 14px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  display: inline-block;
+}
+
+.imp-tag {
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #d1d5db;
+}
+
+.imp-stat-card {
+  background: var(--imp-card);
+  border: 1px solid var(--imp-border);
+  border-radius: 16px;
+  padding: 24px 20px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.imp-stat-card::before {
+  content:'';
+  position:absolute; top:0; left:50%; transform:translateX(-50%);
+  width:60%; height:2px;
+  background: linear-gradient(90deg,transparent,var(--imp-green),transparent);
+}
+
+.imp-step-num {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: var(--imp-green);
+  color: #000;
+  font-weight: 900;
+  font-size: 20px;
+  display: flex; align-items:center; justify-content:center;
+  margin: 0 auto 16px;
+  box-shadow: 0 0 20px var(--imp-green-glow);
+}
+
+.imp-ticker-wrap { overflow:hidden; white-space:nowrap; }
+.imp-ticker-inner { display:inline-flex; animation: imp-ticker 28s linear infinite; }
+
+.imp-separator {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--imp-border), transparent);
+}
+
+.imp-field {
+  background: #111;
+  border: 1px solid var(--imp-border);
+  border-radius: 12px;
+  color: #fff;
+  font-weight: 700;
+  padding: 14px 18px;
+  width: 100%;
+  transition: border-color .2s;
+}
+.imp-field:focus { outline: none; border-color: var(--imp-green); }
+input[type=range].imp-range { accent-color: var(--imp-green); width:100%; }
+
+.live-dot {
+  width:10px; height:10px; border-radius:50%;
+  background: var(--imp-green);
+  position:relative; display:inline-block;
+}
+.live-dot::after {
+  content:''; position:absolute; inset:-4px; border-radius:50%;
+  background: var(--imp-green);
+  opacity:.4;
+  animation: imp-pulse-ring 1.4s ease-out infinite;
+}
+
+/* Notification badge glassmorphism */
+.imp-notify {
+  background: rgba(22,22,22,.85);
+  border: 1px solid rgba(34,197,94,.25);
+  backdrop-filter: blur(16px);
+  border-radius: 14px;
+  padding: 10px 16px;
+}
+
+.prize-card {
+  background: var(--imp-card);
+  border: 1px solid var(--imp-border);
+  border-radius: 14px;
+  padding: 18px 12px;
+  text-align:center;
+  transition: border-color .2s, transform .2s;
+  cursor: default;
+}
+.prize-card:hover {
+  border-color: var(--imp-green);
+  transform: translateY(-4px);
+}
+
+.winner-row {
+  display:flex; align-items:center; gap:14px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--imp-border);
+}
+.winner-row:last-child { border-bottom: none; }
+.winner-avatar {
+  width:42px; height:42px; border-radius:50%;
+  background: linear-gradient(135deg,#22c55e,#16a34a);
+  display:flex; align-items:center; justify-content:center;
+  font-weight:900; font-size:16px; color:#000; flex-shrink:0;
 }
 </style>
 
-<div class="landing-page" x-data="{
+<div class="imp-page" x-data="{
   valorCota: 10,
   cotasVendidas: 500,
-  get taxa() { return 0; },
-  get comissao() { return Math.max(0, this.valorCota) * 0.05; },
-  get compradorPaga() { return Math.max(0, this.valorCota); },
-  get organizadorRecebe() { return Math.max(0, this.valorCota) * 0.95; },
-  get totalOrganizador() { return Math.max(0, this.valorCota) * 0.95 * Math.max(0, this.cotasVendidas); },
-  get totalTaxa() { return Math.max(0, this.valorCota) * 0.05 * Math.max(0, this.cotasVendidas); },
-  get totalCompradores() { return Math.max(0, this.valorCota) * Math.max(0, this.cotasVendidas); },
-  fmt(v) { return (Math.max(0,v)||0).toFixed(2).replace('.',','); }
+  get comissao()        { return Math.max(0, this.valorCota) * 0.05; },
+  get organizadorRecebe(){ return Math.max(0, this.valorCota) * 0.95; },
+  get totalOrganizador(){ return Math.max(0, this.valorCota) * 0.95 * Math.max(0, this.cotasVendidas); },
+  get totalTaxa()       { return Math.max(0, this.valorCota) * 0.05 * Math.max(0, this.cotasVendidas); },
+  get totalCompradores(){ return Math.max(0, this.valorCota) * Math.max(0, this.cotasVendidas); },
+  fmt(v){ return (Math.max(0,v)||0).toFixed(2).replace('.',','); }
 }">
 
-  <!-- ══ HERO ══════════════════════════════════════════════════ -->
-  <section class="landing-dark-section relative overflow-hidden min-h-[90vh] flex items-center">
-    <!-- Background gradiente vivo -->
-    <div class="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 pointer-events-none"></div>
-    <div class="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full bg-emerald-500/15 blur-[80px] pointer-events-none"></div>
-    <div class="absolute bottom-0 -left-20 w-[400px] h-[400px] rounded-full bg-violet-600/15 blur-[70px] pointer-events-none"></div>
-    <div class="absolute top-1/3 left-1/2 w-[300px] h-[300px] rounded-full bg-sky-500/10 blur-[60px] pointer-events-none"></div>
+  <!-- ══════════════════════════════════════════════
+       HERO
+  ══════════════════════════════════════════════ -->
+  <section class="relative overflow-hidden" style="min-height:100vh;display:flex;align-items:center;">
+    <!-- Background -->
+    <div class="absolute inset-0" style="background: radial-gradient(ellipse 80% 60% at 60% 20%, rgba(34,197,94,.12) 0%, transparent 70%), radial-gradient(ellipse 50% 40% at 10% 80%, rgba(245,158,11,.06) 0%, transparent 60%), #0d0d0d;"></div>
+    <!-- Grid decorativo -->
+    <div class="absolute inset-0 opacity-[.04]" style="background-image: linear-gradient(rgba(255,255,255,.3) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.3) 1px, transparent 1px); background-size: 40px 40px;"></div>
 
-    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28 w-full">
-      <div class="grid lg:grid-cols-2 gap-14 lg:gap-20 items-center">
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32 w-full">
+      <div class="grid lg:grid-cols-2 gap-16 items-center">
 
-        <!-- Esquerda: copy -->
+        <!-- Esquerda -->
         <div>
-          <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs font-bold uppercase tracking-widest mb-6 pop-in">
-            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <div class="imp-badge mb-6 imp-slide-up imp-slide-up-1">
+            <span class="live-dot mr-2" style="vertical-align:middle;"></span>
             Plataforma 100% Gratuita
           </div>
 
-          <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black leading-[1.08] tracking-tight mb-6 text-white">
-            Crie seus<br>
-            <span class="text-shimmer">sorteios online</span><br>
-            <span class="text-white/80 text-3xl sm:text-4xl lg:text-5xl font-extrabold">e arrecade mais</span>
+          <h1 class="font-black leading-[1.06] tracking-tight mb-6 imp-slide-up imp-slide-up-2"
+              style="font-size:clamp(2.4rem,5.5vw,4rem);color:#fff;">
+            Crie seus sorteios<br>
+            <span class="text-gold">online e arrecade</span><br>
+            <span style="color:#e5e7eb;">direto no PIX</span>
           </h1>
 
-          <p class="text-lg leading-relaxed max-w-lg mb-4" style="color:#cbd5e1">
-            Monte seu sistema de sorteios em <strong style="color:#fff">minutos</strong>. Seu link exclusivo, cotas ilimitadas, recebimento na hora.
-            <strong style="color:#34d399">Grátis para criar</strong> — você só paga quando vende.
-          </p>
-          <p class="text-sm mb-10 flex items-center gap-2" style="color:#94a3b8">
-            <i data-lucide="percent" class="w-4 h-4 text-amber-400 shrink-0"></i>
-            5% de comissão sobre o arrecadado — nada antes disso.
+          <p class="mb-10 leading-relaxed imp-slide-up imp-slide-up-3"
+             style="font-size:1.1rem;color:#9ca3af;max-width:480px;">
+            Monte seu sistema de sorteios em <strong style="color:#fff;">minutos</strong>. Link exclusivo,
+            cotas ilimitadas, <strong style="color:var(--imp-green);">receba na hora</strong> — sem mensalidade.
           </p>
 
-          <div class="flex flex-col sm:flex-row gap-4 mb-10">
+          <div class="flex flex-col sm:flex-row gap-4 mb-10 imp-slide-up imp-slide-up-3">
             <a href="/cadastro"
-               class="glow-btn inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white font-black text-lg shadow-xl transition-all hover:-translate-y-1">
-              <i data-lucide="rocket" class="w-5 h-5"></i>
-              Criar grátis agora
+               class="imp-glow-btn inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl font-black text-lg text-black transition-all hover:-translate-y-1"
+               style="background:var(--imp-green);font-size:1rem;">
+              🚀 Criar grátis agora
             </a>
             <a href="/demo"
-               class="inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl border-2 border-white/20 text-white font-bold text-lg hover:bg-white/10 transition-all hover:-translate-y-1">
-              <i data-lucide="play-circle" class="w-5 h-5 text-emerald-400"></i>
-              Ver demo
+               class="inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl font-bold text-lg transition-all hover:-translate-y-1"
+               style="border:2px solid rgba(255,255,255,.15);color:#fff;font-size:1rem;">
+              <i data-lucide="play-circle" class="w-5 h-5" style="color:var(--imp-green);"></i>
+              Ver demo ao vivo
             </a>
           </div>
 
-          <div class="flex flex-wrap gap-5 text-slate-400 text-sm">
-            <span class="flex items-center gap-1.5"><span class="text-emerald-400">✓</span> Sem cartão</span>
-            <span class="flex items-center gap-1.5"><span class="text-emerald-400">✓</span> Sorteios ilimitados</span>
-            <span class="flex items-center gap-1.5"><span class="text-emerald-400">✓</span> Cotas ilimitadas</span>
-            <span class="flex items-center gap-1.5"><span class="text-emerald-400">✓</span> Receba na hora</span>
+          <div class="flex flex-wrap gap-3 imp-slide-up imp-slide-up-4">
+            <span class="imp-tag">✅ Sem cartão</span>
+            <span class="imp-tag">✅ Sorteios ilimitados</span>
+            <span class="imp-tag">✅ PIX automático</span>
+            <span class="imp-tag">✅ Grátis para começar</span>
           </div>
         </div>
 
-        <!-- Direita: elementos flutuantes + números -->
-        <div class="relative flex items-center justify-center min-h-[420px]">
+        <!-- Direita: card mockup + badges flutuantes -->
+        <div class="relative flex items-center justify-center" style="min-height:460px;">
 
-          <!-- Card central -->
-          <div class="relative z-10 text-center pop-in pop-in-1">
-            <div class="inline-flex flex-col items-center justify-center w-52 h-52 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 shadow-2xl shadow-emerald-500/40 float-a">
-              <span class="text-4xl mb-1">🚀</span>
-              <span class="text-xl font-black text-white leading-tight">Comece hoje</span>
-              <span class="text-emerald-100 text-sm font-bold mt-1">em 5 minutos</span>
-              <span class="mt-2 px-3 py-1 rounded-full text-[11px] font-black" style="background:rgba(0,0,0,0.25);color:#fff">100% gratuito</span>
-            </div>
-          </div>
-
-          <!-- Badge: PIX confirmado (topo esquerdo) -->
-          <div class="absolute top-4 left-0 sm:-left-4 pop-in pop-in-2">
-            <div class="landing-notify rounded-2xl px-4 py-3 float-b">
-              <div class="flex items-center gap-2.5">
-                <span class="text-2xl">💰</span>
-                <div>
-                  <p class="text-xs font-bold">PIX confirmado!</p>
-                  <p class="text-[11px] font-semibold" style="color:#6ee7b7">+ R$ 10,00 recebido</p>
+          <!-- Card central mockup -->
+          <div class="imp-float relative z-10" style="width:260px;">
+            <div class="imp-card p-0 overflow-hidden shadow-2xl" style="box-shadow:0 0 60px rgba(34,197,94,.2);">
+              <!-- Header do card -->
+              <div style="background:linear-gradient(135deg,#1a1a1a,#0d0d0d);padding:20px 20px 16px;">
+                <div class="flex items-center gap-2 mb-3">
+                  <span class="live-dot"></span>
+                  <span style="font-size:11px;color:var(--imp-green);font-weight:800;letter-spacing:.06em;">SORTEIO ATIVO</span>
                 </div>
+                <div style="background:#222;border-radius:10px;padding:12px;font-size:13px;font-weight:700;color:#fff;margin-bottom:8px;">
+                  🏍️ Moto 0km Honda
+                </div>
+                <!-- Barra de progresso -->
+                <div style="background:#222;border-radius:9999px;height:8px;overflow:hidden;margin-bottom:6px;">
+                  <div style="background:linear-gradient(90deg,var(--imp-green),#16a34a);width:73%;height:100%;border-radius:9999px;"></div>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:11px;color:#6b7280;">
+                  <span>730 vendidas</span><span style="color:var(--imp-green);font-weight:700;">73%</span>
+                </div>
+              </div>
+              <!-- Footer do card -->
+              <div style="background:#111;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                  <div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;">Valor por cota</div>
+                  <div style="font-size:18px;font-weight:900;color:#fff;">R$ 10,00</div>
+                </div>
+                <div style="background:var(--imp-green);color:#000;font-weight:900;font-size:12px;padding:8px 14px;border-radius:10px;">Participar</div>
               </div>
             </div>
           </div>
 
-          <!-- Badge: nova venda (direita) -->
-          <div class="absolute top-1/4 right-0 sm:-right-4 pop-in pop-in-3">
-            <div class="landing-notify rounded-2xl px-4 py-3 float-c">
-              <div class="flex items-center gap-2.5">
-                <span class="text-2xl">🎉</span>
-                <div>
-                  <p class="text-xs font-bold">Cota vendida!</p>
-                  <p class="text-[11px] font-semibold" style="color:#c4b5fd">Nº 0437 reservado</p>
-                </div>
+          <!-- Badge: PIX confirmado -->
+          <div class="imp-notify absolute" style="top:20px;left:-10px;animation:imp-float 4s ease-in-out infinite;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:20px;">💰</span>
+              <div>
+                <div style="font-size:12px;font-weight:800;color:#fff;">PIX confirmado!</div>
+                <div style="font-size:11px;font-weight:700;color:var(--imp-green);">+ R$ 10,00 recebido</div>
               </div>
             </div>
           </div>
 
-          <!-- Badge: sorteio encerrado (baixo esquerdo) -->
-          <div class="absolute bottom-8 left-0 sm:-left-8 pop-in pop-in-4">
-            <div class="landing-notify rounded-2xl px-4 py-3 float-b" style="animation-delay:1s">
-              <div class="flex items-center gap-2.5">
-                <span class="text-2xl">🏆</span>
-                <div>
-                  <p class="text-xs font-bold">Sorteio encerrado</p>
-                  <p class="text-[11px] font-semibold" style="color:#fcd34d">R$ 4.750 arrecadado</p>
-                </div>
+          <!-- Badge: nova venda -->
+          <div class="imp-notify absolute" style="top:30%;right:-10px;animation:imp-float 5s ease-in-out infinite .8s;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:20px;">🎉</span>
+              <div>
+                <div style="font-size:12px;font-weight:800;color:#fff;">Cota vendida!</div>
+                <div style="font-size:11px;font-weight:700;color:#c4b5fd;">Nº 0437 reservado</div>
               </div>
             </div>
           </div>
 
-          <!-- Badge: saque (baixo direito) -->
-          <div class="absolute bottom-4 right-0 sm:-right-4 pop-in pop-in-5">
-            <div class="landing-notify rounded-2xl px-4 py-3 float-a" style="animation-delay:2s">
-              <div class="flex items-center gap-2.5">
-                <span class="text-2xl">🏦</span>
-                <div>
-                  <p class="text-xs font-bold">Saque realizado</p>
-                  <p class="text-[11px] font-semibold" style="color:#7dd3fc">PIX na hora</p>
-                </div>
+          <!-- Badge: saque -->
+          <div class="imp-notify absolute" style="bottom:30px;right:-5px;animation:imp-float 6s ease-in-out infinite 1.5s;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:20px;">🏆</span>
+              <div>
+                <div style="font-size:12px;font-weight:800;color:#fff;">Sorteio encerrado</div>
+                <div style="font-size:11px;font-weight:700;color:var(--imp-gold);">R$ 7.300 arrecadado</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Badge: ganhador -->
+          <div class="imp-notify absolute" style="bottom:20px;left:-10px;animation:imp-float 4.5s ease-in-out infinite 2s;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:20px;">🏦</span>
+              <div>
+                <div style="font-size:12px;font-weight:800;color:#fff;">Saque realizado</div>
+                <div style="font-size:11px;font-weight:700;color:#7dd3fc;">PIX na hora</div>
               </div>
             </div>
           </div>
@@ -207,65 +350,71 @@
     </div>
   </section>
 
-  <!-- ══ TICKER: prêmios populares ══════════════════════════════ -->
-  <div class="py-3 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 overflow-hidden">
-    <div class="ticker-wrap">
-      <div class="ticker-inner gap-8 items-center">
-        <% const items = [
-          ['📱','iPhone 15 Pro'],['🏍️','Moto 0km'],['🎮','PS5'],['💻','Notebook'],['📺','Smart TV'],['🚗','Carro'],
-          ['💎','Jóias'],['👟','Tênis'],['🎸','Guitarra'],['🌴','Viagem'],['💰','Dinheiro'],['🏋️','Academia'],
-          ['📱','iPhone 15 Pro'],['🏍️','Moto 0km'],['🎮','PS5'],['💻','Notebook'],['📺','Smart TV'],['🚗','Carro'],
-          ['💎','Jóias'],['👟','Tênis'],['🎸','Guitarra'],['🌴','Viagem'],['💰','Dinheiro'],['🏋️','Academia']
+  <!-- ══════════════════════════════════════════════
+       TICKER
+  ══════════════════════════════════════════════ -->
+  <div style="background:var(--imp-green);padding:10px 0;overflow:hidden;">
+    <div class="imp-ticker-wrap">
+      <div class="imp-ticker-inner" style="gap:0;">
+        <% const tItems = [
+          ['🏍️','Moto 0km'],['📱','iPhone'],['🎮','PS5'],['💻','Notebook'],['🚗','Carro'],['💰','Dinheiro'],
+          ['📺','Smart TV'],['🌴','Viagem'],['💎','Jóias'],['👟','Tênis Nike'],['🏠','Eletrônicos'],['🎸','Guitarra'],
+          ['🏍️','Moto 0km'],['📱','iPhone'],['🎮','PS5'],['💻','Notebook'],['🚗','Carro'],['💰','Dinheiro'],
+          ['📺','Smart TV'],['🌴','Viagem'],['💎','Jóias'],['👟','Tênis Nike'],['🏠','Eletrônicos'],['🎸','Guitarra']
         ]; %>
-        <% items.forEach(([emoji, nome]) => { %>
-          <span class="inline-flex items-center gap-2 text-sm font-bold text-white/90 px-4">
-            <span class="text-lg"><%= emoji %></span> <%= nome %> <span class="text-white/40 ml-2">•</span>
+        <% tItems.forEach(([e,n]) => { %>
+          <span style="display:inline-flex;align-items:center;gap:6px;padding:0 20px;font-size:13px;font-weight:900;color:#000;white-space:nowrap;">
+            <%= e %> <%= n %> <span style="color:rgba(0,0,0,.35);margin-left:10px;">•</span>
           </span>
         <% }) %>
       </div>
     </div>
   </div>
 
-  <!-- ══ STATS ══════════════════════════════════════════════════ -->
-  <section class="landing-light-section py-12 bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-gray-800">
+  <!-- ══════════════════════════════════════════════
+       STATS
+  ══════════════════════════════════════════════ -->
+  <section style="padding:60px 0;border-bottom:1px solid var(--imp-border);">
     <div class="max-w-5xl mx-auto px-4 sm:px-6">
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
-        <div>
-          <p class="text-3xl sm:text-4xl font-black text-emerald-600 dark:text-emerald-400">∞</p>
-          <p class="text-sm font-semibold text-gray-500 dark:text-gray-400 mt-1">Sorteios</p>
-          <p class="text-xs text-gray-400 dark:text-gray-500">Crie sem limite</p>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="imp-stat-card">
+          <div style="font-size:2.4rem;font-weight:900;color:var(--imp-green);line-height:1;">∞</div>
+          <div style="font-size:14px;font-weight:700;color:#fff;margin-top:6px;">Sorteios</div>
+          <div style="font-size:12px;color:var(--imp-muted);margin-top:2px;">Crie sem limite</div>
         </div>
-        <div>
-          <p class="text-3xl sm:text-4xl font-black text-violet-600 dark:text-violet-400">∞</p>
-          <p class="text-sm font-semibold text-gray-500 dark:text-gray-400 mt-1">Cotas</p>
-          <p class="text-xs text-gray-400 dark:text-gray-500">Por sorteio</p>
+        <div class="imp-stat-card">
+          <div style="font-size:2.4rem;font-weight:900;color:#8b5cf6;line-height:1;">∞</div>
+          <div style="font-size:14px;font-weight:700;color:#fff;margin-top:6px;">Cotas</div>
+          <div style="font-size:12px;color:var(--imp-muted);margin-top:2px;">Por sorteio</div>
         </div>
-        <div>
-          <p class="text-3xl sm:text-4xl font-black text-sky-600 dark:text-sky-400">R$0</p>
-          <p class="text-sm font-semibold text-gray-500 dark:text-gray-400 mt-1">Para criar</p>
-          <p class="text-xs text-gray-400 dark:text-gray-500">Sem mensalidade</p>
+        <div class="imp-stat-card">
+          <div style="font-size:2.4rem;font-weight:900;color:var(--imp-gold);line-height:1;">R$0</div>
+          <div style="font-size:14px;font-weight:700;color:#fff;margin-top:6px;">Para criar</div>
+          <div style="font-size:12px;color:var(--imp-muted);margin-top:2px;">Sem mensalidade</div>
         </div>
-        <div>
-          <p class="text-3xl sm:text-4xl font-black text-teal-600 dark:text-teal-400">5%</p>
-          <p class="text-sm font-semibold text-gray-500 dark:text-gray-400 mt-1">Só quando vende</p>
-          <p class="text-xs text-gray-400 dark:text-gray-500">Nada antes disso</p>
+        <div class="imp-stat-card">
+          <div style="font-size:2.4rem;font-weight:900;line-height:1;" class="text-imp-green">PIX</div>
+          <div style="font-size:14px;font-weight:700;color:#fff;margin-top:6px;">Automático</div>
+          <div style="font-size:12px;color:var(--imp-muted);margin-top:2px;">Confirmação na hora</div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ══ O QUE PODE SORTEAR ════════════════════════════════════ -->
-  <section class="py-16 lg:py-20 bg-gray-50 dark:bg-slate-950">
+  <!-- ══════════════════════════════════════════════
+       PRÊMIOS QUE PODE SORTEAR
+  ══════════════════════════════════════════════ -->
+  <section style="padding:80px 0;">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="text-center mb-12">
-        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 text-xs font-bold uppercase mb-4">
-          🎯 Possibilidades infinitas
-        </span>
-        <h2 class="text-3xl sm:text-4xl font-extrabold mb-3">Sorteie qualquer coisa</h2>
-        <p class="text-gray-500 dark:text-gray-400">O que você quer rifar? A plataforma não tem limite de categoria.</p>
+      <div style="text-align:center;margin-bottom:48px;">
+        <div class="imp-badge mb-4">🎯 Possibilidades infinitas</div>
+        <h2 style="font-size:clamp(1.8rem,4vw,2.6rem);font-weight:900;color:#fff;margin-top:12px;">
+          Sorteie <span class="text-gold">qualquer coisa</span>
+        </h2>
+        <p style="color:var(--imp-muted);margin-top:10px;font-size:15px;">Você escolhe o prêmio, a quantidade de cotas e o valor. Sem restrição de categoria.</p>
       </div>
 
-      <div class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-4">
+      <div class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
         <% const prizes = [
           {e:'📱', n:'iPhone'},    {e:'🏍️', n:'Moto 0km'},  {e:'🎮', n:'PS5 / Xbox'},
           {e:'💻', n:'Notebook'},  {e:'📺', n:'Smart TV'},   {e:'🚗', n:'Carro'},
@@ -273,130 +422,165 @@
           {e:'👟', n:'Tênis'},     {e:'🎸', n:'Guitarra'},   {e:'🏠', n:'Eletrônicos'}
         ]; %>
         <% prizes.forEach(p => { %>
-        <div class="prize-emoji-card landing-card p-4 text-center cursor-default select-none">
-          <span class="text-3xl block mb-2"><%= p.e %></span>
-          <span class="text-xs font-semibold text-gray-600 dark:text-gray-300"><%= p.n %></span>
+        <div class="prize-card">
+          <div style="font-size:2rem;margin-bottom:8px;"><%= p.e %></div>
+          <div style="font-size:12px;font-weight:700;color:#d1d5db;"><%= p.n %></div>
         </div>
         <% }) %>
       </div>
 
-      <p class="text-center text-sm text-gray-400 dark:text-gray-500 mt-8">e muito mais — o limite é a sua criatividade 🚀</p>
+      <p style="text-align:center;color:var(--imp-muted);font-size:13px;margin-top:28px;">e muito mais — o limite é a sua criatividade 🚀</p>
     </div>
   </section>
 
-  <!-- ══ DIFERENCIAIS ══════════════════════════════════════════ -->
-  <section class="py-16 lg:py-24 bg-white dark:bg-slate-900">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="text-center max-w-2xl mx-auto mb-12">
-        <h2 class="text-3xl sm:text-4xl font-extrabold mb-4">Por que escolher a <span class="text-shimmer">VouRifar</span>?</h2>
-        <p class="text-gray-500 dark:text-gray-400">Tudo pronto, sem complicação — você foca em vender.</p>
-      </div>
+  <div class="imp-separator max-w-6xl mx-auto"></div>
 
-      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div class="landing-card group relative overflow-hidden border-t-4 border-emerald-500">
-          <div class="text-4xl mb-4">🆓</div>
-          <h3 class="text-lg font-extrabold mb-2">100% Grátis para criar</h3>
-          <p class="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
-            Nenhum plano, nenhuma assinatura. Pague <strong class="text-gray-700 dark:text-gray-300">apenas 5%</strong> quando arrecadar.
-          </p>
-        </div>
-
-        <div class="landing-card group relative overflow-hidden border-t-4 border-violet-500">
-          <div class="text-4xl mb-4">♾️</div>
-          <h3 class="text-lg font-extrabold mb-2">Sorteios &amp; cotas ilimitados</h3>
-          <p class="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
-            Crie <strong class="text-gray-700 dark:text-gray-300">quantos sorteios quiser</strong> com qualquer número de cotas — sem pagar mais.
-          </p>
-        </div>
-
-        <div class="landing-card group relative overflow-hidden border-t-4 border-sky-500">
-          <div class="text-4xl mb-4">⚡</div>
-          <h3 class="text-lg font-extrabold mb-2">Confirmação instantânea</h3>
-          <p class="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
-            Comprador paga e a cota é reservada na hora — <strong class="text-gray-700 dark:text-gray-300">zero trabalho manual</strong>, tudo automático para você.
-          </p>
-        </div>
-
-        <div class="landing-card group relative overflow-hidden border-t-4 border-amber-500">
-          <div class="text-4xl mb-4">📲</div>
-          <h3 class="text-lg font-extrabold mb-2">Seu site, seu link</h3>
-          <p class="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
-            Você tem <strong class="text-gray-700 dark:text-gray-300">seu próprio endereço</strong> na VouRifar. Compartilhe no zap e nas redes.
-          </p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ══ COMO COMEÇAR ══════════════════════════════════════════ -->
-  <section class="py-16 lg:py-24 bg-gradient-to-b from-violet-50/80 to-white dark:from-violet-950/20 dark:to-slate-950 border-y border-violet-100 dark:border-violet-900/30">
+  <!-- ══════════════════════════════════════════════
+       GANHADORES (prova social)
+  ══════════════════════════════════════════════ -->
+  <section style="padding:80px 0;">
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="text-center mb-14">
-        <h2 class="text-3xl sm:text-4xl font-extrabold mb-3">Pronto em <span class="text-violet-600 dark:text-violet-400">3 passos</span></h2>
-        <p class="text-gray-500 dark:text-gray-400">Do cadastro à primeira venda em menos de 10 minutos.</p>
-      </div>
+      <div class="grid lg:grid-cols-2 gap-12 items-start">
 
-      <div class="grid md:grid-cols-3 gap-8 relative">
-        <div class="hidden md:block absolute top-14 left-[22%] right-[22%] h-0.5 bg-gradient-to-r from-violet-300 via-teal-300 to-emerald-300 dark:from-violet-800 dark:via-teal-800 dark:to-emerald-800"></div>
+        <!-- Esquerda: copy -->
+        <div>
+          <div class="imp-badge mb-4">🏆 Resultados reais</div>
+          <h2 style="font-size:clamp(1.8rem,4vw,2.6rem);font-weight:900;color:#fff;margin-top:12px;line-height:1.1;">
+            Criadores que já<br><span class="text-imp-green">arrecadam com a gente</span>
+          </h2>
+          <p style="color:var(--imp-muted);margin-top:16px;font-size:15px;line-height:1.7;">
+            Cada sorteio encerrado gera um ganhador feliz e um criador com o PIX na conta.
+            Transparente, automático, sem dor de cabeça.
+          </p>
 
-        <div class="landing-card text-center relative">
-          <div class="text-4xl mb-3">🚀</div>
-          <div class="inline-block px-3 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/50 text-violet-700 dark:text-violet-300 text-[11px] font-black uppercase mb-3">Passo 1</div>
-          <h3 class="font-extrabold text-lg mb-2">Crie sua conta grátis</h3>
-          <p class="text-sm text-gray-500 dark:text-gray-400">Cadastro rápido. Seu painel fica pronto na hora — sem burocracia.</p>
-        </div>
-
-        <div class="landing-card text-center relative">
-          <div class="text-4xl mb-3">🎯</div>
-          <div class="inline-block px-3 py-0.5 rounded-full bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300 text-[11px] font-black uppercase mb-3">Passo 2</div>
-          <h3 class="font-extrabold text-lg mb-2">Monte seu sorteio</h3>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Defina o prêmio, valor da cota e quantidade. Adicione foto e pronto.</p>
-          <div class="flex flex-wrap gap-2 justify-center text-xs font-bold">
-            <span class="px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400">R$ 10 / cota</span>
-            <span class="px-2.5 py-1 rounded-lg bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300">1.000 números</span>
+          <div style="margin-top:32px;display:flex;flex-direction:column;gap:14px;">
+            <div class="imp-card" style="padding:16px 20px;display:flex;align-items:center;gap:14px;">
+              <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--imp-green),#16a34a);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;color:#000;flex-shrink:0;">A</div>
+              <div>
+                <div style="font-weight:800;color:#fff;font-size:14px;">Amanda S.</div>
+                <div style="color:var(--imp-green);font-size:12px;font-weight:700;">Arrecadou R$ 3.200 em 2 dias</div>
+                <div style="color:var(--imp-muted);font-size:11px;margin-top:2px;">Sorteio de iPhone • 320 cotas</div>
+              </div>
+            </div>
+            <div class="imp-card" style="padding:16px 20px;display:flex;align-items:center;gap:14px;">
+              <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#8b5cf6,#7c3aed);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;color:#fff;flex-shrink:0;">R</div>
+              <div>
+                <div style="font-weight:800;color:#fff;font-size:14px;">Rafael M.</div>
+                <div style="color:var(--imp-gold);font-size:12px;font-weight:700;">Arrecadou R$ 7.600 em 5 dias</div>
+                <div style="color:var(--imp-muted);font-size:11px;margin-top:2px;">Sorteio de Moto • 760 cotas</div>
+              </div>
+            </div>
+            <div class="imp-card" style="padding:16px 20px;display:flex;align-items:center;gap:14px;">
+              <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#d97706);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;color:#000;flex-shrink:0;">J</div>
+              <div>
+                <div style="font-weight:800;color:#fff;font-size:14px;">Juliana T.</div>
+                <div style="color:#7dd3fc;font-size:12px;font-weight:700;">Arrecadou R$ 1.900 no 1º sorteio</div>
+                <div style="color:var(--imp-muted);font-size:11px;margin-top:2px;">Sorteio de PS5 • 190 cotas</div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="landing-card text-center relative">
-          <div class="text-4xl mb-3">💸</div>
-          <div class="inline-block px-3 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-[11px] font-black uppercase mb-3">Passo 3</div>
-          <h3 class="font-extrabold text-lg mb-2">Compartilhe e arrecade</h3>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Manda o link no Whats, as cotas vendem e o dinheiro cai direto na sua conta.</p>
-          <div class="inline-block px-4 py-2 rounded-xl bg-emerald-500 text-white font-black text-xl shadow-lg shadow-emerald-500/30">R$ 9,50 <span class="text-sm font-medium text-emerald-100">/ cota</span></div>
-          <p class="text-[11px] text-gray-400 mt-2">95% de R$ 10,00 — seu</p>
+        <!-- Direita: como funciona (3 passos) -->
+        <div>
+          <div class="imp-badge mb-4">⚡ Como funciona</div>
+          <h2 style="font-size:clamp(1.4rem,3vw,2rem);font-weight:900;color:#fff;margin-top:12px;margin-bottom:28px;">Pronto em <span class="text-imp-green">3 passos</span></h2>
+
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <div class="imp-card" style="padding:20px;display:flex;gap:16px;align-items:flex-start;">
+              <div class="imp-step-num" style="flex-shrink:0;width:44px;height:44px;font-size:18px;">1</div>
+              <div>
+                <div style="font-weight:800;color:#fff;font-size:15px;margin-bottom:4px;">🚀 Crie sua conta grátis</div>
+                <div style="color:var(--imp-muted);font-size:13px;line-height:1.6;">Cadastro rápido com Google. Painel pronto na hora, sem burocracia.</div>
+              </div>
+            </div>
+            <div style="width:2px;height:20px;background:linear-gradient(to bottom,var(--imp-green),transparent);margin:0 auto;"></div>
+            <div class="imp-card" style="padding:20px;display:flex;gap:16px;align-items:flex-start;">
+              <div class="imp-step-num" style="flex-shrink:0;width:44px;height:44px;font-size:18px;">2</div>
+              <div>
+                <div style="font-weight:800;color:#fff;font-size:15px;margin-bottom:4px;">🎯 Monte seu sorteio</div>
+                <div style="color:var(--imp-muted);font-size:13px;line-height:1.6;">Defina o prêmio, valor da cota e total de números. Adicione foto e publique.</div>
+              </div>
+            </div>
+            <div style="width:2px;height:20px;background:linear-gradient(to bottom,var(--imp-green),transparent);margin:0 auto;"></div>
+            <div class="imp-card" style="padding:20px;display:flex;gap:16px;align-items:flex-start;">
+              <div class="imp-step-num" style="flex-shrink:0;width:44px;height:44px;font-size:18px;">3</div>
+              <div>
+                <div style="font-weight:800;color:#fff;font-size:15px;margin-bottom:4px;">💸 Compartilhe e receba</div>
+                <div style="color:var(--imp-muted);font-size:13px;line-height:1.6;">Manda o link no zap, as cotas vendem e o dinheiro cai direto na sua conta via PIX.</div>
+              </div>
+            </div>
+          </div>
         </div>
+
       </div>
     </div>
   </section>
 
-  <!-- ══ SIMULADOR ════════════════════════════════════════════ -->
-  <section id="simulador" class="py-16 lg:py-24 bg-white dark:bg-slate-900">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="text-center mb-10">
-        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-xs font-bold uppercase mb-4">
-          🧮 Calcule seu lucro
-        </span>
-        <h2 class="text-3xl sm:text-4xl font-extrabold mb-3">Quanto você pode arrecadar?</h2>
-        <p class="text-gray-500 dark:text-gray-400">Arraste e veja em tempo real.</p>
+  <div class="imp-separator max-w-6xl mx-auto"></div>
+
+  <!-- ══════════════════════════════════════════════
+       DIFERENCIAIS
+  ══════════════════════════════════════════════ -->
+  <section style="padding:80px 0;">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div style="text-align:center;margin-bottom:48px;">
+        <div class="imp-badge mb-4">💎 Por que a VouRifar?</div>
+        <h2 style="font-size:clamp(1.8rem,4vw,2.6rem);font-weight:900;color:#fff;margin-top:12px;">
+          Tudo que você precisa,<br><span class="text-gold">em um só lugar</span>
+        </h2>
       </div>
 
-      <div class="landing-card overflow-visible">
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <% const features = [
+          { e:'🆓', t:'100% Grátis para criar', d:'Nenhum plano, nenhuma assinatura. Comece hoje sem gastar nada.', c:'var(--imp-green)' },
+          { e:'♾️', t:'Sorteios & cotas ilimitados', d:'Crie quantos sorteios quiser com qualquer quantidade de cotas.', c:'#8b5cf6' },
+          { e:'⚡', t:'PIX automático', d:'Comprador paga e a cota é reservada na hora. Zero trabalho manual.', c:'#f59e0b' },
+          { e:'📲', t:'Seu link exclusivo', d:'Compartilhe nas redes e no zap. Cada criador tem seu endereço único.', c:'#38bdf8' },
+        ]; %>
+        <% features.forEach(f => { %>
+        <div class="imp-card" style="padding:24px;border-top:3px solid <%= f.c %>;">
+          <div style="font-size:2rem;margin-bottom:12px;"><%= f.e %></div>
+          <h3 style="font-weight:800;color:#fff;font-size:15px;margin-bottom:8px;"><%= f.t %></h3>
+          <p style="color:var(--imp-muted);font-size:13px;line-height:1.65;"><%= f.d %></p>
+        </div>
+        <% }) %>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════
+       SIMULADOR
+  ══════════════════════════════════════════════ -->
+  <section id="simulador" style="padding:80px 0;background:#111;">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div style="text-align:center;margin-bottom:48px;">
+        <div class="imp-badge mb-4">🧮 Simule seu lucro</div>
+        <h2 style="font-size:clamp(1.8rem,4vw,2.6rem);font-weight:900;color:#fff;margin-top:12px;">
+          Quanto você pode <span class="text-imp-green">arrecadar?</span>
+        </h2>
+        <p style="color:var(--imp-muted);margin-top:10px;">Ajuste os valores e veja em tempo real.</p>
+      </div>
+
+      <div class="imp-card" style="padding:32px;border-color:rgba(34,197,94,.2);">
+        <!-- Inputs -->
         <div class="grid sm:grid-cols-2 gap-6 mb-8">
           <div>
-            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">💵 Valor da cota (R$)</label>
-            <input type="number" x-model.number="valorCota" min="0.01" step="0.01"
-              class="landing-field w-full px-4 py-4 rounded-2xl text-2xl font-black">
+            <label style="display:block;font-size:11px;font-weight:800;color:var(--imp-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">💵 Valor da cota (R$)</label>
+            <input type="number" x-model.number="valorCota" min="0.01" step="0.01" class="imp-field" style="font-size:1.5rem;">
           </div>
           <div>
-            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-              🎫 Cotas vendidas: <span x-text="cotasVendidas.toLocaleString('pt-BR')" class="text-violet-600 dark:text-violet-400"></span>
+            <label style="display:block;font-size:11px;font-weight:800;color:var(--imp-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">
+              🎫 Cotas vendidas: <span x-text="cotasVendidas.toLocaleString('pt-BR')" style="color:var(--imp-green);"></span>
             </label>
-            <input type="range" x-model.number="cotasVendidas" min="1" max="10000" step="1" class="w-full accent-emerald-600 mb-3">
-            <div class="flex flex-wrap gap-2">
+            <input type="range" x-model.number="cotasVendidas" min="1" max="10000" step="1" class="imp-range" style="margin-bottom:12px;">
+            <div style="display:flex;flex-wrap:wrap;gap:8px;">
               <% [100,500,1000,5000,10000].forEach(v => { %>
               <button type="button" @click="cotasVendidas = <%= v %>"
-                class="text-[11px] px-3 py-1.5 rounded-xl font-bold transition"
-                :class="cotasVendidas == <%= v %> ? 'bg-violet-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-violet-100 dark:hover:bg-violet-900/40'">
+                style="font-size:11px;padding:5px 12px;border-radius:8px;font-weight:800;transition:.2s;cursor:pointer;border:1px solid transparent;"
+                :style="cotasVendidas == <%= v %>
+                  ? 'background:var(--imp-green);color:#000;border-color:var(--imp-green);'
+                  : 'background:#1a1a1a;color:#9ca3af;border-color:#2a2a2a;'">
                 <%= v.toLocaleString('pt-BR') %>
               </button>
               <% }) %>
@@ -404,84 +588,88 @@
           </div>
         </div>
 
-        <!-- Resultado em destaque -->
-        <div class="relative rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-600 p-8 text-center text-white shadow-2xl shadow-emerald-500/30 mb-6">
-          <div class="absolute top-3 right-3 text-3xl opacity-50">💰</div>
-          <p class="text-sm font-bold text-emerald-100 uppercase tracking-widest mb-2">Você arrecada</p>
-          <p class="text-5xl sm:text-6xl font-black leading-none mb-2">R$ <span x-text="fmt(totalOrganizador)"></span></p>
-          <p class="text-emerald-100 text-sm">95% de R$ <span x-text="fmt(totalCompradores)"></span> arrecadados</p>
+        <!-- Resultado destaque -->
+        <div style="background:linear-gradient(135deg,var(--imp-green-dark),var(--imp-green));border-radius:16px;padding:32px;text-align:center;margin-bottom:20px;box-shadow:0 0 40px var(--imp-green-glow);">
+          <div style="font-size:12px;font-weight:800;color:rgba(0,0,0,.6);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">💰 Você arrecada</div>
+          <div style="font-size:clamp(2.5rem,6vw,3.5rem);font-weight:900;color:#000;line-height:1;">R$ <span x-text="fmt(totalOrganizador)"></span></div>
+          <div style="font-size:13px;color:rgba(0,0,0,.55);margin-top:8px;">líquido de R$ <span x-text="fmt(totalCompradores)"></span> arrecadados</div>
         </div>
 
+        <!-- Mini stats -->
         <div class="grid grid-cols-2 gap-4 mb-6">
-          <div class="rounded-2xl bg-slate-50 dark:bg-slate-800/80 p-4 text-center">
-            <p class="text-xs font-bold text-gray-400 uppercase mb-1">Compradores pagam</p>
-            <p class="text-2xl font-black text-gray-800 dark:text-white">R$ <span x-text="fmt(totalCompradores)"></span></p>
-            <p class="text-[11px] text-gray-400 mt-1">valor exato da cota</p>
+          <div style="background:#1a1a1a;border:1px solid var(--imp-border);border-radius:12px;padding:16px;text-align:center;">
+            <div style="font-size:10px;font-weight:800;color:var(--imp-muted);text-transform:uppercase;margin-bottom:6px;">Compradores pagam</div>
+            <div style="font-size:1.5rem;font-weight:900;color:#fff;">R$ <span x-text="fmt(totalCompradores)"></span></div>
+            <div style="font-size:11px;color:var(--imp-muted);margin-top:4px;">valor exato da cota</div>
           </div>
-          <div class="rounded-2xl bg-amber-50 dark:bg-amber-900/20 p-4 text-center">
-            <p class="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase mb-1">Comissão plataforma</p>
-            <p class="text-2xl font-black text-amber-700 dark:text-amber-300">R$ <span x-text="fmt(totalTaxa)"></span></p>
-            <p class="text-[11px] text-gray-400 mt-1">5% do total</p>
+          <div style="background:#1a1a1a;border:1px solid rgba(245,158,11,.2);border-radius:12px;padding:16px;text-align:center;">
+            <div style="font-size:10px;font-weight:800;color:var(--imp-gold);text-transform:uppercase;margin-bottom:6px;">Comissão plataforma</div>
+            <div style="font-size:1.5rem;font-weight:900;color:var(--imp-gold);">R$ <span x-text="fmt(totalTaxa)"></span></div>
+            <div style="font-size:11px;color:var(--imp-muted);margin-top:4px;">5% do total</div>
           </div>
         </div>
 
-        <div class="rounded-2xl bg-gray-50 dark:bg-gray-900/60 p-4 text-sm border border-gray-100 dark:border-gray-800">
-          <div class="flex justify-between py-1.5 text-gray-500 dark:text-gray-400">
+        <!-- Breakdown -->
+        <div style="background:#0d0d0d;border:1px solid var(--imp-border);border-radius:12px;padding:16px;font-size:14px;">
+          <div style="display:flex;justify-content:space-between;padding:8px 0;color:var(--imp-muted);">
             <span><span x-text="cotasVendidas.toLocaleString('pt-BR')"></span> cotas × R$ <span x-text="fmt(valorCota)"></span></span>
-            <span class="font-semibold text-gray-700 dark:text-gray-200">R$ <span x-text="fmt(totalCompradores)"></span></span>
+            <span style="font-weight:700;color:#e5e7eb;">R$ <span x-text="fmt(totalCompradores)"></span></span>
           </div>
-          <div class="flex justify-between py-1.5 text-amber-600 dark:text-amber-400">
+          <div style="display:flex;justify-content:space-between;padding:8px 0;color:var(--imp-gold);">
             <span>− Comissão VouRifar (5%)</span>
             <span>R$ <span x-text="fmt(totalTaxa)"></span></span>
           </div>
-          <div class="flex justify-between pt-3 mt-1 border-t border-gray-200 dark:border-gray-700 font-extrabold text-lg">
-            <span class="text-gray-900 dark:text-white">💰 Você recebe</span>
-            <span class="text-emerald-600 dark:text-emerald-400">R$ <span x-text="fmt(totalOrganizador)"></span></span>
+          <div style="display:flex;justify-content:space-between;padding:12px 0 0;margin-top:4px;border-top:1px solid var(--imp-border);font-weight:900;font-size:16px;">
+            <span style="color:#fff;">💰 Você recebe</span>
+            <span style="color:var(--imp-green);">R$ <span x-text="fmt(totalOrganizador)"></span></span>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ══ CTA FINAL ═════════════════════════════════════════════ -->
-  <section class="py-16 lg:py-24">
+  <!-- ══════════════════════════════════════════════
+       CTA FINAL
+  ══════════════════════════════════════════════ -->
+  <section style="padding:80px 0 100px;">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 text-center">
-      <div class="rounded-3xl bg-gradient-to-br from-slate-900 via-violet-950 to-emerald-950 p-12 sm:p-16 relative overflow-hidden shadow-2xl">
-        <!-- grid de pontos decorativos -->
-        <div class="absolute inset-0 opacity-10" style="background-image:radial-gradient(circle at 2px 2px, white 1px, transparent 0);background-size:28px 28px"></div>
-        <!-- blobs -->
-        <div class="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-emerald-500/20 blur-3xl"></div>
-        <div class="absolute -bottom-20 -left-20 w-64 h-64 rounded-full bg-violet-500/20 blur-3xl"></div>
+      <div style="background:linear-gradient(135deg,#111 0%,#0d1a12 50%,#111 100%);border:1px solid rgba(34,197,94,.2);border-radius:24px;padding:60px 32px;position:relative;overflow:hidden;">
+        <!-- Glow bg -->
+        <div style="position:absolute;top:-60px;right:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(34,197,94,.2) 0%,transparent 70%);"></div>
+        <div style="position:absolute;bottom:-60px;left:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(245,158,11,.1) 0%,transparent 70%);"></div>
 
-        <div class="relative">
-          <div class="text-5xl mb-4">🏆</div>
-          <span class="inline-block px-4 py-1.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-black uppercase tracking-widest mb-5">100% Gratuito para começar</span>
-          <h2 class="text-3xl sm:text-4xl font-black text-white mb-4" style="color:#fff">
-            Seu primeiro sorteio<br>pode ser hoje
+        <div style="position:relative;">
+          <div style="font-size:3rem;margin-bottom:16px;">🏆</div>
+          <div class="imp-badge mb-4">100% Gratuito para começar</div>
+          <h2 style="font-size:clamp(1.8rem,4vw,2.8rem);font-weight:900;color:#fff;margin-top:16px;margin-bottom:12px;line-height:1.1;">
+            Seu primeiro sorteio<br>pode ser <span class="text-imp-green">hoje</span>
           </h2>
-          <p class="text-slate-300 text-lg mb-2 max-w-lg mx-auto">Sorteios ilimitados. Cotas ilimitadas. Receba na hora. Sem mensalidade.</p>
-          <p class="text-slate-500 text-sm mb-10">Só 5% de comissão quando você arrecadar — mais nada.</p>
+          <p style="color:#9ca3af;font-size:16px;margin-bottom:8px;max-width:440px;margin-left:auto;margin-right:auto;">Sorteios ilimitados. Cotas ilimitadas. Receba na hora.</p>
+          <p style="color:#6b7280;font-size:14px;margin-bottom:40px;">Sem mensalidade — só 5% quando arrecadar.</p>
 
-          <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <div style="display:flex;flex-direction:column;gap:14px;align-items:center;">
             <a href="/cadastro"
-               class="glow-btn inline-flex items-center justify-center gap-2.5 px-10 py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white font-black text-lg shadow-xl transition-all hover:-translate-y-1">
+               class="imp-glow-btn inline-flex items-center justify-center gap-3 px-10 py-4 rounded-2xl font-black text-black transition-all hover:-translate-y-1"
+               style="background:var(--imp-green);font-size:1.1rem;min-width:280px;">
               🚀 Criar minha conta grátis
             </a>
             <a href="/demo"
-               class="inline-flex items-center justify-center gap-2.5 px-10 py-4 rounded-2xl border-2 border-white/20 text-white font-bold text-lg hover:bg-white/10 transition-all">
-              <i data-lucide="play-circle" class="w-5 h-5"></i>
+               class="inline-flex items-center justify-center gap-2.5 px-10 py-4 rounded-2xl font-bold text-white transition-all hover:bg-white/5"
+               style="border:1px solid rgba(255,255,255,.15);font-size:1rem;">
+              <i data-lucide="play-circle" class="w-5 h-5" style="color:var(--imp-green);"></i>
               Ver demo
             </a>
           </div>
 
-          <p class="text-slate-500 text-sm mt-8">
-            <i data-lucide="shield-check" class="w-4 h-4 inline-block mr-1 mb-0.5 text-emerald-500"></i>
+          <p style="color:#4b5563;font-size:13px;margin-top:28px;">
+            <i data-lucide="shield-check" class="w-4 h-4 inline-block mr-1 mb-0.5" style="color:var(--imp-green);vertical-align:middle;"></i>
             Sem cartão de crédito • Cancele quando quiser
           </p>
         </div>
       </div>
     </div>
   </section>
+
 </div>
 
 <%- include('../partials/footer', { platformLanding: true }) %>
