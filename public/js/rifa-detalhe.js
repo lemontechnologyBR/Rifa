@@ -114,7 +114,7 @@
     return { subtotal, taxa: 0, total: subtotal };
   }
 
-  const COMPRA_MIN_REAIS = 10.50;
+  const COMPRA_MIN_REAIS = 5.00;
   const QTD_MIN_COMPRA = VALOR_COTA > 0 ? Math.ceil(COMPRA_MIN_REAIS / VALOR_COTA) : 1;
 
   function clampQtd(val) {
@@ -442,7 +442,7 @@
   if (typeof MODALIDADE !== 'undefined' && MODALIDADE === 'numeros') {
     let numerosGrade = [];
     const selecionadosGrade = new Set();
-    const COMPRA_MIN_GRADE = 10.50;
+    const COMPRA_MIN_GRADE = 5.00;
     const QTD_MIN_GRADE = VALOR_COTA > 0 ? Math.ceil(COMPRA_MIN_GRADE / VALOR_COTA) : 1;
 
     function statusNumero(num) {
