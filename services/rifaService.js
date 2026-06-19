@@ -83,7 +83,7 @@ const RifaService = {
     const {
       titulo, descricao, imagem_url, valor_cota, total_numeros,
       data_sorteio, chave_pix, meta_minima_pct, premios = [], faixas = [],
-      cor_primaria
+      cor_primaria, modalidade
     } = dados;
 
     const tenant = await prisma.tenant.findUnique({ where: { id: Number(tenantId) } });
@@ -106,6 +106,7 @@ const RifaService = {
           corPrimaria: cor_primaria || null,
           valorCota: parseFloat(valor_cota),
           totalNumeros: parseInt(total_numeros),
+          modalidade: (modalidade === 'numeros' && parseInt(total_numeros) <= 100) ? 'numeros' : 'cotas',
           dataSorteio: new Date(data_sorteio),
           chavePix: pixFinal,
           metaMinimaPct: meta_minima_pct ? parseFloat(meta_minima_pct) : null

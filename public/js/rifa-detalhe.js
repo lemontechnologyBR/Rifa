@@ -242,6 +242,10 @@
 
   btnIniciar?.addEventListener('click', iniciarCompra);
   btnMobile?.addEventListener('click', () => {
+    if (typeof MODALIDADE !== 'undefined' && MODALIDADE === 'numeros') {
+      document.getElementById('comprar-grade')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
     document.getElementById('comprar-cotas')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     iniciarCompra();
   });
@@ -428,5 +432,130 @@
     }, 5000);
   }
 
-  setQtd(qtdCotas);
+  if (typeof MODALIDADE === 'undefined' || MODALIDADE !== 'numeros') {
+    setQtd(qtdCotas);
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     GRADE DE NÚMEROS — modalidade "numeros"
+  ═══════════════════════════════════════════════════════ */
+  if (typeof MODALIDADE !== 'undefined' && MODALIDADE === 'numeros') {
+    let numerosGrade = [];
+    const selecionadosGrade = new Set();
+    const COMPRA_MIN_GRADE = 10.50;
+    const QTD_MIN_GRADE = VALOR_COTA > 0 ? Math.ceil(COMPRA_MIN_GRADE / VALOR_COTA) : 1;
+
+    function statusNumero(num) {
+      const entry = numerosGrade.find(n => n.numero === num);
+      if (!entry) return 'disponivel';
+      return entry.status === 'vendido' ? 'vendido' : entry.status === 'reservado' ? 'reservado' : 'disponivel';
+    }
+
+    function renderizarGrade() {
+      document.querySelectorAll('.grade-num-btn').forEach(btn => {
+        const num = parseInt(btn.dataset.num, 10);
+        const st = statusNumero(num);
+        const bloqueado = st === 'vendido' || st === 'reservado';
+        btn.disabled = bloqueado;
+        if (selecionadosGrade.has(num)) {
+          btn.className = 'grade-num-btn selecionado';
+        } else {
+          btn.className = `grade-num-btn ${st}`;
+        }
+      });
+    }
+
+    function atualizarStatsGrade() {
+      const livres     = numerosGrade.filter(n => n.status === 'disponivel').length;
+      const reservados = numerosGrade.filter(n => n.status === 'reservado').length;
+      const pagos      = numerosGrade.filter(n => n.status === 'vendido').length;
+      const set = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
+      set('grade-stat-livres',     `${livres} Livres`);
+      set('grade-stat-reservados', `${reservados} Reservados`);
+      set('grade-stat-pagos',      `${pagos} Pagos`);
+    }
+
+    function atualizarBotaoGrade() {
+      const qtd   = selecionadosGrade.size;
+      const total = qtd * VALOR_COTA;
+      const set   = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
+      set('grade-selecionados-qtd', String(qtd));
+      set('grade-total-label',      `R$ ${fmt(total)}`);
+      set('btn-grade-total-label',  `R$ ${fmt(total)}`);
+      set('sticky-qtd',             `${qtd} número(s)`);
+      set('sticky-total',           `R$ ${fmt(total)}`);
+
+      const abaixoMin = total < COMPRA_MIN_GRADE;
+      const avisoMin  = document.getElementById('aviso-grade-minima');
+      const qtdMinEl  = document.getElementById('grade-minimo-qtd');
+      if (avisoMin)  avisoMin.classList.toggle('hidden', !(abaixoMin && qtd > 0));
+      if (qtdMinEl)  qtdMinEl.textContent = String(QTD_MIN_GRADE);
+      const btn = document.getElementById('btn-iniciar-compra-grade');
+      if (btn) btn.disabled = qtd === 0 || abaixoMin || compraEmAndamento;
+      if (btnMobile) btnMobile.disabled = qtd === 0 || abaixoMin || compraEmAndamento;
+    }
+
+    document.querySelectorAll('.grade-num-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const num = parseInt(btn.dataset.num, 10);
+        if (statusNumero(num) !== 'disponivel' && !selecionadosGrade.has(num)) return;
+        if (selecionadosGrade.has(num)) {
+          selecionadosGrade.delete(num);
+        } else {
+          selecionadosGrade.add(num);
+        }
+        renderizarGrade();
+        atualizarBotaoGrade();
+      });
+    });
+
+    async function iniciarCompraGrade() {
+      if (compraEmAndamento || selecionadosGrade.size === 0) return;
+      compraEmAndamento = true;
+      atualizarBotaoGrade();
+
+      try {
+        numerosSelecionados = [...selecionadosGrade];
+
+        modalCompra.classList.remove('hidden');
+        syncScrollLock();
+        atualizarModalCheckout();
+        if (window.lucide) lucide.createIcons();
+
+        await reservarNumeros();
+        atualizarModalCheckout();
+      } catch (err) {
+        numerosSelecionados = [];
+        showToast(err.message, 'error');
+      } finally {
+        compraEmAndamento = false;
+        atualizarBotaoGrade();
+      }
+    }
+
+    document.getElementById('btn-iniciar-compra-grade')?.addEventListener('click', iniciarCompraGrade);
+
+    async function carregarGrade() {
+      try {
+        const data = await fetchApi(`${api}/rifas/${RIFA_ID}/numeros`);
+        numerosGrade = data.numeros || [];
+        renderizarGrade();
+        atualizarStatsGrade();
+      } catch (e) {
+        console.error('Erro ao carregar grade:', e);
+      }
+    }
+
+    carregarGrade();
+    atualizarBotaoGrade();
+
+    setInterval(async () => {
+      try {
+        const data = await fetchApi(`${api}/rifas/${RIFA_ID}/numeros`);
+        numerosGrade = data.numeros || [];
+        renderizarGrade();
+        atualizarStatsGrade();
+      } catch (e) { /* ignore */ }
+    }, 20000);
+  }
 })();

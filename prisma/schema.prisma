@@ -93,6 +93,7 @@ model Rifa {
   dataSorteio    DateTime @map("data_sorteio")
   chavePix       String   @map("chave_pix")
   status         String   @default("ativa")
+  modalidade     String   @default("cotas") @map("modalidade")
   numeroSorteado Int?     @map("numero_sorteado")
   ganhadorNome   String?  @map("ganhador_nome")
   metaMinimaPct  Float?   @map("meta_minima_pct")

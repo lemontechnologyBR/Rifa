@@ -78,6 +78,14 @@ body .glass-nav { background: rgba(18,18,31,.97) !important; border-color: rgba(
 
 @keyframes imp-slide-up { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
 .imp-fade { animation: imp-slide-up .4s ease forwards; }
+
+/* Grade de Números */
+.grade-num-btn { -webkit-tap-highlight-color: transparent; user-select: none; }
+.grade-num-btn.disponivel  { background:#374151; color:#d1d5db; }
+.grade-num-btn.reservado   { background:rgba(251,191,36,.25); color:#fbbf24; cursor:not-allowed; }
+.grade-num-btn.vendido     { background:rgba(34,197,94,.25); color:#22c55e; cursor:not-allowed; }
+.grade-num-btn.selecionado { background:#22c55e; color:#000; transform:scale(1.1); }
+.grade-num-btn:disabled    { cursor:not-allowed; opacity:.9; }
 </style>
 
 <%
@@ -166,6 +174,47 @@ body .glass-nav { background: rgba(18,18,31,.97) !important; border-color: rgba(
 
     <% if (rifa.status === 'ativa') { %>
 
+    <% if (rifa.modalidade === 'numeros') { %>
+    <!-- ══ GRADE DE NÚMEROS ═══════════════════════════════════════ -->
+    <div style="background:#1a1a2e;border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:16px;margin-bottom:10px;" class="imp-fade" id="comprar-grade">
+
+      <!-- Legenda status -->
+      <div style="display:flex;gap:8px;margin-bottom:14px;justify-content:center;">
+        <span id="grade-stat-livres" style="background:#374151;color:#d1d5db;font-size:12px;font-weight:700;padding:5px 14px;border-radius:9999px;">— Livres</span>
+        <span id="grade-stat-reservados" style="background:rgba(251,191,36,.15);color:#fbbf24;font-size:12px;font-weight:700;padding:5px 14px;border-radius:9999px;">— Reservados</span>
+        <span id="grade-stat-pagos" style="background:rgba(34,197,94,.15);color:#22c55e;font-size:12px;font-weight:700;padding:5px 14px;border-radius:9999px;">— Pagos</span>
+      </div>
+
+      <!-- Grid de números -->
+      <div id="grade-numeros" style="display:grid;grid-template-columns:repeat(10,1fr);gap:5px;margin-bottom:16px;">
+        <!-- preenchido via JS -->
+        <% for(let i=0; i < rifa.totalNumeros; i++) { %>
+        <button type="button"
+          class="grade-num-btn"
+          data-num="<%= i+1 %>"
+          style="background:#374151;border:none;border-radius:8px;color:#d1d5db;font-size:13px;font-weight:800;padding:10px 2px;cursor:pointer;transition:background .12s,color .12s;"
+          aria-label="Número <%= String(i).padStart(2,'0') %>">
+          <%= String(i).padStart(2,'0') %>
+        </button>
+        <% } %>
+      </div>
+
+      <!-- Selecionados info -->
+      <p style="text-align:center;font-size:12px;color:#6b7280;margin:0 0 8px;">
+        <span id="grade-selecionados-qtd" style="color:#22c55e;font-weight:900;">0</span> número(s) selecionado(s) ·
+        Total: <span id="grade-total-label" style="color:#22c55e;font-weight:900;">R$ 0,00</span>
+      </p>
+      <p id="aviso-grade-minima" style="text-align:center;font-size:12px;color:#fbbf24;margin:0 0 10px;" class="hidden">
+        Compra mínima: R$ 10,50 — selecione pelo menos <span id="grade-minimo-qtd">1</span> número(s)
+      </p>
+
+      <button type="button" id="btn-iniciar-compra-grade" class="imp-btn-green" disabled>
+        <i data-lucide="qr-code" class="w-5 h-5"></i>
+        Participar · <span id="btn-grade-total-label">R$ 0,00</span>
+      </button>
+    </div>
+    <% } else { %>
+
     <!-- Pacotes de desconto (faixas) -->
     <% if (rifa.faixasDesconto && rifa.faixasDesconto.length) { %>
     <div style="background:#1a1a2e;border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:14px 16px;margin-bottom:10px;" class="imp-fade">
@@ -240,6 +289,8 @@ body .glass-nav { background: rgba(18,18,31,.97) !important; border-color: rgba(
         Quero participar · <span id="btn-total-label">R$ 0,00</span>
       </button>
     </div>
+
+    <% } /* fim else modalidade cotas */ %>
 
     <!-- Compartilhar -->
     <div style="margin-bottom:10px;">
@@ -384,6 +435,8 @@ body .glass-nav { background: rgba(18,18,31,.97) !important; border-color: rgba(
   const COTAS_DISPONIVEIS = <%= stats.disponiveis %>;
   const QTD_MAX = Math.min(5000, <%= stats.disponiveis %>);
   const RIFA_ATIVA = <%= rifa.status === 'ativa' ? 'true' : 'false' %>;
+  const MODALIDADE = '<%= rifa.modalidade || "cotas" %>';
+  const TOTAL_NUMEROS = <%= rifa.totalNumeros %>;
   const FAIXAS = <%- JSON.stringify(rifa.faixasDesconto || []) %>;
   const TEMPO_RESERVA_MIN = <%= typeof tempoReservaMin !== 'undefined' ? tempoReservaMin : 10 %>;
   const CODIGO_INDICACAO = '<%= codigoIndicacao || '' %>';

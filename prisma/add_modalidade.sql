@@ -1,0 +1,1 @@
+ALTER TABLE rifas ADD COLUMN modalidade TEXT NOT NULL DEFAULT 'cotas';

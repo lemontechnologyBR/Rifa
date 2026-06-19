@@ -37,7 +37,7 @@
         <% if (!rifa || !rifa.id) { %>
           <div>
             <label class="text-sm font-medium text-gray-600">Total de números *</label>
-            <input type="number" name="total_numeros" required min="1" class="w-full border rounded-xl px-4 py-2 mt-1">
+            <input type="number" name="total_numeros" id="input_total_numeros" required min="1" class="w-full border rounded-xl px-4 py-2 mt-1">
           </div>
         <% } else { %>
           <div>
@@ -52,6 +52,27 @@
           value="<%= rifa && rifa.dataSorteio ? new Date(rifa.dataSorteio).toISOString().slice(0,16) : (rifa && rifa.data_sorteio ? rifa.data_sorteio.slice(0,16) : '') %>"
           class="w-full border rounded-xl px-4 py-2 mt-1">
       </div>
+      <% if (!rifa || !rifa.id) { %>
+      <div id="bloco_modalidade">
+        <label class="text-sm font-medium text-gray-600 block mb-1">Modalidade de participação *</label>
+        <div class="flex gap-3">
+          <label id="label_cotas" class="flex items-center gap-2 cursor-pointer flex-1 border rounded-xl px-4 py-3 transition hover:border-emerald-400">
+            <input type="radio" name="modalidade" value="cotas" class="accent-emerald-500" checked>
+            <div>
+              <p class="font-semibold text-sm">Por Cotas</p>
+              <p class="text-xs text-gray-500">Sistema sorteio aleatório de cotas</p>
+            </div>
+          </label>
+          <label id="label_numeros" class="flex items-center gap-2 cursor-pointer flex-1 border rounded-xl px-4 py-3 transition hover:border-emerald-400 opacity-40" title="Disponível apenas com até 100 números">
+            <input type="radio" name="modalidade" value="numeros" id="radio_numeros" class="accent-emerald-500" disabled>
+            <div>
+              <p class="font-semibold text-sm">Grade de Números</p>
+              <p class="text-xs text-gray-500" id="label_numeros_hint">Apenas para rifas com até 100 números</p>
+            </div>
+          </label>
+        </div>
+      </div>
+      <% } %>
       <input type="hidden" name="chave_pix" value="<%= tenant.pixChave || '' %>">
       <div class="admin-panel-card p-4 text-sm !shadow-none border border-gray-100 dark:border-gray-800">
         <p class="font-semibold flex items-center gap-2 mb-1"><i data-lucide="wallet" class="w-4 h-4 text-emerald-600"></i> Recebimento via Carteira</p>
@@ -124,5 +145,33 @@
 
   <%- include('partials/layout-end') %>
   <script>lucide.createIcons();</script>
+<script>
+(function() {
+  const inputTotal = document.getElementById('input_total_numeros');
+  const radioNumeros = document.getElementById('radio_numeros');
+  const labelNumeros = document.getElementById('label_numeros');
+  const labelHint = document.getElementById('label_numeros_hint');
+  if (!inputTotal || !radioNumeros) return;
+
+  function atualizarModalidade() {
+    const n = parseInt(inputTotal.value, 10);
+    const ok = !isNaN(n) && n >= 1 && n <= 100;
+    radioNumeros.disabled = !ok;
+    labelNumeros.classList.toggle('opacity-40', !ok);
+    labelNumeros.classList.toggle('opacity-100', ok);
+    if (ok) {
+      labelHint.textContent = 'Participantes escolhem os números';
+    } else {
+      labelHint.textContent = 'Apenas para rifas com até 100 números';
+      if (radioNumeros.checked) {
+        document.querySelector('input[name="modalidade"][value="cotas"]').checked = true;
+      }
+    }
+  }
+
+  inputTotal.addEventListener('input', atualizarModalidade);
+  atualizarModalidade();
+})();
+</script>
 </body>
 </html>
