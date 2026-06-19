@@ -52,27 +52,36 @@
           value="<%= rifa && rifa.dataSorteio ? new Date(rifa.dataSorteio).toISOString().slice(0,16) : (rifa && rifa.data_sorteio ? rifa.data_sorteio.slice(0,16) : '') %>"
           class="w-full border rounded-xl px-4 py-2 mt-1">
       </div>
-      <% if (!rifa || !rifa.id) { %>
+      <%
+        const totalNumerosAtual = rifa ? (rifa.totalNumeros || rifa.stats?.total || 0) : 0;
+        const podeGradeExistente = totalNumerosAtual > 0 && totalNumerosAtual <= 100;
+        const modalidadeAtual = rifa ? (rifa.modalidade || 'cotas') : 'cotas';
+      %>
       <div id="bloco_modalidade">
-        <label class="text-sm font-medium text-gray-600 block mb-1">Modalidade de participação *</label>
+        <label class="text-sm font-medium text-gray-600 block mb-1">Modalidade de participação</label>
         <div class="flex gap-3">
-          <label id="label_cotas" class="flex items-center gap-2 cursor-pointer flex-1 border rounded-xl px-4 py-3 transition hover:border-emerald-400">
-            <input type="radio" name="modalidade" value="cotas" class="accent-emerald-500" checked>
+          <label class="flex items-center gap-2 cursor-pointer flex-1 border rounded-xl px-4 py-3 transition hover:border-emerald-400 <%= modalidadeAtual === 'cotas' ? 'border-emerald-500 bg-emerald-50' : '' %>">
+            <input type="radio" name="modalidade" value="cotas" class="accent-emerald-500" <%= modalidadeAtual === 'cotas' ? 'checked' : '' %>>
             <div>
               <p class="font-semibold text-sm">Por Cotas</p>
-              <p class="text-xs text-gray-500">Sistema sorteio aleatório de cotas</p>
+              <p class="text-xs text-gray-500">Números atribuídos aleatoriamente</p>
             </div>
           </label>
-          <label id="label_numeros" class="flex items-center gap-2 cursor-pointer flex-1 border rounded-xl px-4 py-3 transition hover:border-emerald-400 opacity-40" title="Disponível apenas com até 100 números">
-            <input type="radio" name="modalidade" value="numeros" id="radio_numeros" class="accent-emerald-500" disabled>
+          <label id="label_numeros"
+            class="flex items-center gap-2 flex-1 border rounded-xl px-4 py-3 transition <%= !rifa || !rifa.id ? '' : (podeGradeExistente ? 'cursor-pointer hover:border-emerald-400' : 'opacity-40') %> <%= modalidadeAtual === 'numeros' ? 'border-emerald-500 bg-emerald-50' : '' %>"
+            title="<%= (!rifa || !rifa.id) ? 'Disponível para até 100 números' : (podeGradeExistente ? 'Participante escolhe os números' : 'Total de números excede 100') %>">
+            <input type="radio" name="modalidade" value="numeros" id="radio_numeros" class="accent-emerald-500"
+              <%= modalidadeAtual === 'numeros' ? 'checked' : '' %>
+              <%= (!rifa || !rifa.id) ? '' : (podeGradeExistente ? '' : 'disabled') %>>
             <div>
               <p class="font-semibold text-sm">Grade de Números</p>
-              <p class="text-xs text-gray-500" id="label_numeros_hint">Apenas para rifas com até 100 números</p>
+              <p class="text-xs text-gray-500" id="label_numeros_hint">
+                <%= (!rifa || !rifa.id) ? 'Apenas para rifas com até 100 números' : (podeGradeExistente ? 'Participante escolhe os números' : 'Total excede 100 (indisponível)') %>
+              </p>
             </div>
           </label>
         </div>
       </div>
-      <% } %>
       <input type="hidden" name="chave_pix" value="<%= tenant.pixChave || '' %>">
       <div class="admin-panel-card p-4 text-sm !shadow-none border border-gray-100 dark:border-gray-800">
         <p class="font-semibold flex items-center gap-2 mb-1"><i data-lucide="wallet" class="w-4 h-4 text-emerald-600"></i> Recebimento via Carteira</p>

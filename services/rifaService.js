@@ -169,7 +169,10 @@ const RifaService = {
         valorCota: parseFloat(dados.valor_cota),
         dataSorteio: new Date(dados.data_sorteio),
         chavePix: dados.chave_pix,
-        metaMinimaPct: dados.meta_minima_pct ? parseFloat(dados.meta_minima_pct) : null
+        metaMinimaPct: dados.meta_minima_pct ? parseFloat(dados.meta_minima_pct) : null,
+        ...(dados.modalidade ? {
+          modalidade: (dados.modalidade === 'numeros' && rifa.totalNumeros <= 100) ? 'numeros' : 'cotas'
+        } : {})
       }
     });
 

@@ -10,6 +10,8 @@
   valorCota: 10,
   totalCotas: 100,
   dataSorteio: '',
+  modalidade: 'cotas',
+  get podeGrade() { return this.totalCotas >= 1 && this.totalCotas <= 100; },
   carteiraOk: <%= tenant.pixChave ? 'true' : 'false' %>,
   get taxaCota() { return Math.max(0, this.valorCota) * 0; },
   get compradorPaga() { return Math.max(0, this.valorCota); },
@@ -24,6 +26,7 @@
     this.valorCota = 10;
     this.totalCotas = 100;
     this.dataSorteio = '';
+    this.modalidade = 'cotas';
   },
   openWizard() {
     if (!this.carteiraOk) {

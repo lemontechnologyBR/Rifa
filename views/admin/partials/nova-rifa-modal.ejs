@@ -30,6 +30,7 @@
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <input type="hidden" name="premio_titulo" value="Prêmio principal">
       <input type="hidden" name="chave_pix" value="<%= tenant.pixChave || '' %>">
+      <input type="hidden" name="modalidade" :value="modalidade">
 
       <div x-show="wizardStep === 1" class="p-6 space-y-4">
         <p class="text-sm text-gray-500 dark:text-gray-400">Defina o prêmio e quantas cotas serão vendidas.</p>
@@ -49,6 +50,35 @@
           </div>
         </div>
         <%- include('rifa-simulacao') %>
+
+        <!-- Modalidade -->
+        <div>
+          <label class="admin-label">Modalidade de participação</label>
+          <div class="grid grid-cols-2 gap-3 mt-1">
+            <label class="flex items-start gap-3 border rounded-xl p-3 cursor-pointer transition"
+              :class="modalidade === 'cotas' ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'border-gray-200 dark:border-gray-700'">
+              <input type="radio" x-model="modalidade" value="cotas" class="mt-0.5 accent-emerald-500">
+              <div>
+                <p class="font-semibold text-sm">Por Cotas</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Números atribuídos aleatoriamente</p>
+              </div>
+            </label>
+            <label class="flex items-start gap-3 border rounded-xl p-3 transition"
+              :class="podeGrade ? 'cursor-pointer ' + (modalidade === 'numeros' ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'border-gray-200 dark:border-gray-700') : 'opacity-40 cursor-not-allowed border-gray-200 dark:border-gray-700'"
+              :title="podeGrade ? '' : 'Apenas disponível com até 100 cotas'">
+              <input type="radio" x-model="modalidade" value="numeros" :disabled="!podeGrade" class="mt-0.5 accent-emerald-500">
+              <div>
+                <p class="font-semibold text-sm">Grade de Números</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400" x-text="podeGrade ? 'Participante escolhe os números' : 'Máx. 100 cotas'"></p>
+              </div>
+            </label>
+          </div>
+          <p x-show="!podeGrade && modalidade === 'numeros'" x-cloak class="text-xs text-amber-600 mt-1">
+            ⚠️ Grade resetada para Cotas pois o total excede 100.
+          </p>
+          <!-- força reset quando ultrapassa 100 -->
+          <span x-effect="if (!podeGrade && modalidade === 'numeros') modalidade = 'cotas'"></span>
+        </div>
       </div>
 
       <div x-show="wizardStep === 2" x-cloak class="p-6 space-y-4">
