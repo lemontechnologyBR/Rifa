@@ -1,68 +1,159 @@
 <%- include('../partials/header') %>
 
 <style>
-@keyframes pulse-ring {
-  0%   { transform: scale(1);    opacity:.7; }
-  100% { transform: scale(1.5);  opacity:0;  }
+/* ═══════════════════════════════════════════════
+   STORE PÚBLICA — ESTILO IMPÉRIO PRÊMIOS
+═══════════════════════════════════════════════ */
+.imp-store {
+  background: #12121f;
+  min-height: 100vh;
+  color: #fff;
 }
-@keyframes slideUp {
-  from { opacity:0; transform:translateY(20px); }
+.imp-store .glass-nav,
+body .glass-nav {
+  background: rgba(18,18,31,.97) !important;
+  border-color: rgba(255,255,255,.07) !important;
+}
+
+/* Card destaque (primeiro sorteio) */
+.imp-featured-card {
+  background: #1a1a2e;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform .2s, box-shadow .2s;
+}
+.imp-featured-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 48px rgba(0,0,0,.5);
+}
+
+/* Cards menores (lista) */
+.imp-list-card {
+  background: #1a1a2e;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  align-items: stretch;
+  transition: border-color .2s, transform .2s;
+  cursor: pointer;
+}
+.imp-list-card:hover {
+  border-color: rgba(34,197,94,.4);
+  transform: translateY(-2px);
+}
+
+/* Progress bar */
+.imp-progress-wrap {
+  background: rgba(255,255,255,.08);
+  border-radius: 9999px;
+  height: 8px;
+  overflow: hidden;
+}
+.imp-progress-bar {
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+  transition: width .6s ease;
+}
+
+/* Badge */
+.imp-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.imp-badge-green  { background: rgba(34,197,94,.2);  color: #22c55e; border:1px solid rgba(34,197,94,.3); }
+.imp-badge-red    { background: rgba(239,68,68,.2);   color: #f87171; border:1px solid rgba(239,68,68,.3); }
+.imp-badge-orange { background: rgba(249,115,22,.2);  color: #fb923c; border:1px solid rgba(249,115,22,.3); }
+
+/* Botão participar */
+.imp-btn-primary {
+  background: #22c55e;
+  color: #000;
+  font-weight: 900;
+  border-radius: 10px;
+  padding: 12px 20px;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  transition: background .15s, transform .15s;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.imp-btn-primary:hover { background: #16a34a; transform: translateY(-1px); }
+
+.imp-btn-outline {
+  background: transparent;
+  color: #9ca3af;
+  font-weight: 700;
+  border-radius: 10px;
+  padding: 11px 20px;
+  font-size: 13px;
+  border: 1px solid rgba(255,255,255,.15);
+  cursor: pointer;
+  transition: border-color .15s, color .15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-decoration: none;
+}
+.imp-btn-outline:hover { border-color: rgba(255,255,255,.4); color: #fff; }
+
+@keyframes imp-slide-up {
+  from { opacity:0; transform:translateY(18px); }
   to   { opacity:1; transform:translateY(0); }
 }
-.rifa-card-anim { animation: slideUp .45s ease forwards; opacity:0; }
-.rifa-card-anim:nth-child(1){animation-delay:.05s}
-.rifa-card-anim:nth-child(2){animation-delay:.12s}
-.rifa-card-anim:nth-child(3){animation-delay:.19s}
-.rifa-card-anim:nth-child(4){animation-delay:.26s}
-.rifa-card-anim:nth-child(5){animation-delay:.33s}
-.rifa-card-anim:nth-child(6){animation-delay:.40s}
-.live-dot::before {
-  content:'';
-  position:absolute; inset:-3px;
-  border-radius:50%;
-  background:currentColor;
-  animation: pulse-ring 1.4s ease-out infinite;
-}
-.progress-hot { background: linear-gradient(90deg, #f59e0b, #ef4444); }
-.progress-mid { background: linear-gradient(90deg, #10b981, #06b6d4); }
-.progress-low { background: linear-gradient(90deg, #6366f1, #8b5cf6); }
-.store-hero-bg {
-  background: linear-gradient(135deg, var(--hero-from,#0f172a) 0%, var(--hero-to,#134e4a) 100%);
-}
+.imp-anim { animation: imp-slide-up .4s ease forwards; opacity:0; }
+.imp-anim:nth-child(1){animation-delay:.05s}
+.imp-anim:nth-child(2){animation-delay:.12s}
+.imp-anim:nth-child(3){animation-delay:.19s}
+.imp-anim:nth-child(4){animation-delay:.26s}
+.imp-anim:nth-child(5){animation-delay:.33s}
+.imp-anim:nth-child(6){animation-delay:.40s}
 </style>
 
 <%
-  const corPrimaria = tenant.corPrimaria || '#10b981';
-  const totalAtivos = rifas.length;
-  const totalCotas = rifas.reduce((s,r) => s + (r.stats.disponiveis || 0), 0);
-  const totalVendidos = rifas.reduce((s,r) => s + (r.stats.vendidos || (r.stats.total - r.stats.disponiveis) || 0), 0);
+  const corPrimaria = tenant.corPrimaria || '#22c55e';
   const nomeExibido = typeof organizadorNome !== 'undefined' ? organizadorNome : tenant.nome;
-  const iniciais = nomeExibido.split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase();
 %>
 
-<!-- ══ MINI-HERO DA LOJA ══════════════════════════════════════════ -->
-<% if (tenant.descricao) { %>
-<div class="border-b border-gray-200/60 dark:border-gray-700/50 bg-gray-50/80 dark:bg-gray-900/60">
-  <div class="max-w-5xl mx-auto px-4 sm:px-6 py-3">
-    <p class="text-sm text-gray-600 dark:text-gray-300 text-center"><%= tenant.descricao %></p>
-  </div>
-</div>
-<% } %>
+<div class="imp-store">
+  <div class="max-w-2xl mx-auto px-3 sm:px-4 py-6 pb-24">
 
-<!-- ══ SORTEIOS ══════════════════════════════════════════════════ -->
-<div class="public-site max-w-5xl mx-auto px-4 sm:px-6 py-8 pb-20 pb-safe">
+    <!-- Descrição da loja -->
+    <% if (tenant.descricao) { %>
+    <p style="color:#6b7280;font-size:13px;text-align:center;margin-bottom:20px;"><%= tenant.descricao %></p>
+    <% } %>
 
-  <% if (rifas.length === 0) { %>
-
-    <div class="text-center py-24">
-      <div class="text-6xl mb-5">🎯</div>
-      <p class="text-gray-700 dark:text-white text-xl font-bold mb-2">Nenhum sorteio ativo agora</p>
-      <p class="text-gray-400 dark:text-gray-500 text-sm">Volte em breve — novidades chegando!</p>
+    <!-- Cabeçalho da seção -->
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;">
+      <span style="color:#22c55e;font-size:18px;">⚡</span>
+      <h2 style="font-size:18px;font-weight:900;color:#fff;margin:0;">Campanhas</h2>
+      <span style="color:#6b7280;font-size:13px;font-weight:500;">Escolha sua sorte</span>
     </div>
 
-  <% } else { %>
+    <% if (rifas.length === 0) { %>
+      <div style="text-align:center;padding:80px 20px;">
+        <div style="font-size:4rem;margin-bottom:16px;">🎯</div>
+        <p style="font-size:18px;font-weight:800;color:#fff;margin-bottom:8px;">Nenhum sorteio ativo agora</p>
+        <p style="color:#6b7280;font-size:14px;">Volte em breve — novidades chegando!</p>
+      </div>
+    <% } else { %>
 
-    <div id="rifas-container" class="grid grid-cols-1 sm:grid-cols-2 gap-5"
+    <div id="rifas-container"
          data-page="<%= page %>" data-paginas="<%= paginas %>"
          data-slug="<%= tenant.slug %>"
          data-organizador-nome="<%= nomeExibido.replace(/"/g, '&quot;') %>">
@@ -71,260 +162,273 @@
         const vendidos  = rifa.stats.vendidos || (rifa.stats.total - rifa.stats.disponiveis);
         const pct       = rifa.stats.total > 0 ? Math.round((vendidos / rifa.stats.total) * 100) : 0;
         const isQuente  = pct >= 75;
-        const isMeio    = pct >= 40 && pct < 75;
         const diasRestantes = Math.max(0, Math.ceil((new Date(rifa.dataSorteio) - new Date()) / (1000*60*60*24)));
-        const urgente   = diasRestantes <= 3 && diasRestantes >= 0;
+        const urgente   = diasRestantes <= 3;
+        const dataFmt   = new Date(rifa.dataSorteio).toLocaleDateString('pt-BR', {weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});
       %>
 
-        <article class="public-rifa-card rifa-card-anim flex flex-col overflow-hidden group">
+      <% if (idx === 0) { %>
+        <!-- ══ CARD DESTAQUE (primeiro) ══ -->
+        <div class="imp-featured-card imp-anim" style="margin-bottom:12px;"
+             onclick="document.querySelector('[data-rifa-id=\'<%= rifa.id %>\']')?.click()">
 
-          <!-- Imagem ou placeholder colorido -->
-          <div class="relative <% if (rifa.imagemUrl) { %>h-52<% } else { %>h-28<% } %> overflow-hidden shrink-0">
-
+          <!-- Imagem -->
+          <div style="position:relative;height:220px;overflow:hidden;">
             <% if (rifa.imagemUrl) { %>
               <img src="<%= rifa.imagemUrl %>" alt="<%= rifa.titulo %>"
-                   class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
-              <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent"></div>
+                   style="width:100%;height:100%;object-fit:cover;display:block;">
+              <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(18,18,31,.95) 0%,rgba(18,18,31,.3) 50%,transparent 100%);"></div>
             <% } else { %>
-              <div class="w-full h-full flex items-center justify-center text-4xl"
-                   style="background:linear-gradient(135deg,<%= corPrimaria %>33,<%= corPrimaria %>11)">
-                🏆
-              </div>
+              <div style="width:100%;height:100%;background:linear-gradient(135deg,#1a1a2e,#0d0d1a);display:flex;align-items:center;justify-content:center;font-size:4rem;">🏆</div>
+              <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(18,18,31,.9) 0%,transparent 60%);"></div>
             <% } %>
 
-            <!-- Badges sobrepostos -->
-            <div class="absolute top-3 left-3 flex flex-wrap gap-1.5">
-              <% if (urgente) { %>
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-600 text-white text-[10px] font-black uppercase shadow">
-                  ⏰ <%= diasRestantes === 0 ? 'Hoje!' : diasRestantes + 'd' %>
-                </span>
-              <% } %>
-              <% if (isQuente) { %>
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-500 text-white text-[10px] font-black uppercase shadow">
-                  🔥 Quente
-                </span>
-              <% } %>
-              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500 text-white text-[10px] font-bold uppercase shadow">
-                ATIVA
-              </span>
+            <!-- Badges topo -->
+            <div style="position:absolute;top:12px;left:12px;display:flex;gap:6px;flex-wrap:wrap;">
+              <span class="imp-status-badge imp-badge-green">● ATIVA</span>
+              <% if (isQuente) { %><span class="imp-status-badge imp-badge-orange">🔥 Quase esgotando!</span><% } %>
+              <% if (urgente) { %><span class="imp-status-badge imp-badge-red">⏰ <%= diasRestantes === 0 ? 'Hoje!' : diasRestantes + 'd' %></span><% } %>
             </div>
 
-            <% if (rifa.imagemUrl) { %>
-              <div class="absolute bottom-3 left-3 right-3">
-                <h3 class="font-black text-white text-lg leading-tight drop-shadow-lg"><%= rifa.titulo %></h3>
-              </div>
-            <% } %>
+            <!-- Título na imagem -->
+            <div style="position:absolute;bottom:0;left:0;right:0;padding:16px;">
+              <h3 style="font-size:18px;font-weight:900;color:#fff;margin:0 0 4px;text-shadow:0 2px 8px rgba(0,0,0,.6);"><%= rifa.titulo %></h3>
+              <p style="font-size:12px;color:rgba(255,255,255,.6);margin:0;text-transform:capitalize;">
+                <%= dataFmt.charAt(0).toUpperCase() + dataFmt.slice(1) %>
+              </p>
+            </div>
           </div>
 
-          <!-- Corpo do card -->
-          <div class="p-5 flex flex-col flex-1">
-
-            <% if (!rifa.imagemUrl) { %>
-              <h3 class="font-black text-lg text-gray-900 dark:text-white mb-3 leading-snug"><%= rifa.titulo %></h3>
-            <% } %>
-
-            <!-- Valor + stats -->
-            <div class="flex items-end justify-between mb-4">
-              <div>
-                <p class="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold mb-0.5">Valor da cota</p>
-                <p class="text-3xl font-black rifa-brand-text leading-none">R$&nbsp;<%= rifa.valorCota.toFixed(2).replace('.', ',') %></p>
+          <!-- Corpo -->
+          <div style="padding:16px;">
+            <!-- Progress -->
+            <div style="margin-bottom:14px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                <span style="font-size:12px;color:#9ca3af;">Cotas vendidas</span>
+                <span style="font-size:13px;font-weight:900;color:#22c55e;"><%= pct %>%</span>
               </div>
-              <div class="text-right">
-                <p class="text-sm font-bold text-gray-700 dark:text-white"><%= vendidos.toLocaleString('pt-BR') %> <span class="text-gray-400 font-normal">/ <%= rifa.stats.total.toLocaleString('pt-BR') %></span></p>
-                <p class="text-[11px] text-gray-400 flex items-center justify-end gap-1 mt-0.5">
-                  <i data-lucide="calendar" class="w-3 h-3"></i>
-                  <%= new Date(rifa.dataSorteio).toLocaleDateString('pt-BR') %>
-                </p>
+              <div class="imp-progress-wrap">
+                <div class="imp-progress-bar" style="width:<%= Math.max(pct,2) %>%;"></div>
               </div>
             </div>
 
-            <!-- Barra de progresso -->
-            <div class="mb-5 rounded-2xl p-4 <%= isQuente ? 'bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800/40' : isMeio ? 'bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40' : 'bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700' %>">
-              <div class="flex justify-between items-center mb-3">
-                <span class="text-xs font-bold uppercase tracking-wide <%= isQuente ? 'text-orange-600 dark:text-orange-400' : isMeio ? 'text-emerald-700 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400' %>">
-                  <%= isQuente ? '🔥 Quase esgotando!' : isMeio ? '📈 Vendendo bem' : '🎟️ Cotas vendidas' %>
-                </span>
-                <span class="text-2xl font-black <%= isQuente ? 'text-orange-500' : isMeio ? 'text-emerald-600 dark:text-emerald-400' : 'rifa-brand-text' %>"><%= pct %>%</span>
+            <!-- Valor + Botão -->
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div style="flex:1;">
+                <div style="font-size:10px;color:#6b7280;text-transform:uppercase;font-weight:700;margin-bottom:2px;">Por apenas</div>
+                <div style="font-size:22px;font-weight:900;color:#fff;">R$&nbsp;<%= rifa.valorCota.toFixed(2).replace('.',',') %></div>
               </div>
-              <div class="h-5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden shadow-inner">
-                <div class="h-full rounded-full transition-all duration-700 flex items-center justify-end pr-2 <%= isQuente ? 'progress-hot' : isMeio ? 'progress-mid' : 'progress-low' %>"
-                     style="width:<%= Math.max(pct, 4) %>%; min-width:<%= pct > 0 ? '1.5rem' : '0' %>">
-                  <% if (pct >= 15) { %>
-                    <span class="text-[10px] font-black text-white/90"><%= pct %>%</span>
-                  <% } %>
-                </div>
-              </div>
-              <div class="flex justify-between text-xs mt-2 <%= isQuente ? 'text-orange-500 dark:text-orange-400' : 'text-gray-400 dark:text-gray-500' %>">
-                <span><%= vendidos.toLocaleString('pt-BR') %> vendidas</span>
-                <% if (isQuente) { %>
-                  <span class="font-bold">⚡ só <%= rifa.stats.disponiveis.toLocaleString('pt-BR') %> restam!</span>
-                <% } else { %>
-                  <span><%= rifa.stats.disponiveis.toLocaleString('pt-BR') %> disponíveis</span>
-                <% } %>
-              </div>
-            </div>
-
-            <!-- Botões -->
-            <div class="mt-auto flex flex-col sm:flex-row gap-2.5">
-              <button type="button"
-                class="public-btn-primary flex-1 py-3.5 px-4 text-center rounded-xl font-bold text-sm sm:text-base"
+              <button type="button" class="imp-btn-primary" style="flex:1;max-width:160px;"
                 data-abrir-modal
                 data-rifa-id="<%= rifa.id %>"
                 data-rifa-titulo="<%= rifa.titulo.replace(/"/g, '&quot;') %>"
                 data-valor-cota="<%= rifa.valorCota %>"
                 data-disponiveis="<%= rifa.stats.disponiveis %>"
-                data-faixas="<%= encodeURIComponent(JSON.stringify(rifa.faixasDesconto || [])) %>">
-                🎟️ Participar agora
+                data-faixas="<%= encodeURIComponent(JSON.stringify(rifa.faixasDesconto || [])) %>"
+                onclick="event.stopPropagation()">
+                🎟️ Participar
               </button>
-
-              <a href="<%= tenantBase %>/rifas/<%= rifa.id %>"
-                class="py-3.5 px-4 text-center text-sm font-semibold rounded-xl border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:border-gray-400 dark:hover:border-gray-500 transition flex items-center justify-center gap-1.5 bg-transparent">
-                Ver detalhes
-              </a>
             </div>
           </div>
+        </div>
 
-        </article>
+      <% } else { %>
+        <!-- ══ CARD LISTA (demais) ══ -->
+        <div class="imp-list-card imp-anim" style="margin-bottom:10px;"
+             onclick="document.querySelector('[data-rifa-id=\'<%= rifa.id %>\'][data-abrir-modal]')?.click()">
 
+          <!-- Thumbnail -->
+          <div style="width:90px;flex-shrink:0;position:relative;overflow:hidden;">
+            <% if (rifa.imagemUrl) { %>
+              <img src="<%= rifa.imagemUrl %>" alt="<%= rifa.titulo %>"
+                   style="width:100%;height:100%;object-fit:cover;display:block;">
+            <% } else { %>
+              <div style="width:100%;height:100%;background:linear-gradient(135deg,#1f2a1f,#0d1a0d);display:flex;align-items:center;justify-content:center;font-size:2rem;">🏆</div>
+            <% } %>
+          </div>
+
+          <!-- Info -->
+          <div style="flex:1;padding:12px 14px;display:flex;flex-direction:column;justify-content:space-between;min-width:0;">
+            <div>
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap;">
+                <span class="imp-status-badge imp-badge-green">● ATIVA</span>
+                <% if (isQuente) { %><span class="imp-status-badge imp-badge-orange">🔥</span><% } %>
+              </div>
+              <h3 style="font-size:14px;font-weight:800;color:#fff;margin:0 0 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><%= rifa.titulo %></h3>
+              <p style="font-size:11px;color:#6b7280;margin:0;text-transform:capitalize;">
+                Resultado: <%= new Date(rifa.dataSorteio).toLocaleDateString('pt-BR') %>
+              </p>
+            </div>
+
+            <!-- Progress mini + valor -->
+            <div style="margin-top:10px;">
+              <div class="imp-progress-wrap" style="height:5px;margin-bottom:8px;">
+                <div class="imp-progress-bar" style="width:<%= Math.max(pct,2) %>%;"></div>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <span style="font-size:12px;font-weight:900;color:#22c55e;"><%= pct %>% vendido</span>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span style="font-size:13px;font-weight:900;color:#fff;">R$&nbsp;<%= rifa.valorCota.toFixed(2).replace('.',',') %></span>
+                  <button type="button" class="imp-btn-primary" style="width:auto;padding:7px 14px;font-size:12px;"
+                    data-abrir-modal
+                    data-rifa-id="<%= rifa.id %>"
+                    data-rifa-titulo="<%= rifa.titulo.replace(/"/g, '&quot;') %>"
+                    data-valor-cota="<%= rifa.valorCota %>"
+                    data-disponiveis="<%= rifa.stats.disponiveis %>"
+                    data-faixas="<%= encodeURIComponent(JSON.stringify(rifa.faixasDesconto || [])) %>"
+                    onclick="event.stopPropagation()">
+                    Participar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      <% } %>
       <% }); %>
 
     </div>
 
     <% if (page < paginas) { %>
-      <div id="load-more" class="text-center py-10">
-        <div class="inline-flex items-center gap-2 text-gray-400 text-sm">
-          <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-          Carregando mais sorteios...
+      <div id="load-more" style="text-align:center;padding:32px 0;">
+        <div style="display:inline-flex;align-items:center;gap:8px;color:#6b7280;font-size:13px;">
+          <svg style="animation:spin 1s linear infinite;width:16px;height:16px;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" opacity=".25"/><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" opacity=".75"/></svg>
+          Carregando mais...
         </div>
       </div>
     <% } %>
 
-  <% } %>
-
+    <% } %>
+  </div>
 </div>
 
-<!-- ══ MODAL COMPRA RÁPIDA ════════════════════════════════════════ -->
-<div id="modal-participar" class="fixed inset-0 z-50 hidden public-modal-backdrop flex items-end sm:items-center justify-center p-0 sm:p-4" role="dialog" aria-modal="true">
-  <div class="bg-white dark:bg-slate-900 w-full sm:max-w-lg modal-sheet overflow-y-auto rounded-t-2xl sm:rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 pb-safe">
-    <div class="w-12 h-1 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mt-3 sm:hidden shrink-0"></div>
-    <div class="sticky top-0 bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-gray-800 px-4 sm:px-6 py-4 flex items-center justify-between z-10">
-      <h3 id="modal-rifa-titulo" class="font-bold text-lg text-gray-900 dark:text-white pr-4">Sorteio</h3>
-      <button type="button" id="modal-fechar" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500" aria-label="Fechar">
+<!-- ══ MODAL COMPRA RÁPIDA ══════════════════════════════════════════ -->
+<div id="modal-participar" class="fixed inset-0 z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4" style="background:rgba(0,0,0,.75);" role="dialog" aria-modal="true">
+  <div style="background:#1a1a2e;border:1px solid rgba(255,255,255,.1);color:#fff;width:100%;max-width:480px;border-radius:20px 20px 0 0;overflow-y:auto;max-height:92vh;" class="sm:rounded-2xl pb-safe">
+    <div style="width:48px;height:4px;background:rgba(255,255,255,.2);border-radius:9999px;margin:12px auto 0;" class="sm:hidden"></div>
+    <!-- Header -->
+    <div style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#1a1a2e;z-index:10;">
+      <h3 id="modal-rifa-titulo" style="font-weight:800;font-size:16px;color:#fff;margin:0;padding-right:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Sorteio</h3>
+      <button type="button" id="modal-fechar" style="background:rgba(255,255,255,.08);border:none;border-radius:8px;padding:8px;cursor:pointer;color:#9ca3af;" aria-label="Fechar">
         <i data-lucide="x" class="w-5 h-5"></i>
       </button>
     </div>
 
-    <div class="p-4 sm:p-6 space-y-5">
-      <div class="compra-qtd-panel rounded-xl p-4 sm:p-5">
-        <p class="text-sm font-semibold mb-1 flex items-center gap-2">
-          <i data-lucide="layers" class="w-4 h-4 text-emerald-400"></i> Quantas cotas você quer?
-        </p>
-        <p class="text-xs text-gray-400 mb-4">Números atribuídos automaticamente.</p>
+    <div style="padding:20px;">
+      <!-- Qtd -->
+      <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:18px;margin-bottom:16px;">
+        <p style="font-size:13px;font-weight:700;color:#d1d5db;margin:0 0 4px;">Quantas cotas você quer?</p>
+        <p style="font-size:11px;color:#6b7280;margin:0 0 14px;">Números atribuídos automaticamente.</p>
 
-        <div class="grid grid-cols-3 gap-2 mb-4">
-          <button type="button" class="btn-quick text-xs py-2.5" data-modal-add="100">+100</button>
-          <button type="button" class="btn-quick text-xs py-2.5" data-modal-add="500">+500</button>
-          <button type="button" class="btn-quick text-xs py-2.5" data-modal-add="1000">+1000</button>
+        <!-- Atalhos -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;">
+          <button type="button" class="btn-quick text-xs py-2.5" data-modal-add="100" style="background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:#22c55e;border-radius:8px;font-weight:800;cursor:pointer;">+100</button>
+          <button type="button" class="btn-quick text-xs py-2.5" data-modal-add="500" style="background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:#22c55e;border-radius:8px;font-weight:800;cursor:pointer;">+500</button>
+          <button type="button" class="btn-quick text-xs py-2.5" data-modal-add="1000" style="background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:#22c55e;border-radius:8px;font-weight:800;cursor:pointer;">+1000</button>
         </div>
 
-        <div class="flex items-center justify-center gap-3 mb-3">
-          <button type="button" class="stepper-btn !w-10 !h-10 !text-xl" id="modal-qtd-menos" aria-label="Diminuir">−</button>
-          <input type="number" id="modal-input-qtd" class="stepper-input !text-xl !max-w-[100px]" value="1" min="1" inputmode="numeric">
-          <button type="button" class="stepper-btn !w-10 !h-10 !text-xl" id="modal-qtd-mais" aria-label="Aumentar">+</button>
+        <!-- Stepper -->
+        <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:10px;">
+          <button type="button" id="modal-qtd-menos" style="width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;font-size:22px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;" aria-label="Diminuir">−</button>
+          <input type="number" id="modal-input-qtd" value="1" min="1" inputmode="numeric"
+            style="width:90px;text-align:center;font-size:22px;font-weight:900;background:#111827;border:1px solid rgba(255,255,255,.15);border-radius:10px;color:#fff;padding:8px;">
+          <button type="button" id="modal-qtd-mais" style="width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;font-size:22px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;" aria-label="Aumentar">+</button>
         </div>
 
-        <p class="text-center text-xs text-gray-400 mb-4">
+        <p style="text-align:center;font-size:11px;color:#6b7280;margin:0 0 14px;">
           <span id="modal-label-disponiveis">0</span> cotas disponíveis
         </p>
 
-        <div class="resumo-checkout space-y-2 text-sm">
-          <div class="flex justify-between text-gray-400"><span>Cotas</span><span id="modal-qtd" class="text-white font-medium">1</span></div>
-          <div class="flex justify-between text-gray-400"><span>Subtotal</span><span id="modal-subtotal">R$ 0,00</span></div>
-          <div class="flex justify-between pt-2 border-t border-white/10 font-bold">
-            <span class="text-white">Total PIX</span>
-            <span id="modal-valor-total" class="text-emerald-400 text-lg">R$ 0,00</span>
+        <!-- Resumo -->
+        <div style="border-top:1px solid rgba(255,255,255,.08);padding-top:12px;display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:#9ca3af;">
+            <span>Cotas</span><span id="modal-qtd" style="color:#fff;font-weight:600;">1</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:#9ca3af;">
+            <span>Subtotal</span><span id="modal-subtotal">R$ 0,00</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:900;padding-top:8px;border-top:1px solid rgba(255,255,255,.08);">
+            <span style="color:#fff;">Total PIX</span>
+            <span id="modal-valor-total" style="color:#22c55e;">R$ 0,00</span>
           </div>
         </div>
       </div>
 
-      <div class="space-y-3">
+      <!-- Dados -->
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
         <div>
-          <label for="modal-nome" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Nome completo *</label>
-          <input type="text" id="modal-nome" placeholder="Seu nome" class="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
+          <label for="modal-nome" style="display:block;font-size:12px;font-weight:700;color:#9ca3af;margin-bottom:6px;">Nome completo *</label>
+          <input type="text" id="modal-nome" placeholder="Seu nome"
+            style="width:100%;background:#111827;border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:12px 14px;color:#fff;font-size:14px;">
         </div>
         <div>
-          <label for="modal-cpf" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">CPF *</label>
-          <input type="text" id="modal-cpf" placeholder="000.000.000-00" inputmode="numeric" maxlength="14" class="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
+          <label for="modal-cpf" style="display:block;font-size:12px;font-weight:700;color:#9ca3af;margin-bottom:6px;">CPF *</label>
+          <input type="text" id="modal-cpf" placeholder="000.000.000-00" inputmode="numeric" maxlength="14"
+            style="width:100%;background:#111827;border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:12px 14px;color:#fff;font-size:14px;">
         </div>
         <div>
-          <label for="modal-telefone" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">WhatsApp *</label>
-          <input type="tel" id="modal-telefone" placeholder="(11) 99999-9999" inputmode="numeric" maxlength="15" class="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
+          <label for="modal-telefone" style="display:block;font-size:12px;font-weight:700;color:#9ca3af;margin-bottom:6px;">WhatsApp *</label>
+          <input type="tel" id="modal-telefone" placeholder="(11) 99999-9999" inputmode="numeric" maxlength="15"
+            style="width:100%;background:#111827;border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:12px 14px;color:#fff;font-size:14px;">
         </div>
       </div>
 
-      <p id="modal-aviso-compra-minima" class="hidden text-center text-xs text-amber-400 mb-2"></p>
-      <button type="button" id="modal-pagar-pix" class="public-btn-primary w-full py-4 text-base flex items-center justify-center gap-2">
+      <p id="modal-aviso-compra-minima" class="hidden" style="text-align:center;font-size:12px;color:#fbbf24;margin-bottom:10px;"></p>
+
+      <button type="button" id="modal-pagar-pix" class="imp-btn-primary" style="font-size:15px;padding:15px;">
         <i data-lucide="qr-code" class="w-5 h-5"></i> Pagar via PIX
       </button>
 
-      <a id="modal-ver-detalhe" href="#" class="block w-full py-3 text-sm text-center text-blue-800 dark:text-blue-300 font-medium hover:underline">
+      <a id="modal-ver-detalhe" href="#"
+         style="display:block;width:100%;padding:11px;text-align:center;font-size:13px;color:#6b7280;font-weight:600;margin-top:8px;text-decoration:none;">
         Ver detalhes do sorteio →
       </a>
     </div>
   </div>
 </div>
 
-<!-- Modal sucesso / pagamento PIX -->
-<div id="modal-sucesso-index" class="fixed inset-0 bg-black/60 modal-backdrop z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
-  <div class="bg-white dark:bg-gray-800 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full sm:max-w-md overflow-y-auto pb-safe" style="max-height:92vh">
-    <div class="w-12 h-1 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mt-3 sm:hidden shrink-0"></div>
+<!-- ══ MODAL SUCESSO / PIX ══════════════════════════════════════════ -->
+<div id="modal-sucesso-index" class="fixed inset-0 z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4" style="background:rgba(0,0,0,.8);">
+  <div style="background:#1a1a2e;border:1px solid rgba(34,197,94,.25);color:#fff;width:100%;max-width:440px;border-radius:20px 20px 0 0;overflow-y:auto;max-height:92vh;" class="sm:rounded-2xl pb-safe">
+    <div style="width:48px;height:4px;background:rgba(255,255,255,.15);border-radius:9999px;margin:12px auto 0;" class="sm:hidden"></div>
 
-    <div class="p-5 sm:p-6">
+    <div style="padding:24px 20px;">
       <!-- Header -->
-      <div class="text-center mb-5">
-        <div class="w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center mx-auto mb-3">
-          <i data-lucide="check-circle" class="w-9 h-9 text-emerald-500"></i>
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="width:56px;height:56px;border-radius:50%;background:rgba(34,197,94,.15);border:2px solid rgba(34,197,94,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+          <i data-lucide="check-circle" class="w-9 h-9" style="color:#22c55e;"></i>
         </div>
-        <h3 class="text-xl font-extrabold dark:text-white">Reserva Confirmada!</h3>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Realize o pagamento PIX para garantir seus números</p>
+        <h3 style="font-size:18px;font-weight:900;color:#fff;margin:0 0 4px;">Reserva Confirmada!</h3>
+        <p style="font-size:13px;color:#6b7280;margin:0;">Realize o pagamento PIX para garantir seus números</p>
       </div>
 
       <!-- Detalhes -->
-      <div class="bg-gray-50 dark:bg-gray-900/40 rounded-xl p-3 text-sm dark:text-gray-300 mb-4 space-y-1">
-        <p class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-[11px] font-bold">💳 PIX</p>
-        <p>Reserva <strong id="ms-id">#</strong></p>
-        <p><strong id="ms-qtd">0</strong> cota(s) — números: <span id="ms-nums" class="text-indigo-600 dark:text-indigo-400 font-semibold"></span></p>
-        <p>Total PIX: <strong id="ms-total">R$ 0,00</strong></p>
-        <div class="bg-amber-50 dark:bg-amber-900/30 rounded-xl p-3 mt-2 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-xs text-center">
+      <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px;margin-bottom:16px;font-size:13px;color:#d1d5db;">
+        <div style="display:inline-flex;align-items:center;gap:4px;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:#22c55e;border-radius:9999px;padding:3px 10px;font-size:11px;font-weight:800;margin-bottom:10px;">💳 PIX</div>
+        <div style="margin-bottom:4px;">Reserva <strong id="ms-id" style="color:#fff;">#</strong></div>
+        <div style="margin-bottom:4px;"><strong id="ms-qtd" style="color:#fff;">0</strong> cota(s) — <span id="ms-nums" style="color:#22c55e;font-weight:700;"></span></div>
+        <div style="margin-bottom:10px;">Total: <strong id="ms-total" style="color:#fff;">R$ 0,00</strong></div>
+        <div style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.2);border-radius:10px;padding:10px;text-align:center;font-size:12px;color:#fbbf24;">
           ⏱️ Pague em até <strong>10 min</strong> — expira em <strong id="ms-timer">--:--</strong>
         </div>
       </div>
 
-      <!-- QR Code -->
-      <div class="text-center mb-4">
-        <p class="text-xs text-gray-400 uppercase font-bold tracking-wide mb-3">Escaneie o QR Code</p>
-        <img id="ms-qrcode" src="" alt="QR Code PIX" class="hidden mx-auto rounded-2xl shadow-lg border-4 border-white dark:border-gray-700" style="max-width:200px;width:100%">
-        <div class="flex items-center gap-3 my-3">
-          <div class="flex-1 h-px bg-gray-200 dark:bg-gray-700"></div>
-          <span class="text-xs text-gray-400 font-semibold">ou</span>
-          <div class="flex-1 h-px bg-gray-200 dark:bg-gray-700"></div>
+      <!-- QR -->
+      <div style="text-align:center;margin-bottom:16px;">
+        <p style="font-size:11px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;">Escaneie o QR Code</p>
+        <img id="ms-qrcode" src="" alt="QR Code PIX" style="display:none;max-width:180px;width:100%;border-radius:12px;border:3px solid rgba(255,255,255,.1);margin:0 auto 12px;">
+        <div style="display:flex;align-items:center;gap:10px;margin:12px 0;">
+          <div style="flex:1;height:1px;background:rgba(255,255,255,.08);"></div>
+          <span style="font-size:11px;color:#6b7280;">ou</span>
+          <div style="flex:1;height:1px;background:rgba(255,255,255,.08);"></div>
         </div>
-        <button id="ms-copiar" type="button"
-          class="w-full btn-brand text-sm py-3 rounded-xl font-semibold">
-          📋 Copiar código PIX
-        </button>
-        <p id="ms-status-pix" class="text-xs text-amber-600 dark:text-amber-400 font-semibold mt-3">⏳ Aguardando pagamento PIX…</p>
+        <button id="ms-copiar" type="button" class="imp-btn-primary" style="font-size:14px;">📋 Copiar código PIX</button>
+        <p id="ms-status-pix" style="font-size:12px;color:#fbbf24;font-weight:700;margin-top:10px;">⏳ Aguardando pagamento PIX…</p>
       </div>
 
-      <!-- Ações -->
-      <a id="ms-ver-comprovante" href="#"
-         class="block w-full text-center btn-brand font-bold py-3.5 rounded-xl shadow-md mb-2">
-        Ver Comprovante
-      </a>
-      <button id="ms-fechar" type="button"
-        class="w-full text-gray-500 dark:text-gray-400 text-sm py-2 hover:text-gray-700 transition">
-        Fechar
-      </button>
+      <a id="ms-ver-comprovante" href="#" class="imp-btn-primary" style="display:flex;margin-bottom:8px;font-size:14px;">Ver Comprovante</a>
+      <button id="ms-fechar" type="button" style="width:100%;background:transparent;border:none;color:#6b7280;font-size:13px;padding:8px;cursor:pointer;">Fechar</button>
     </div>
   </div>
 </div>
