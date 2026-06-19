@@ -279,7 +279,8 @@ body .glass-nav {
     <%
       const ganhadores = (typeof rifasEncerradas !== 'undefined' ? rifasEncerradas : [])
         .filter(function(r){ return r.ganhadorNome; })
-        .map(function(r){ return { nome: r.ganhadorNome, titulo: r.titulo, numero: r.numeroSorteado, data: r.updatedAt || r.dataSorteio }; });
+        .map(function(r){ return { nome: r.ganhadorNome, titulo: r.titulo, numero: r.numeroSorteado, data: r.updatedAt || r.dataSorteio }; })
+        .slice(0, 1);
     %>
     <% if (ganhadores.length > 0) { %>
     <div style="margin-top:32px;">
