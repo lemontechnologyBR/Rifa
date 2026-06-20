@@ -7,6 +7,76 @@ function showToast(msg, tipo = 'info') {
   else notyf.open({ type: 'info', message: msg });
 }
 
+function copiarPixFeedback(btn) {
+  if (!btn) return;
+  if (!btn.dataset.labelOriginal) btn.dataset.labelOriginal = btn.textContent.trim();
+  btn.textContent = '✅ Copiado!';
+  btn.disabled = true;
+  setTimeout(function () {
+    btn.textContent = btn.dataset.labelOriginal;
+    btn.disabled = false;
+  }, 2000);
+}
+
+function copiarPixFallback(texto) {
+  const existente = document.getElementById('pix-copia-cola');
+  let el = existente;
+  let criado = false;
+
+  if (!el || !el.value) {
+    el = document.createElement('textarea');
+    el.value = texto;
+    el.setAttribute('readonly', '');
+    el.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;padding:0;border:none;opacity:0;';
+    document.body.appendChild(el);
+    criado = true;
+  }
+
+  el.focus();
+  el.select();
+  if (el.setSelectionRange) el.setSelectionRange(0, el.value.length);
+
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+  if (criado) document.body.removeChild(el);
+  return ok;
+}
+
+function copiarPix(texto, btn) {
+  const code = String(texto || '').trim();
+  if (!code) {
+    showToast('Código PIX indisponível. Tente novamente.', 'error');
+    return Promise.resolve(false);
+  }
+
+  if (navigator.clipboard && window.isSecureContext) {
+    return navigator.clipboard.writeText(code)
+      .then(function () {
+        copiarPixFeedback(btn);
+        if (!btn) showToast('Código PIX copiado!', 'success');
+        return true;
+      })
+      .catch(function () {
+        if (copiarPixFallback(code)) {
+          copiarPixFeedback(btn);
+          if (!btn) showToast('Código PIX copiado!', 'success');
+          return true;
+        }
+        showToast('Não foi possível copiar. Tente novamente.', 'error');
+        return false;
+      });
+  }
+
+  if (copiarPixFallback(code)) {
+    copiarPixFeedback(btn);
+    if (!btn) showToast('Código PIX copiado!', 'success');
+    return Promise.resolve(true);
+  }
+
+  showToast('Não foi possível copiar. Tente novamente.', 'error');
+  return Promise.resolve(false);
+}
+
 function getCsrfToken() {
   return document.querySelector('meta[name="csrf-token"]')?.content || '';
 }

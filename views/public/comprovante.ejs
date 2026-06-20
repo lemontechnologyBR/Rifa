@@ -79,11 +79,15 @@
             <!-- Textarea oculto — usado apenas pelo botão copiar -->
             <textarea readonly id="pix-copia-cola" class="sr-only" aria-hidden="true"><%= pagamento.copiaCola %></textarea>
 
-            <button type="button"
-              onclick="navigator.clipboard.writeText(document.getElementById('pix-copia-cola').value).then(function(){var b=this;b.textContent='✅ Copiado!';b.style.background='#059669';setTimeout(function(){b.textContent='📋 Copiar código PIX';b.style.background='';},2000);}.bind(this)).catch(function(){alert('Copie manualmente: ' + document.getElementById('pix-copia-cola').value);})"
+            <button type="button" id="btn-copiar-pix"
               class="w-full btn-brand text-sm py-3 rounded-xl font-semibold">
               📋 Copiar código PIX
             </button>
+            <script>
+              document.getElementById('btn-copiar-pix')?.addEventListener('click', function () {
+                copiarPix(document.getElementById('pix-copia-cola')?.value, this);
+              });
+            </script>
 
             <p class="text-xs mt-3 text-amber-600 dark:text-amber-400 font-semibold" id="status-pag-pix">⏳ Aguardando pagamento PIX…</p>
           </div>

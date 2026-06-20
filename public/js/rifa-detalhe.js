@@ -333,28 +333,43 @@
       const nums = data.numeros || numerosSelecionados;
       const numsDisplay = nums.length <= 20 ? nums.join(', ') : `${nums.slice(0, 18).join(', ')}… (+${nums.length - 18})`;
 
-      const pixBadge = '<p class="text-xs bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 rounded-full px-3 py-1 inline-block mb-2">💳 PIX</p>';
-
       const expiraEm = data.expiraEm ? new Date(data.expiraEm).getTime() : Date.now() + minutosReserva * 60 * 1000;
 
       document.getElementById('sucesso-detalhes').innerHTML = `
-        ${pixBadge}
-        <p>Reserva <strong>#${data.reservaId}</strong></p>
-        <p><strong>${nums.length}</strong> cota(s) — números: <strong>${numsDisplay}</strong></p>
-        <p>Total PIX: <strong>R$ ${(data.valorTotal || 0).toFixed(2).replace('.', ',')}</strong></p>
-        ${data.bonusUsado ? `<p class="text-green-600">${data.bonusUsado} cota(s) bônus aplicada(s)</p>` : ''}
-        <div class="bg-amber-50 dark:bg-amber-900/30 rounded-xl p-3 mt-3 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-sm text-center">
-          ⏱️ Pague em até <strong>${minutosReserva} min</strong> — expira em <strong id="pix-expira-timer">--:--</strong>
+        <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px;margin-bottom:16px;font-size:13px;color:#d1d5db;">
+          <div style="display:inline-flex;align-items:center;gap:4px;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:#22c55e;border-radius:9999px;padding:3px 10px;font-size:11px;font-weight:800;margin-bottom:10px;">💳 PIX</div>
+          <div style="margin-bottom:4px;">Reserva <strong style="color:#fff;">#${data.reservaId}</strong></div>
+          <div style="margin-bottom:4px;"><strong style="color:#fff;">${nums.length}</strong> cota(s) — <span style="color:#22c55e;font-weight:700;">${numsDisplay}</span></div>
+          <div style="margin-bottom:10px;">Total: <strong style="color:#fff;">R$ ${(data.valorTotal || 0).toFixed(2).replace('.', ',')}</strong></div>
+          ${data.bonusUsado ? `<div style="color:#22c55e;margin-bottom:8px;">${data.bonusUsado} cota(s) bônus aplicada(s)</div>` : ''}
+          <div style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.2);border-radius:10px;padding:10px;text-align:center;font-size:12px;color:#fbbf24;">
+            ⏱️ Pague em até <strong>${minutosReserva} min</strong> — expira em <strong id="pix-expira-timer">--:--</strong>
+          </div>
         </div>
-        <div class="bg-white dark:bg-gray-900 rounded-xl p-4 mt-3 text-center">
-          <p class="text-xs text-gray-400 uppercase font-bold tracking-wide mb-3">Escaneie o QR Code</p>
-          ${data.qrCodeUrl ? `<img src="${data.qrCodeUrl}" alt="QR Code PIX" class="mx-auto rounded-2xl shadow-lg border-4 border-white dark:border-gray-800 mb-3" style="max-width:200px;width:100%">` : ''}
-          <div class="flex items-center gap-2 my-2"><div class="flex-1 h-px bg-gray-200 dark:bg-gray-700"></div><span class="text-xs text-gray-400">ou</span><div class="flex-1 h-px bg-gray-200 dark:bg-gray-700"></div></div>
-          <textarea readonly class="sr-only" id="pix-copia-cola">${data.copiaCola || data.payloadPix || ''}</textarea>
-          <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('pix-copia-cola').value).then(function(){var b=document.querySelector('#modal-sucesso .pix-copy-btn');if(b){b.textContent='✅ Copiado!';b.style.background='#059669';setTimeout(function(){b.textContent='📋 Copiar código PIX';b.style.background='';},2000);}}).catch(function(){showToast('Copie manualmente','error');})"
-            class="pix-copy-btn w-full btn-brand text-sm py-2.5 rounded-xl font-semibold">📋 Copiar código PIX</button>
-          <p id="status-pagamento" class="text-xs mt-3 text-amber-600 dark:text-amber-400 font-semibold">⏳ Aguardando pagamento...</p>
+        <div style="text-align:center;">
+          <p style="font-size:11px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;">Escaneie o QR Code</p>
+          ${data.qrCodeUrl ? `<img src="${data.qrCodeUrl}" alt="QR Code PIX" style="max-width:180px;width:100%;border-radius:12px;border:3px solid rgba(255,255,255,.1);margin:0 auto 12px;display:block;">` : ''}
+          <div style="display:flex;align-items:center;gap:10px;margin:12px 0;">
+            <div style="flex:1;height:1px;background:rgba(255,255,255,.08);"></div>
+            <span style="font-size:11px;color:#6b7280;">ou</span>
+            <div style="flex:1;height:1px;background:rgba(255,255,255,.08);"></div>
+          </div>
+          <textarea readonly id="pix-copia-cola" aria-hidden="true" tabindex="-1" style="position:absolute;width:1px;height:1px;padding:0;border:0;opacity:0;pointer-events:none;"></textarea>
+          <button type="button" id="btn-copiar-pix" class="imp-btn-green" style="font-size:14px;padding:14px;">📋 Copiar código PIX</button>
+          <p id="status-pagamento" style="font-size:12px;color:#fbbf24;font-weight:700;margin-top:10px;">⏳ Aguardando pagamento PIX…</p>
         </div>`;
+
+      const pixCode = data.copiaCola || data.payloadPix || '';
+      const pixInput = document.getElementById('pix-copia-cola');
+      if (pixInput) pixInput.value = pixCode;
+
+      const copyBtn = document.getElementById('btn-copiar-pix');
+      if (copyBtn) {
+        copyBtn.addEventListener('click', function () {
+          copiarPix(pixInput ? pixInput.value : pixCode, copyBtn);
+        });
+      }
+
       document.getElementById('link-comprovante').href = `${tenantPath}/comprovante/${data.reservaId}`;
       document.getElementById('modal-sucesso').classList.remove('hidden');
       syncScrollLock();

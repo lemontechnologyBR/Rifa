@@ -275,12 +275,8 @@
     const pixData = data.copiaCola || data.payloadPix || '';
     const copyBtn = ms.querySelector('#ms-copiar');
     if (copyBtn) {
-      copyBtn.onclick = function() {
-        navigator.clipboard.writeText(pixData).then(function() {
-          copyBtn.textContent = '✅ Copiado!';
-          copyBtn.style.background = '#059669';
-          setTimeout(function(){ copyBtn.textContent = '📋 Copiar código PIX'; copyBtn.style.background = ''; }, 2000);
-        }).catch(function(){ alert('Copie manualmente: ' + pixData); });
+      copyBtn.onclick = function () {
+        copiarPix(pixData, copyBtn);
       };
     }
 
