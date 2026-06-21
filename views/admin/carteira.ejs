@@ -61,11 +61,11 @@
     </div>
 
     <%
-      const saldoDisp = resumo.saldoConfirmado * 0.95;
-      const saqueGratis = saldoDisp >= 500;
-      const podeSacar = saldoDisp >= 50;
-      const taxaSaque = saqueGratis ? 0 : 2.50;
-      const saldoLiquido = podeSacar ? (saqueGratis ? saldoDisp : saldoDisp - taxaSaque) : 0;
+      const saldoDisp = saque ? saque.saldoDisponivel : resumo.saldoConfirmado * 0.95;
+      const saqueGratis = saque ? saque.saqueGratis : saldoDisp >= 500;
+      const podeSacar = saque ? saque.podeSacar : saldoDisp >= 50;
+      const taxaSaque = saque ? saque.taxa : (saqueGratis ? 0 : 3.50);
+      const saldoLiquido = saque ? saque.saldoLiquido : (podeSacar ? (saqueGratis ? saldoDisp : saldoDisp - taxaSaque) : 0);
     %>
     <div class="admin-panel-card p-5 mb-6 border-l-4 <%= saqueGratis ? 'border-emerald-500' : podeSacar ? 'border-violet-400' : 'border-gray-300 dark:border-gray-700' %>">
       <div class="flex flex-col sm:flex-row sm:items-center gap-4">
@@ -79,7 +79,7 @@
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Saldo acima de R$ 500,00 — <strong>saque sem taxa</strong>. Você receberá R$ <strong><%= saldoDisp.toFixed(2).replace('.', ',') %></strong> na sua chave PIX.</p>
             <% } else if (podeSacar) { %>
               <p class="font-bold text-sm text-violet-800 dark:text-violet-300">💰 Saque disponível — R$ <%= saldoDisp.toFixed(2).replace('.', ',') %></p>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Taxa de saque: <strong>R$ 2,50</strong>. Você receberá <strong>R$ <%= saldoLiquido.toFixed(2).replace('.', ',') %></strong> na sua chave PIX. Saques acima de R$ 500,00 são gratuitos.</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Taxa de saque: <strong>R$ 3,50</strong>. Você receberá <strong>R$ <%= saldoLiquido.toFixed(2).replace('.', ',') %></strong> na sua chave PIX. Saques acima de R$ 500,00 são gratuitos.</p>
             <% } else { %>
               <p class="font-bold text-sm text-gray-600 dark:text-gray-400">⏳ Saldo insuficiente para saque</p>
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Mínimo para saque: <strong>R$ 50,00</strong>. Disponível: R$ <%= saldoDisp.toFixed(2).replace('.', ',') %>. Faltam R$ <%= Math.max(0, 50 - saldoDisp).toFixed(2).replace('.', ',') %>.</p>
@@ -218,7 +218,7 @@
             </li>
             <li class="flex items-start gap-2.5">
               <span class="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">✓</span>
-              <span>Saldo <strong class="text-gray-700 dark:text-gray-200">≥ R$ 500,00</strong>: saque gratuito. Abaixo: taxa de <strong class="text-gray-700 dark:text-gray-200">R$ 2,50</strong></span>
+              <span>Saldo <strong class="text-gray-700 dark:text-gray-200">≥ R$ 500,00</strong>: saque gratuito. Abaixo: taxa de <strong class="text-gray-700 dark:text-gray-200">R$ 3,50</strong></span>
             </li>
           </ol>
         </div>
@@ -232,7 +232,7 @@
             </li>
             <li class="flex items-center gap-2 text-amber-700 dark:text-amber-400">
               <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
-              <span><strong>R$ 2,50</strong> — saque abaixo de R$ 500,00</span>
+              <span><strong>R$ 3,50</strong> — saque abaixo de R$ 500,00</span>
             </li>
             <li class="flex items-center gap-2 text-gray-500 dark:text-gray-400">
               <i data-lucide="arrow-up" class="w-4 h-4 shrink-0"></i>

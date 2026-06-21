@@ -158,9 +158,13 @@ const organizadorController = {
   async carteiraForm(req, res, next) {
     try {
       const CarteiraService = require('../services/carteiraService');
+      const SaqueService = require('../services/saqueService');
       const WooviService = require('../services/wooviService');
+      const { ORGANIZADOR_PERCENTUAL } = require('../lib/config');
       const { detectarTipoChavePix, labelTipoPix } = require('../lib/pixKey');
       const resumo = await CarteiraService.obterResumo(req.tenant.id);
+      const saldoDisp = resumo.saldoConfirmado * ORGANIZADOR_PERCENTUAL;
+      const saque = SaqueService.calcularResumo(saldoDisp);
       const pixTipoDetectado = detectarTipoChavePix(req.tenant.pixChave);
       const pixTipo = req.query.tipo || pixTipoDetectado || 'cpf';
 
@@ -168,6 +172,7 @@ const organizadorController = {
         titulo: 'Carteira',
         tenant: req.tenant,
         resumo,
+        saque,
         carteiraOk: WooviService.isConfigured(req.tenant),
         pixTipo,
         pixTipoLabel: labelTipoPix(pixTipoDetectado),
@@ -200,24 +205,27 @@ const organizadorController = {
     try {
       const WooviService = require('../services/wooviService');
       const CarteiraService = require('../services/carteiraService');
+      const SaqueService = require('../services/saqueService');
       const { ORGANIZADOR_PERCENTUAL } = require('../lib/config');
 
       if (!WooviService.isConfigured(req.tenant)) {
         return res.redirect(`/${req.tenant.slug}/admin/carteira?erro=${encodeURIComponent('Configure sua chave PIX antes de sacar.')}`);
       }
 
-      // Verificar saldo mínimo (R$50 disponível para saque)
-      const resumo = await CarteiraService.obterResumo(req.tenant.id);
-      const saldoDisp = resumo.saldoConfirmado * ORGANIZADOR_PERCENTUAL;
+      const resumoCarteira = await CarteiraService.obterResumo(req.tenant.id);
+      const saldoDisp = resumoCarteira.saldoConfirmado * ORGANIZADOR_PERCENTUAL;
 
-      if (saldoDisp < 50) {
-        return res.redirect(`/${req.tenant.slug}/admin/carteira?erro=${encodeURIComponent(`Saldo insuficiente. Mínimo para saque: R$ 50,00. Disponível: R$ ${saldoDisp.toFixed(2).replace('.', ',')}.`)}`);
-      }
+      const { resumo: saqueResumo } = await SaqueService.processarSaque(
+        req.tenant,
+        saldoDisp,
+        req.session.organizadorNome || req.session.adminUsuario
+      );
 
-      const tx = await WooviService.sacarSubconta(req.tenant);
-
-      const valorFmt = tx.value ? `R$ ${(tx.value / 100).toFixed(2).replace('.', ',')}` : '';
-      const msg = `Saque solicitado com sucesso! ${valorFmt ? 'Valor: ' + valorFmt + '. ' : ''}O valor chegará na sua chave PIX em instantes.`;
+      const valorFmt = `R$ ${saqueResumo.saldoLiquido.toFixed(2).replace('.', ',')}`;
+      const taxaMsg = saqueResumo.taxa > 0
+        ? ` Taxa de saque: R$ ${saqueResumo.taxa.toFixed(2).replace('.', ',')}.`
+        : '';
+      const msg = `Saque solicitado com sucesso! Você receberá ${valorFmt} na sua chave PIX.${taxaMsg}`;
 
       res.redirect(`/${req.tenant.slug}/admin/carteira?msg=${encodeURIComponent(msg)}`);
     } catch (err) {

@@ -198,6 +198,38 @@ const WooviService = {
   },
 
   /**
+   * Debita valor da subconta para a conta principal da plataforma (taxa de saque).
+   * POST /subaccount/{pixKey}/debit — value em centavos.
+   */
+  async debitarSubconta(tenant, valorReais, descricao = 'Taxa de saque') {
+    if (!this.isConfigured(tenant)) {
+      throw new Error('Configure sua chave PIX antes de solicitar o saque.');
+    }
+
+    const valueCents = Math.round(Number(valorReais) * 100);
+    if (valueCents < 1) return null;
+
+    const pixKey = encodeURIComponent(tenant.pixChave);
+    try {
+      const data = await this._request(`/subaccount/${pixKey}/debit`, {
+        method: 'POST',
+        body: JSON.stringify({
+          value: valueCents,
+          description: String(descricao || 'Taxa de saque').slice(0, 120)
+        })
+      });
+      console.log(`[Woovi] Débito subconta ${tenant.pixChave}: R$ ${valorReais}`);
+      return data;
+    } catch (err) {
+      const msg = String(err.message || '').toLowerCase();
+      if (msg.includes('not_enough_balance') || msg.includes('saldo insuficiente')) {
+        throw new Error('Saldo insuficiente na subconta para a taxa de saque. Tente novamente em instantes.');
+      }
+      throw new Error(`Não foi possível processar a taxa de saque: ${err.message}`);
+    }
+  },
+
+  /**
    * Solicita saque integral da subconta do organizador para a chave PIX cadastrada.
    * Endpoint: POST /subaccount/{pixKey}/withdraw
    * Retorna os dados da transação ou lança erro com mensagem amigável.
