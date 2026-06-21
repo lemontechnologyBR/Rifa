@@ -83,10 +83,11 @@ body .glass-nav { background: rgba(18,18,31,.97) !important; border-color: rgba(
 .grade-num-btn {
   -webkit-tap-highlight-color: transparent;
   user-select: none;
-  transition: background .12s, transform .1s, box-shadow .1s;
+  transition: background .12s, transform .1s, box-shadow .1s, color .12s, border-color .12s;
   font-size: 13px; font-weight: 800;
   border-radius: 8px; border: 2px solid transparent;
-  padding: 9px 2px; cursor: pointer;
+  padding: 10px 2px; cursor: pointer;
+  background: #2d3748; color: #9ca3af;
 }
 .grade-num-btn.disponivel {
   background: #2d3748; color: #9ca3af; border-color: transparent;
@@ -95,24 +96,34 @@ body .glass-nav { background: rgba(18,18,31,.97) !important; border-color: rgba(
   background: #374151; color: #fff; border-color: rgba(255,255,255,.2);
 }
 .grade-num-btn.reservado {
-  background: rgba(251,191,36,.12); color: #fbbf24;
-  border-color: rgba(251,191,36,.3); cursor: not-allowed;
+  background: rgba(251,191,36,.25) !important; color: #fbbf24 !important;
+  border-color: rgba(251,191,36,.55) !important; cursor: not-allowed;
+  opacity: 1;
 }
 .grade-num-btn.vendido {
-  background: rgba(34,197,94,.12); color: #22c55e;
-  border-color: rgba(34,197,94,.3); cursor: not-allowed;
+  background: rgba(34,197,94,.25) !important; color: #22c55e !important;
+  border-color: rgba(34,197,94,.55) !important; cursor: not-allowed;
+  opacity: 1;
 }
 .grade-num-btn.selecionado {
-  background: #16a34a;
-  color: #fff;
-  border-color: #4ade80;
+  background: #16a34a !important;
+  color: #fff !important;
+  border-color: #4ade80 !important;
   transform: scale(1.12);
   box-shadow: 0 0 0 3px rgba(34,197,94,.35), 0 4px 12px rgba(34,197,94,.4);
   font-size: 14px;
   z-index: 1;
   position: relative;
 }
-.grade-num-btn:disabled { cursor: not-allowed; }
+.grade-num-btn:disabled { cursor: not-allowed; pointer-events: none; }
+
+.grade-legenda { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 12px; }
+.grade-legenda-item { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: #9ca3af; font-weight: 600; }
+.grade-legenda-dot { width: 14px; height: 14px; border-radius: 4px; border: 2px solid transparent; flex-shrink: 0; }
+.grade-legenda-dot.livre { background: #2d3748; border-color: rgba(255,255,255,.15); }
+.grade-legenda-dot.reservado { background: rgba(251,191,36,.25); border-color: rgba(251,191,36,.55); }
+.grade-legenda-dot.pago { background: rgba(34,197,94,.25); border-color: rgba(34,197,94,.55); }
+.grade-legenda-dot.selecionado { background: #16a34a; border-color: #4ade80; }
 </style>
 
 <%
@@ -212,14 +223,19 @@ body .glass-nav { background: rgba(18,18,31,.97) !important; border-color: rgba(
         <span id="grade-stat-pagos" style="background:rgba(34,197,94,.15);color:#22c55e;font-size:12px;font-weight:700;padding:5px 14px;border-radius:9999px;">— Pagos</span>
       </div>
 
+      <div class="grade-legenda">
+        <span class="grade-legenda-item"><span class="grade-legenda-dot livre"></span> Livre</span>
+        <span class="grade-legenda-item"><span class="grade-legenda-dot reservado"></span> Reservado</span>
+        <span class="grade-legenda-item"><span class="grade-legenda-dot pago"></span> Pago</span>
+        <span class="grade-legenda-item"><span class="grade-legenda-dot selecionado"></span> Seu número</span>
+      </div>
+
       <!-- Grid de números -->
       <div id="grade-numeros" style="display:grid;grid-template-columns:repeat(10,1fr);gap:5px;margin-bottom:16px;">
-        <!-- preenchido via JS -->
         <% for(let i=0; i < rifa.totalNumeros; i++) { %>
         <button type="button"
-          class="grade-num-btn"
+          class="grade-num-btn disponivel"
           data-num="<%= i+1 %>"
-          style="background:#374151;border:none;border-radius:8px;color:#d1d5db;font-size:13px;font-weight:800;padding:10px 2px;cursor:pointer;transition:background .12s,color .12s;"
           aria-label="Número <%= String(i).padStart(2,'0') %>">
           <%= String(i).padStart(2,'0') %>
         </button>

@@ -483,10 +483,23 @@
         const st = statusNumero(num);
         const bloqueado = st === 'vendido' || st === 'reservado';
         btn.disabled = bloqueado;
+        btn.removeAttribute('style');
         if (selecionadosGrade.has(num)) {
           btn.className = 'grade-num-btn selecionado';
+          btn.setAttribute('aria-label', `Número ${String(num - 1).padStart(2, '0')} — selecionado`);
         } else {
           btn.className = `grade-num-btn ${st}`;
+          const label = String(num - 1).padStart(2, '0');
+          if (st === 'vendido') {
+            btn.setAttribute('aria-label', `Número ${label} — pago`);
+            btn.title = 'Pago';
+          } else if (st === 'reservado') {
+            btn.setAttribute('aria-label', `Número ${label} — reservado`);
+            btn.title = 'Reservado';
+          } else {
+            btn.setAttribute('aria-label', `Número ${label} — livre`);
+            btn.removeAttribute('title');
+          }
         }
       });
     }
