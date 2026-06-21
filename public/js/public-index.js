@@ -237,12 +237,15 @@
         body: JSON.stringify({ quantidade: qtdCotas })
       });
       numerosReservados = aleatorio.numeros || [];
-
-      await fetchApi(apiBase + '/rifas/' + rifaAtual.id + '/reservar', {
-        method: 'POST',
-        body: JSON.stringify({ numeros: numerosReservados })
-      });
-      reservaAtiva = true;
+      if (aleatorio.reservado) {
+        reservaAtiva = true;
+      } else {
+        await fetchApi(apiBase + '/rifas/' + rifaAtual.id + '/reservar', {
+          method: 'POST',
+          body: JSON.stringify({ numeros: numerosReservados })
+        });
+        reservaAtiva = true;
+      }
 
       const data = await fetchApi(apiBase + '/rifas/' + rifaAtual.id + '/comprar', {
         method: 'POST',

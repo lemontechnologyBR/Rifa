@@ -233,7 +233,13 @@
       atualizarModalCheckout();
       if (window.lucide) lucide.createIcons();
 
-      await reservarNumeros();
+      if (aleatorio.reservado && aleatorio.expiraEm) {
+        reservaAtiva = true;
+        expiraEm = new Date(aleatorio.expiraEm);
+        iniciarTimer();
+      } else {
+        await reservarNumeros();
+      }
       atualizarModalCheckout();
     } catch (err) {
       numerosSelecionados = [];

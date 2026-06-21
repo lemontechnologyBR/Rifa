@@ -6,16 +6,37 @@ const { TAXA_PLATAFORMA } = require('../lib/config');
 
 const MP_API = process.env.MERCADOPAGO_API_BASE || 'https://api.mercadopago.com';
 
+function isPixQrKeyError(message) {
+  const msg = String(message || '').toLowerCase();
+  return msg.includes('without key enabled for qr') ||
+    msg.includes('collector user without key') ||
+    msg.includes('chave pix') && msg.includes('qr');
+}
+
 function parseMpError(raw) {
   try {
     const data = typeof raw === 'string' ? JSON.parse(raw) : raw;
     const msg = data?.message || data?.error;
-    if (typeof msg === 'string' && msg.trim()) return msg;
+    if (typeof msg === 'string' && msg.trim()) {
+      if (isPixQrKeyError(msg)) {
+        return 'Conta Mercado Pago do organizador sem chave PIX ativa para QR Code. Peça ao organizador ativar o PIX no Mercado Pago.';
+      }
+      return msg;
+    }
     const cause = data?.cause?.[0];
-    if (cause?.description) return cause.description;
+    if (cause?.description) {
+      if (isPixQrKeyError(cause.description)) {
+        return 'Conta Mercado Pago do organizador sem chave PIX ativa para QR Code. Peça ao organizador ativar o PIX no Mercado Pago.';
+      }
+      return cause.description;
+    }
     if (cause?.code) return String(cause.code);
   } catch (_) { /* ignore */ }
-  return typeof raw === 'string' ? raw.trim() : 'Falha na API Mercado Pago.';
+  const fallback = typeof raw === 'string' ? raw.trim() : 'Falha na API Mercado Pago.';
+  if (isPixQrKeyError(fallback)) {
+    return 'Conta Mercado Pago do organizador sem chave PIX ativa para QR Code. Peça ao organizador ativar o PIX no Mercado Pago.';
+  }
+  return fallback;
 }
 
 function splitNome(nome) {
@@ -136,16 +157,42 @@ const MercadoPagoService = {
       }
     }
 
+    const usesSplit = this.usesSplit(tenant);
     let accessToken = this.getAccessToken();
-    if (this.usesSplit(tenant)) {
+    if (usesSplit) {
       accessToken = await MercadoPagoOAuthService.getSellerAccessToken(tenant);
       body.application_fee = Math.round(valor * TAXA_PLATAFORMA * 100) / 100;
       console.log(`[MercadoPago] Split OAuth tenant #${tenant.id} — fee R$ ${body.application_fee}`);
     }
 
-    const data = await this._request('POST', '/v1/payments', body, {
-      'X-Idempotency-Key': String(correlationID).slice(0, 64)
-    }, accessToken);
+    let data;
+    let splitAtivo = usesSplit;
+    const idempotencyKey = String(correlationID).slice(0, 64);
+    try {
+      data = await this._request('POST', '/v1/payments', body, {
+        'X-Idempotency-Key': idempotencyKey
+      }, accessToken);
+    } catch (err) {
+      const platformToken = this.getAccessToken();
+      const podeFallback =
+        usesSplit &&
+        platformToken &&
+        isPixQrKeyError(err.message);
+
+      if (!podeFallback) throw err;
+
+      console.warn(
+        `[MercadoPago] Tenant #${tenant.id} sem PIX QR no MP — fallback conta plataforma (sem split)`
+      );
+      splitAtivo = false;
+      const bodyLegacy = { ...body };
+      delete bodyLegacy.application_fee;
+      bodyLegacy.metadata = { ...body.metadata, split: 'legacy_fallback' };
+
+      data = await this._request('POST', '/v1/payments', bodyLegacy, {
+        'X-Idempotency-Key': `${idempotencyKey}-fb`.slice(0, 64)
+      }, platformToken);
+    }
 
     const tx = data?.point_of_interaction?.transaction_data || {};
     const qrBase64 = tx.qr_code_base64
@@ -159,7 +206,7 @@ const MercadoPagoService = {
       qrCodeImage: qrBase64,
       ticketUrl: tx.ticket_url || '',
       status: data.status || 'pending',
-      split: this.usesSplit(tenant)
+      split: splitAtivo
     };
   },
 

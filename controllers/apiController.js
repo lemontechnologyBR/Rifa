@@ -65,8 +65,16 @@ const apiController = {
         return res.status(400).json({ erro: `Apenas ${stats.disponiveis} cotas disponíveis.` });
       }
 
-      const numeros = await NumeroService.escolherAleatorios(rifa.id, quantidade);
-      res.json({ sucesso: true, numeros, quantidade: numeros.length });
+      const resultado = await NumeroService.escolherEReservarAleatorios(
+        rifa.id, quantidade, req.sessionID
+      );
+      res.json({
+        sucesso: true,
+        numeros: resultado.numeros,
+        quantidade: resultado.numeros.length,
+        expiraEm: resultado.expiraEm,
+        reservado: true
+      });
     } catch (err) {
       res.status(400).json({ erro: err.message });
     }
@@ -94,7 +102,7 @@ const apiController = {
       const codigoIndicacao = req.session.codigoIndicacao || req.body.codigo_indicacao || null;
 
       const { reservaId } = await NumeroService.confirmarCompra(
-        rifa.id, nums, usuario.id, valorTotal, codigoIndicacao
+        rifa.id, nums, usuario.id, valorTotal, codigoIndicacao, req.sessionID
       );
 
       await CarrinhoService.remover(req.sessionID, rifa.id);
