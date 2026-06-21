@@ -1,52 +1,70 @@
 /**
- * Facade de pagamentos — Mercado Pago (ativo) ou Woovi (legado, desativado por padrão).
+ * Facade de pagamentos — seleção automática por tenant:
+ *   - Mercado Pago OAuth  → tenant conectou a conta MP (recebe direto, sem saque)
+ *   - Woovi (plataforma)  → fallback quando MP não conectado (plataforma coleta, organizer saca)
  */
 const WooviService = require('./wooviService');
 const MercadoPagoService = require('./mercadoPagoService');
 
 const WOOVI_ENABLED = process.env.WOOVI_ENABLED === 'true';
 
-function activeProvider() {
-  if (MercadoPagoService.isPlatformConfigured()) return 'mercadopago';
+/** Detecta o provider correto para um tenant específico. */
+function getProviderForTenant(tenant) {
+  if (tenant && MercadoPagoService.isConfigured(tenant)) return 'mercadopago';
   if (WOOVI_ENABLED && WooviService.isPlatformConfigured()) return 'woovi';
   return null;
 }
 
+/**
+ * Detecta o provider pelo formato da referência de pagamento armazenada.
+ * MP payment IDs são numéricos puros; Woovi usa UUIDs ou "reserva-N".
+ */
+function detectProviderFromRef(paymentRef) {
+  if (!paymentRef) return null;
+  return /^\d+$/.test(String(paymentRef)) ? 'mercadopago' : 'woovi';
+}
+
 const PaymentService = {
-  getProvider() {
-    return activeProvider();
+  /**
+   * Retorna o provider ativo para o tenant dado.
+   * Sem tenant: retorna provider de plataforma para compatibilidade (hooks, logs).
+   */
+  getProvider(tenant) {
+    if (tenant) return getProviderForTenant(tenant);
+    // Sem tenant — detecta plataforma (usado apenas em contextos sem tenant)
+    if (MercadoPagoService.isPlatformConfigured()) return 'mercadopago';
+    if (WOOVI_ENABLED && WooviService.isPlatformConfigured()) return 'woovi';
+    return null;
   },
 
   isPlatformConfigured() {
-    return !!activeProvider();
+    return MercadoPagoService.isPlatformConfigured() ||
+           (WOOVI_ENABLED && WooviService.isPlatformConfigured());
   },
 
   isConfigured(tenant) {
-    const provider = activeProvider();
-    if (provider === 'mercadopago') return MercadoPagoService.isConfigured(tenant);
-    if (provider === 'woovi') return WooviService.isConfigured(tenant);
-    return false;
+    return !!getProviderForTenant(tenant);
   },
 
   async ensureTenantReady(tenant) {
-    if (activeProvider() === 'woovi') {
+    if (getProviderForTenant(tenant) === 'woovi') {
       await WooviService.ensureSubconta(tenant);
     }
   },
 
   async criarCobranca(tenant, opts) {
-    const provider = activeProvider();
+    const provider = getProviderForTenant(tenant);
     if (provider === 'mercadopago') {
       return MercadoPagoService.criarCobranca(tenant, opts);
     }
     if (provider === 'woovi') {
       return WooviService.criarCobranca(tenant, opts);
     }
-    throw new Error('Gateway de pagamento não configurado.');
+    throw new Error('Gateway de pagamento não configurado. Configure a Carteira no painel.');
   },
 
   async consultarStatus(paymentRef) {
-    const provider = activeProvider();
+    const provider = detectProviderFromRef(paymentRef);
     if (provider === 'mercadopago') {
       return MercadoPagoService.consultarStatus(paymentRef);
     }
@@ -57,25 +75,19 @@ const PaymentService = {
   },
 
   pagamentoConfirmado(status) {
-    const provider = activeProvider();
-    if (provider === 'mercadopago') {
-      return MercadoPagoService.pagamentoConfirmado(status);
-    }
-    if (provider === 'woovi') {
-      const s = String(status || '').toUpperCase();
-      return ['COMPLETED', 'CONFIRMED', 'PAID'].some((x) => s.includes(x));
-    }
+    const s = String(status || '');
+    // Mercado Pago
+    if (['approved', 'authorized'].includes(s.toLowerCase())) return true;
+    // Woovi
+    if (['COMPLETED', 'CONFIRMED', 'PAID'].some((x) => s.toUpperCase().includes(x))) return true;
     return false;
   },
 
   extrairReferenciaWebhook(payload, query = {}) {
-    const provider = activeProvider();
-    if (provider === 'mercadopago') {
-      return MercadoPagoService.extrairPaymentId(payload, query);
-    }
-    if (provider === 'woovi') {
-      return WooviService.extrairCorrelationId(payload);
-    }
+    // Webhooks chegam em rotas separadas; tentamos MP primeiro, depois Woovi
+    const mpRef = MercadoPagoService.extrairPaymentId(payload, query);
+    if (mpRef) return mpRef;
+    if (WOOVI_ENABLED) return WooviService.extrairCorrelationId(payload);
     return null;
   }
 };

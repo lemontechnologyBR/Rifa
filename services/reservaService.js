@@ -137,7 +137,7 @@ const ReservaService = {
 
     const correlationID = reserva.codigoPagamento || `reserva-${reserva.id}`;
     const { TAXA_PLATAFORMA, ORGANIZADOR_PERCENTUAL } = require('../lib/config');
-    const provider = PaymentService.getProvider();
+    const provider = PaymentService.getProvider(tenant);
 
     const valorCobrado = reserva.valorTotal;
     const valorOrganizador = reserva.valorTotal * ORGANIZADOR_PERCENTUAL;

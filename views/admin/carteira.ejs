@@ -39,6 +39,21 @@
     <% const mpSplit = typeof mpSplitConfigured !== 'undefined' && mpSplitConfigured; %>
     <% const mpOk = typeof mpConnected !== 'undefined' && mpConnected; %>
 
+    <%# Modalidade badge %>
+    <div class="flex items-center gap-3 mb-5">
+      <% if (mpOk) { %>
+        <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700">
+          <i data-lucide="zap" class="w-3.5 h-3.5"></i> Modalidade: Mercado Pago Direto
+        </span>
+        <span class="text-xs text-gray-500">95% cai na sua conta MP na hora do pagamento</span>
+      <% } else { %>
+        <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300 border border-sky-200 dark:border-sky-700">
+          <i data-lucide="building-2" class="w-3.5 h-3.5"></i> Modalidade: Plataforma VouRifar
+        </span>
+        <span class="text-xs text-gray-500">Plataforma coleta e você saca quando quiser</span>
+      <% } %>
+    </div>
+
     <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
       <article class="admin-metric-card">
         <p class="admin-metric-label mb-1">Saldo confirmado</p>
@@ -47,10 +62,10 @@
       </article>
       <article class="admin-metric-card">
         <% const saldoSaque = resumo.saldoDisponivel != null ? resumo.saldoDisponivel : resumo.saldoConfirmado * 0.95; %>
-        <% if (mpSplit) { %>
+        <% if (mpOk) { %>
           <p class="admin-metric-label mb-1">Sua parte (95%)</p>
           <p class="admin-metric-value text-violet-600">R$ <%= (resumo.saldoConfirmado * 0.95).toFixed(2).replace('.', ',') %></p>
-          <p class="text-xs text-gray-400 mt-1"><%= mpOk ? 'Creditado direto na sua conta MP' : 'Conecte o MP para receber automaticamente' %></p>
+          <p class="text-xs text-gray-400 mt-1">Creditado direto na sua conta MP</p>
         <% } else { %>
           <p class="admin-metric-label mb-1">Disponível para saque</p>
           <p class="admin-metric-value text-violet-600">R$ <%= saldoSaque.toFixed(2).replace('.', ',') %></p>
@@ -63,37 +78,22 @@
         <p class="text-xs text-gray-400 mt-1"><%= resumo.reservasPendentes %> reserva(s)</p>
       </article>
       <article class="admin-metric-card">
-        <% if (mpSplit) { %>
-          <p class="admin-metric-label mb-1">Mercado Pago</p>
-          <% if (mpOk) { %>
-            <p class="text-sm font-bold mt-2 text-emerald-600 flex items-center gap-1.5">
-              <i data-lucide="check-circle-2" class="w-4 h-4"></i> Conectada
-            </p>
-            <p class="text-xs text-gray-500 mt-1 truncate" title="<%= tenant.mpNickname || tenant.mpUserId %>"><%= tenant.mpNickname || ('Conta #' + tenant.mpUserId) %></p>
-          <% } else { %>
-            <p class="text-sm font-bold mt-2 text-amber-600 flex items-center gap-1.5">
-              <i data-lucide="circle-dashed" class="w-4 h-4"></i> Não conectada
-            </p>
-            <p class="text-xs text-gray-400 mt-1">Conecte para receber</p>
-          <% } %>
+        <p class="admin-metric-label mb-1">Mercado Pago</p>
+        <% if (mpOk) { %>
+          <p class="text-sm font-bold mt-2 text-emerald-600 flex items-center gap-1.5">
+            <i data-lucide="check-circle-2" class="w-4 h-4"></i> Conectada
+          </p>
+          <p class="text-xs text-gray-500 mt-1 truncate" title="<%= tenant.mpNickname || tenant.mpUserId %>"><%= tenant.mpNickname || ('Conta #' + tenant.mpUserId) %></p>
         <% } else { %>
-          <p class="admin-metric-label mb-1">Chave PIX</p>
-          <% if (tenant.pixChave) { %>
-            <p class="text-sm font-bold mt-2 text-emerald-600 flex items-center gap-1.5">
-              <i data-lucide="check-circle-2" class="w-4 h-4"></i> Ativa
-            </p>
-            <p class="text-xs text-gray-500 mt-1 truncate" title="<%= tenant.pixChave %>"><%= pixTipoLabel %>: <%= tenant.pixChave %></p>
-          <% } else { %>
-            <p class="text-sm font-bold mt-2 text-amber-600 flex items-center gap-1.5">
-              <i data-lucide="circle-dashed" class="w-4 h-4"></i> Não cadastrada
-            </p>
-            <p class="text-xs text-gray-400 mt-1">Cadastre abaixo para receber</p>
-          <% } %>
+          <p class="text-sm font-bold mt-2 text-amber-600 flex items-center gap-1.5">
+            <i data-lucide="circle-dashed" class="w-4 h-4"></i> Não conectada
+          </p>
+          <p class="text-xs text-gray-400 mt-1"><%= tenant.pixChave ? 'Usando Plataforma' : 'Configure abaixo' %></p>
         <% } %>
       </article>
     </div>
 
-    <% if (mpSplit && mpOk) { %>
+    <% if (mpOk) { %>
     <div class="admin-alert mb-4" style="background:#fef9c3;border:1px solid #fde047;color:#713f12;border-radius:12px;padding:14px 16px;display:flex;gap:10px;align-items:flex-start;">
       <i data-lucide="info" class="w-5 h-5 shrink-0 mt-0.5" style="color:#b45309;"></i>
       <div class="text-sm">
@@ -104,7 +104,7 @@
     </div>
     <% } %>
 
-    <% if (mpSplit) { %>
+    <% if (mpSplitConfigured) { %>
     <div class="admin-panel-card p-6 mb-6 border-l-4 <%= mpOk ? 'border-emerald-500' : 'border-sky-500' %>">
       <div class="admin-config-section-head mb-4">
         <div class="admin-config-section-icon blue"><i data-lucide="link" class="w-5 h-5"></i></div>
@@ -152,7 +152,7 @@
     </div>
     <% } %>
 
-    <% if (!mpSplit) { %>
+    <% if (!mpOk) { %>
     <%
       const saldoDisp = saque ? saque.saldoDisponivel : (resumo.saldoDisponivel != null ? resumo.saldoDisponivel : resumo.saldoConfirmado * 0.95);
       const saqueGratis = saque ? saque.saqueGratis : saldoDisp >= 500;
@@ -188,7 +188,7 @@
             Sacar agora
           </button>
         </form>
-        <% } else if (!tenant.pixChave && !mpSplit) { %>
+        <% } else if (!tenant.pixChave && !mpOk) { %>
         <span class="text-xs text-gray-400 shrink-0">Configure a chave PIX para sacar</span>
         <% } %>
       </div>
@@ -196,7 +196,7 @@
     <% } %>
 
     <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
-      <% if (!mpSplit) { %>
+      <% if (!mpOk) { %>
       <form method="POST" action="<%= adminBase %>/carteira" class="admin-panel-card p-6 space-y-5 lg:col-span-3"
         x-data="{
           tipo: '<%= pixTipo %>',
@@ -217,8 +217,8 @@
         <div class="admin-config-section-head">
           <div class="admin-config-section-icon pix"><img src="/img/pix.svg?v=2" alt="PIX" width="40" height="40"></div>
           <div>
-            <h2 class="font-bold text-base">Sua chave PIX</h2>
-            <p class="text-sm text-gray-500 dark:text-gray-400">A plataforma processa os pagamentos por você. Informe apenas onde quer receber.</p>
+            <h2 class="font-bold text-base">Sua chave PIX para saque</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400">A plataforma processa os pagamentos. Informe sua chave PIX para sacar o saldo acumulado.</p>
           </div>
         </div>
 
@@ -305,7 +305,7 @@
       <% } %>
 
       <aside class="lg:col-span-2 space-y-4">
-        <% if (!mpSplit) { %>
+        <% if (!mpOk) { %>
         <div class="admin-panel-card p-5">
           <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Tipos de chave</p>
           <ul class="text-sm text-gray-500 dark:text-gray-400 space-y-2">

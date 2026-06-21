@@ -48,7 +48,7 @@ const SaqueService = {
       throw new Error('Saldo insuficiente para cobrir a taxa de saque.');
     }
 
-    const provider = PaymentService.getProvider();
+    const provider = PaymentService.getProvider(tenant);
 
     if (provider === 'woovi') {
       const WooviService = require('./wooviService');

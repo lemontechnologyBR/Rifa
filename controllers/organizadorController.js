@@ -14,11 +14,13 @@ function cartPaymentContext(tenant) {
   const MercadoPagoOAuthService = require('../services/mercadoPagoOAuthService');
   const mpSplitConfigured = MercadoPagoOAuthService.isSplitConfigured();
   const mpConnected = MercadoPagoOAuthService.isTenantConnected(tenant);
+  const provider = PaymentService.getProvider(tenant);
   return {
     carteiraOk: PaymentService.isConfigured(tenant),
     mpSplitConfigured,
     mpConnected,
-    usesSplit: mpSplitConfigured && mpConnected
+    usesSplit: provider === 'mercadopago',
+    gateway: provider
   };
 }
 
@@ -184,6 +186,7 @@ const organizadorController = {
       const pixTipo = req.query.tipo || pixTipoDetectado || 'cpf';
       const mpSplitConfigured = MercadoPagoOAuthService.isSplitConfigured();
       const mpConnected = MercadoPagoOAuthService.isTenantConnected(req.tenant);
+      const provider = PaymentService.getProvider(req.tenant);
 
       res.render('admin/carteira', {
         titulo: 'Carteira',
@@ -193,8 +196,8 @@ const organizadorController = {
         carteiraOk: PaymentService.isConfigured(req.tenant),
         mpSplitConfigured,
         mpConnected,
-        usesSplit: mpSplitConfigured && mpConnected,
-        gateway: PaymentService.getProvider(),
+        usesSplit: provider === 'mercadopago',
+        gateway: provider,
         pixTipo,
         pixTipoLabel: labelTipoPix(pixTipoDetectado),
         adminBase: `/${req.tenant.slug}/admin`,
