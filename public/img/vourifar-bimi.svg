@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" role="img" aria-label="VouRifar">
+  <!-- Fundo escuro arredondado -->
+  <rect width="100" height="100" rx="22" fill="#0f172a"/>
+
+  <!-- Bilhete centralizado -->
+  <!-- Canhoto esquerdo -->
+  <path fill="none" stroke="#10b981" stroke-width="2.5" stroke-linejoin="round"
+    d="M 24 28 H 38 V 72 H 24 Q 18 72 18 65 L 18 58 Q 24 50 18 42 L 18 35 Q 18 28 24 28 Z"/>
+  <!-- Corpo principal -->
+  <path fill="none" stroke="#10b981" stroke-width="2.5" stroke-linejoin="round"
+    d="M 39 28 H 76 Q 82 28 82 35 L 82 42 Q 76 50 82 58 L 82 65 Q 82 72 76 72 H 39 Z"/>
+
+  <!-- Linha pontilhada separando canhoto -->
+  <line x1="39" y1="32" x2="39" y2="68"
+    stroke="#10b981" stroke-width="1.5" stroke-dasharray="3 3" stroke-linecap="round"/>
+
+  <!-- Pontinhos de picote -->
+  <circle cx="39" cy="36" r="1.4" fill="#10b981" opacity="0.9"/>
+  <circle cx="39" cy="50" r="1.4" fill="#10b981" opacity="0.9"/>
+  <circle cx="39" cy="64" r="1.4" fill="#10b981" opacity="0.9"/>
+
+  <!-- Linhas decorativas no canhoto -->
+  <line x1="22" y1="42" x2="34" y2="42" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+  <line x1="22" y1="50" x2="34" y2="50" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+  <line x1="22" y1="58" x2="34" y2="58" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+
+  <!-- "VR" no corpo do bilhete -->
+  <text x="60" y="57" text-anchor="middle" dominant-baseline="middle"
+    font-family="Segoe UI, system-ui, sans-serif" font-size="20" font-weight="900"
+    fill="#10b981" letter-spacing="-0.5">VR</text>
+</svg>
