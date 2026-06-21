@@ -131,17 +131,7 @@
       <% } else { %>
       <div class="rounded-xl border border-sky-200 bg-sky-50 dark:bg-sky-950/20 dark:border-sky-800/40 p-4 mb-4">
         <p class="font-semibold text-sky-800 dark:text-sky-300 text-sm mb-1">Conecte sua conta para vender</p>
-        <p class="text-xs text-sky-700 dark:text-sky-400 mb-3">Você será redirecionado ao Mercado Pago para autorizar o VouRifar. Use uma conta <strong>diferente</strong> da que criou o app da plataforma.</p>
-        <% if (typeof mpOAuth !== 'undefined' && mpOAuth) { %>
-        <div class="rounded-lg border border-sky-200/80 dark:border-sky-800/50 bg-white/70 dark:bg-slate-900/40 p-3 mb-3 text-xs text-gray-600 dark:text-gray-400 space-y-2">
-          <p class="font-semibold text-gray-700 dark:text-gray-300">Se aparecer erro ao conectar, confira no painel MP:</p>
-          <ol class="list-decimal list-inside space-y-1">
-            <li>Aplicação criada em <strong>Split de pagamentos / Marketplace</strong></li>
-            <li>Redirect URL <strong>idêntica</strong> a: <code class="text-[11px] bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded break-all"><%= mpOAuth.redirectUri %></code></li>
-            <li>Conectar com outra conta MP (não a titular do app VouRifar)</li>
-          </ol>
-        </div>
-        <% } %>
+        <p class="text-xs text-sky-700 dark:text-sky-400">Você será redirecionado ao Mercado Pago para autorizar o recebimento dos pagamentos na sua conta.</p>
       </div>
       <a href="<%= adminBase %>/carteira/mp/conectar" class="admin-mp-connect-btn">
         <img src="/img/mercadopago.svg?v=2" alt="">

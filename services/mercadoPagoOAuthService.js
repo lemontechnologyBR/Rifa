@@ -52,6 +52,16 @@ const MercadoPagoOAuthService = {
     };
   },
 
+  createPkce() {
+    const verifier = crypto.randomBytes(32).toString('base64url');
+    const challenge = crypto.createHash('sha256').update(verifier).digest('base64url');
+    return { verifier, challenge };
+  },
+
+  usePkce() {
+    return process.env.MERCADOPAGO_OAUTH_PKCE !== 'false';
+  },
+
   encodeState(payload) {
     const data = Buffer.from(JSON.stringify({ ...payload, ts: payload.ts || Date.now() })).toString('base64url');
     const sig = crypto.createHmac('sha256', getStateSecret()).update(data).digest('base64url');
@@ -82,7 +92,7 @@ const MercadoPagoOAuthService = {
     return payload;
   },
 
-  buildAuthUrl(req, state) {
+  buildAuthUrl(req, state, pkceChallenge = null) {
     const redirectUri = this.getCallbackUrl(req);
     const params = new URLSearchParams({
       client_id: this.getClientId(),
@@ -91,9 +101,12 @@ const MercadoPagoOAuthService = {
       redirect_uri: redirectUri,
       state
     });
-    params.set('scope', 'read write offline_access');
+    if (pkceChallenge) {
+      params.set('code_challenge', pkceChallenge);
+      params.set('code_challenge_method', 'S256');
+    }
     const url = `https://auth.mercadopago.com.br/authorization?${params.toString()}`;
-    console.log(`[MP OAuth] redirect_uri=${redirectUri} client_id=${this.getClientId()}`);
+    console.log(`[MP OAuth] redirect_uri=${redirectUri} pkce=${!!pkceChallenge}`);
     return url;
   },
 
@@ -115,7 +128,7 @@ const MercadoPagoOAuthService = {
     return JSON.parse(raw);
   },
 
-  async exchangeCode(req, code, state = null) {
+  async exchangeCode(req, code, state = null, codeVerifier = null) {
     const body = {
       client_id: this.getClientId(),
       client_secret: this.getClientSecret(),
@@ -124,6 +137,7 @@ const MercadoPagoOAuthService = {
       redirect_uri: this.getCallbackUrl(req)
     };
     if (state) body.state = String(state);
+    if (codeVerifier) body.code_verifier = String(codeVerifier);
     return this._tokenRequest(body);
   },
 

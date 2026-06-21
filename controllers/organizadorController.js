@@ -171,7 +171,6 @@ const organizadorController = {
       const pixTipo = req.query.tipo || pixTipoDetectado || 'cpf';
       const mpSplitConfigured = MercadoPagoOAuthService.isSplitConfigured();
       const mpConnected = MercadoPagoOAuthService.isTenantConnected(req.tenant);
-      const mpOAuth = mpSplitConfigured ? MercadoPagoOAuthService.getOAuthDiagnostics(req) : null;
 
       res.render('admin/carteira', {
         titulo: 'Carteira',
@@ -182,7 +181,6 @@ const organizadorController = {
         mpSplitConfigured,
         mpConnected,
         usesSplit: mpSplitConfigured && mpConnected,
-        mpOAuth,
         gateway: PaymentService.getProvider(),
         pixTipo,
         pixTipoLabel: labelTipoPix(pixTipoDetectado),
