@@ -12,7 +12,8 @@
   dataSorteio: '',
   modalidade: 'cotas',
   get podeGrade() { return this.totalCotas >= 1 && this.totalCotas <= 100; },
-  carteiraOk: <%= typeof carteiraOk !== 'undefined' ? carteiraOk : (tenant.pixChave ? 'true' : 'false') %>,
+  carteiraOk: <%= typeof carteiraOk !== 'undefined' ? carteiraOk : 'false' %>,
+  mpSplit: <%= typeof mpSplitConfigured !== 'undefined' && mpSplitConfigured ? 'true' : 'false' %>,
   get taxaCota() { return Math.max(0, this.valorCota) * 0; },
   get compradorPaga() { return Math.max(0, this.valorCota); },
   get faturamentoTotal() { return Math.max(0, this.valorCota) * 0.95 * Math.max(0, this.totalCotas); },
@@ -30,7 +31,9 @@
   },
   openWizard() {
     if (!this.carteiraOk) {
-      alert('Configure sua chave PIX na Carteira antes de criar sorteios.');
+      alert(this.mpSplit
+        ? 'Conecte sua conta Mercado Pago na Carteira antes de criar sorteios.'
+        : 'Configure sua chave PIX na Carteira antes de criar sorteios.');
       window.location.href = '<%= adminBase %>/carteira';
       return;
     }

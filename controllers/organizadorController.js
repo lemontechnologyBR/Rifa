@@ -9,6 +9,19 @@ const LogService = require('../services/logService');
 const GoogleAuthService = require('../services/googleAuthService');
 const OrganizadorService = require('../services/organizadorService');
 
+function cartPaymentContext(tenant) {
+  const PaymentService = require('../services/paymentService');
+  const MercadoPagoOAuthService = require('../services/mercadoPagoOAuthService');
+  const mpSplitConfigured = MercadoPagoOAuthService.isSplitConfigured();
+  const mpConnected = MercadoPagoOAuthService.isTenantConnected(tenant);
+  return {
+    carteiraOk: PaymentService.isConfigured(tenant),
+    mpSplitConfigured,
+    mpConnected,
+    usesSplit: mpSplitConfigured && mpConnected
+  };
+}
+
 const organizadorController = {
   loginForm(req, res) {
     if (req.session.organizadorId && req.session.tenantId === req.tenant.id) {
@@ -97,12 +110,12 @@ const organizadorController = {
       busca: ''
     });
     const ab = `/${req.tenant.slug}/admin`;
-    const PaymentService = require('../services/paymentService');
+    const paymentCtx = cartPaymentContext(req.tenant);
 
     res.render('admin/rifas', {
       titulo: `Rifas — ${req.tenant.nome}`,
       tenant: req.tenant,
-      carteiraOk: PaymentService.isConfigured(req.tenant),
+      ...paymentCtx,
       adminBase: ab,
       tenantBase: `/${req.tenant.slug}`,
       rifas,
@@ -264,11 +277,13 @@ const organizadorController = {
 
   async criarRifa(req, res) {
     const ab = `/${req.tenant.slug}/admin`;
+    const paymentCtx = cartPaymentContext(req.tenant);
     if (req.validationErrors?.length) {
       return res.render('admin/rifa-form', {
         titulo: 'Nova Rifa', tenant: req.tenant, adminBase: ab, tenantBase: `/${req.tenant.slug}`,
         adminUsuario: req.session.organizadorNome, active: 'rifas', pageTitle: 'Nova Rifa',
-        rifa: req.body, erro: req.validationErrors.join(' '), csrfToken: res.locals.csrfToken
+        rifa: req.body, erro: req.validationErrors.join(' '), csrfToken: res.locals.csrfToken,
+        ...paymentCtx
       });
     }
     try {
@@ -282,7 +297,8 @@ const organizadorController = {
       res.render('admin/rifa-form', {
         titulo: 'Nova Rifa', tenant: req.tenant, adminBase: ab, tenantBase: `/${req.tenant.slug}`,
         adminUsuario: req.session.organizadorNome, active: 'rifas', pageTitle: 'Nova Rifa',
-        rifa: req.body, erro: err.message, csrfToken: res.locals.csrfToken
+        rifa: req.body, erro: err.message, csrfToken: res.locals.csrfToken,
+        ...paymentCtx
       });
     }
   },
@@ -295,18 +311,21 @@ const organizadorController = {
       titulo: 'Editar Rifa', tenant: req.tenant,
       adminBase: `/${req.tenant.slug}/admin`, tenantBase: `/${req.tenant.slug}`,
       adminUsuario: req.session.organizadorNome, active: 'rifas', pageTitle: 'Editar Rifa',
-      rifa, erro: null, csrfToken: res.locals.csrfToken
+      rifa, erro: null, csrfToken: res.locals.csrfToken,
+      ...cartPaymentContext(req.tenant)
     });
   },
 
   async atualizarRifa(req, res) {
     const ab = `/${req.tenant.slug}/admin`;
+    const paymentCtx = cartPaymentContext(req.tenant);
     if (req.validationErrors?.length) {
       const rifa = await RifaService.buscarPorId(req.params.id, req.tenant.id);
       return res.render('admin/rifa-form', {
         titulo: 'Editar Rifa', tenant: req.tenant, adminBase: ab, tenantBase: `/${req.tenant.slug}`,
         adminUsuario: req.session.organizadorNome, active: 'rifas', pageTitle: 'Editar Rifa',
-        rifa: mergeRifaForm(rifa, req.body), erro: req.validationErrors.join(' '), csrfToken: res.locals.csrfToken
+        rifa: mergeRifaForm(rifa, req.body), erro: req.validationErrors.join(' '), csrfToken: res.locals.csrfToken,
+        ...paymentCtx
       });
     }
     try {
@@ -317,7 +336,8 @@ const organizadorController = {
       res.render('admin/rifa-form', {
         titulo: 'Editar Rifa', tenant: req.tenant, adminBase: ab, tenantBase: `/${req.tenant.slug}`,
         adminUsuario: req.session.organizadorNome, active: 'rifas', pageTitle: 'Editar Rifa',
-        rifa: mergeRifaForm(rifa, req.body), erro: err.message, csrfToken: res.locals.csrfToken
+        rifa: mergeRifaForm(rifa, req.body), erro: err.message, csrfToken: res.locals.csrfToken,
+        ...paymentCtx
       });
     }
   },

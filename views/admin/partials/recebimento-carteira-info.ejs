@@ -1,0 +1,32 @@
+<% const mpSplit = typeof mpSplitConfigured !== 'undefined' && mpSplitConfigured; %>
+<% const mpOk = typeof mpConnected !== 'undefined' && mpConnected; %>
+<div class="admin-panel-card p-4 text-sm space-y-2 <%= typeof compact !== 'undefined' && compact ? '!shadow-none border border-gray-100 dark:border-gray-800' : '' %>">
+  <% if (mpSplit) { %>
+    <p class="font-semibold flex items-center gap-2">
+      <img src="/img/mercadopago.svg?v=2" alt="" class="h-4 w-auto shrink-0" aria-hidden="true">
+      Pagamentos via Mercado Pago
+    </p>
+    <p class="text-gray-500 dark:text-gray-400">
+      Compradores pagam via PIX. Você recebe <strong class="text-gray-700 dark:text-gray-200">95%</strong> direto na sua conta Mercado Pago. Confirmação automática após o pagamento.
+    </p>
+    <% if (mpOk) { %>
+      <p class="text-xs text-emerald-700 dark:text-emerald-400 font-medium flex items-center gap-1.5">
+        <i data-lucide="check-circle-2" class="w-3.5 h-3.5 shrink-0"></i>
+        Conta conectada: <%= tenant.mpNickname || ('#' + tenant.mpUserId) %>
+      </p>
+    <% } else { %>
+      <p class="text-xs text-amber-700 dark:text-amber-400">
+        Conecte sua conta em <a href="<%= adminBase %>/carteira" class="underline font-medium">Carteira</a> para receber os pagamentos.
+      </p>
+    <% } %>
+  <% } else if (tenant.pixChave) { %>
+    <p class="font-semibold flex items-center gap-2"><i data-lucide="wallet" class="w-4 h-4 text-emerald-600"></i> Pagamentos automáticos</p>
+    <p class="text-gray-500 dark:text-gray-400">PIX processado pela VouRifar — confirmação automática após o pagamento.</p>
+    <p class="text-xs text-emerald-700 dark:text-emerald-400 font-medium">Chave: <%= tenant.pixChave %></p>
+  <% } else { %>
+    <p class="font-semibold flex items-center gap-2"><i data-lucide="wallet" class="w-4 h-4 text-emerald-600"></i> Recebimento</p>
+    <p class="text-amber-700 dark:text-amber-400">
+      Configure a <a href="<%= adminBase %>/carteira" class="underline font-medium">Carteira</a> antes de publicar sorteios.
+    </p>
+  <% } %>
+</div>

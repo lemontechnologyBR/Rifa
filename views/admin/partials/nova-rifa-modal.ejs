@@ -29,7 +29,6 @@
     <form method="POST" action="<%= adminBase %>/rifas/nova" class="flex flex-col flex-1 min-h-0 overflow-y-auto">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <input type="hidden" name="premio_titulo" value="Prêmio principal">
-      <input type="hidden" name="chave_pix" value="<%= tenant.pixChave || '' %>">
       <input type="hidden" name="modalidade" :value="modalidade">
 
       <div x-show="wizardStep === 1" class="p-6 space-y-4">
@@ -87,13 +86,7 @@
           <label class="admin-label">Data do sorteio *</label>
           <input type="datetime-local" name="data_sorteio" required x-model="dataSorteio" class="admin-input">
         </div>
-        <div class="admin-panel-card p-4 text-sm space-y-2">
-          <p class="font-semibold flex items-center gap-2"><i data-lucide="wallet" class="w-4 h-4 text-emerald-600"></i> Pagamentos automáticos</p>
-          <p class="text-gray-500 dark:text-gray-400">Os valores caem na chave PIX da sua Carteira. Confirmação automática após o pagamento.</p>
-          <% if (tenant.pixChave) { %>
-            <p class="text-xs text-emerald-700 dark:text-emerald-400 font-medium">Chave: <%= tenant.pixChave %></p>
-          <% } %>
-        </div>
+        <%- include('recebimento-carteira-info') %>
       </div>
 
       <div x-show="wizardStep === 3" x-cloak class="p-6 space-y-4">
@@ -102,7 +95,7 @@
           <div><dt>Nome</dt><dd x-text="titulo"></dd></div>
           <div><dt>Cota</dt><dd>R$ <span x-text="fmt(valorCota)"></span> · <span x-text="fmtInt(totalCotas)"></span> cotas</dd></div>
           <div><dt>Sorteio</dt><dd x-text="dataSorteio ? new Date(dataSorteio).toLocaleString('pt-BR') : '—'"></dd></div>
-          <div><dt>Recebimento</dt><dd>Chave PIX da Carteira</dd></div>
+          <div><dt>Recebimento</dt><dd><% if (typeof mpSplitConfigured !== 'undefined' && mpSplitConfigured) { %><%= typeof mpConnected !== 'undefined' && mpConnected ? 'Mercado Pago — 95% automático' : 'Mercado Pago (conectar na Carteira)' %><% } else { %>Chave PIX da Carteira<% } %></dd></div>
         </dl>
         <%- include('rifa-simulacao', { full: true }) %>
       </div>
