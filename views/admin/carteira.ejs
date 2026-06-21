@@ -96,7 +96,7 @@
     <% if (mpSplit) { %>
     <div class="admin-panel-card p-6 mb-6 border-l-4 <%= mpOk ? 'border-emerald-500' : 'border-sky-500' %>">
       <div class="admin-config-section-head mb-4">
-        <div class="admin-config-section-icon mercadopago"><img src="/img/mercadopago.svg?v=2" alt="Mercado Pago" height="32"></div>
+        <div class="admin-config-section-icon blue"><i data-lucide="link" class="w-5 h-5"></i></div>
         <div>
           <h2 class="font-bold text-base">Conta Mercado Pago</h2>
           <p class="text-sm text-gray-500 dark:text-gray-400">Conecte sua conta para receber 95% de cada venda automaticamente. A plataforma retém 5% na hora do pagamento.</p>
@@ -133,9 +133,9 @@
         <p class="font-semibold text-sky-800 dark:text-sky-300 text-sm mb-1">Conecte sua conta para vender</p>
         <p class="text-xs text-sky-700 dark:text-sky-400">Você será redirecionado ao Mercado Pago para autorizar o recebimento dos pagamentos na sua conta.</p>
       </div>
-      <a href="<%= adminBase %>/carteira/mp/conectar" class="admin-mp-connect-btn">
-        <img src="/img/mercadopago.svg?v=2" alt="">
-        Conectar conta
+      <a href="<%= adminBase %>/carteira/mp/conectar" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-bold transition shadow">
+        <i data-lucide="link" class="w-4 h-4"></i>
+        Conectar conta Mercado Pago
       </a>
       <% } %>
     </div>
