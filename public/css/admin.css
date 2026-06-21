@@ -754,6 +754,11 @@
 .admin-mp-connect-btn:hover {
   background: #f5db00;
 }
+.admin-mp-connect-btn__logo {
+  height: 1.25rem;
+  width: auto;
+  display: block;
+}
 .dark .admin-config-section-icon { background: rgba(16, 185, 129, 0.15); color: #6ee7b7; }
 .dark .admin-config-section-icon.violet { background: rgba(124, 58, 237, 0.2); color: #c4b5fd; }
 .dark .admin-config-section-icon.blue { background: rgba(37, 99, 235, 0.2); color: #93c5fd; }
