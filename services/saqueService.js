@@ -1,7 +1,8 @@
 /**
  * Regras e processamento de saque do organizador.
  */
-const WooviService = require('./wooviService');
+const prisma = require('../lib/prisma');
+const PaymentService = require('./paymentService');
 const LogService = require('./logService');
 const {
   SAQUE_GRATIS_MIN,
@@ -42,24 +43,50 @@ const SaqueService = {
       throw new Error('Saldo insuficiente para cobrir a taxa de saque.');
     }
 
-    if (resumo.taxa > 0) {
-      await WooviService.debitarSubconta(
-        tenant,
-        resumo.taxa,
-        'Taxa de saque VouRifar'
+    const provider = PaymentService.getProvider();
+
+    if (provider === 'woovi') {
+      const WooviService = require('./wooviService');
+      if (resumo.taxa > 0) {
+        await WooviService.debitarSubconta(tenant, resumo.taxa, 'Taxa de saque VouRifar');
+      }
+      const tx = await WooviService.sacarSubconta(tenant);
+      await LogService.registrar(
+        adminUsuario,
+        'saque_carteira',
+        `Saque PIX Woovi — taxa R$ ${resumo.taxa.toFixed(2)}, líquido ~R$ ${resumo.saldoLiquido.toFixed(2)}`,
+        tenant.id
       );
+      return { ...tx, resumo };
     }
 
-    const tx = await WooviService.sacarSubconta(tenant);
+    const saque = await prisma.saque.create({
+      data: {
+        tenantId: tenant.id,
+        valorBruto: resumo.saldoDisponivel,
+        taxa: resumo.taxa,
+        valorLiquido: resumo.saldoLiquido,
+        status: 'solicitado'
+      }
+    });
+
+    console.log(
+      `[Saque] Tenant #${tenant.id} (${tenant.slug}) — R$ ${resumo.saldoLiquido.toFixed(2)} ` +
+      `→ PIX ${tenant.pixChave} (saque #${saque.id})`
+    );
 
     await LogService.registrar(
       adminUsuario,
       'saque_carteira',
-      `Saque PIX — taxa R$ ${resumo.taxa.toFixed(2)}, líquido ~R$ ${resumo.saldoLiquido.toFixed(2)}`,
+      `Saque solicitado #${saque.id} — taxa R$ ${resumo.taxa.toFixed(2)}, líquido R$ ${resumo.saldoLiquido.toFixed(2)}`,
       tenant.id
     );
 
-    return { ...tx, resumo };
+    return {
+      status: 'SOLICITADO',
+      saqueId: saque.id,
+      resumo
+    };
   }
 };
 

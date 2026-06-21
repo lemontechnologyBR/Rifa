@@ -34,8 +34,23 @@ model Tenant {
   organizadores Organizador[]
   rifas         Rifa[]
   logs          LogAdmin[]
+  saques        Saque[]
 
   @@map("tenants")
+}
+
+model Saque {
+  id           Int      @id @default(autoincrement())
+  tenantId     Int      @map("tenant_id")
+  valorBruto   Float    @map("valor_bruto")
+  taxa         Float    @default(0)
+  valorLiquido Float    @map("valor_liquido")
+  status       String   @default("solicitado")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("saques")
 }
 
 model Organizador {

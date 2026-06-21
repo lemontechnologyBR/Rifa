@@ -154,7 +154,9 @@ const apiController = {
   },
 
   async webhookWoovi(req, res) {
-    // Responde 200 imediatamente para evitar retry da Woovi
+    if (process.env.WOOVI_ENABLED !== 'true') {
+      return res.status(410).json({ ok: false, erro: 'Woovi desativada.' });
+    }
     res.json({ ok: true });
     try {
       const WooviService = require('../services/wooviService');
@@ -162,7 +164,6 @@ const apiController = {
       const correlationID = WooviService.extrairCorrelationId(req.body);
       console.log(`[Webhook Woovi] evento="${event}" correlationID="${correlationID}" body=${JSON.stringify(req.body).slice(0, 300)}`);
 
-      // Ignora eventos que não sejam de pagamento confirmado
       const eventosConfirmacao = ['OPENPIX:CHARGE_COMPLETED', 'OPENPIX:CHARGE_COMPLETED_NOT_SAME_CUSTOMER_PAYER', 'charge.completed'];
       if (event && !eventosConfirmacao.some(e => event.toUpperCase().includes(e.split(':').pop()))) {
         console.log(`[Webhook Woovi] evento ignorado: ${event}`);
@@ -173,7 +174,7 @@ const apiController = {
         console.warn('[Webhook Woovi] Payload sem correlationID:', JSON.stringify(req.body).slice(0, 200));
         return;
       }
-      const reserva = await ReservaService.confirmarViaWoovi(correlationID);
+      const reserva = await ReservaService.confirmarViaGateway(correlationID);
       console.log(`[Webhook Woovi] Reserva #${reserva.id} confirmada via correlationID=${correlationID}`);
     } catch (err) {
       if (!err.message.includes('não encontrada') && !err.message.includes('confirmado')) {
@@ -182,10 +183,35 @@ const apiController = {
     }
   },
 
-  /** Verifica pagamentos pendentes na API Woovi e confirma automaticamente */
+  async webhookMercadoPago(req, res) {
+    res.status(200).send('OK');
+    try {
+      const MercadoPagoService = require('../services/mercadoPagoService');
+      const paymentId = MercadoPagoService.extrairPaymentId(req.body, req.query);
+      console.log(`[Webhook MP] paymentId="${paymentId}" query=${JSON.stringify(req.query).slice(0, 120)}`);
+
+      if (!paymentId) return;
+
+      const payment = await MercadoPagoService.obterPagamento(paymentId);
+      if (!MercadoPagoService.pagamentoConfirmado(payment?.status)) {
+        console.log(`[Webhook MP] Pagamento ${paymentId} status=${payment?.status} — ignorado`);
+        return;
+      }
+
+      const ref = payment.external_reference || paymentId;
+      const reserva = await ReservaService.confirmarViaGateway(ref);
+      console.log(`[Webhook MP] Reserva #${reserva.id} confirmada via payment=${paymentId}`);
+    } catch (err) {
+      if (!err.message.includes('não encontrada') && !err.message.includes('confirmado')) {
+        console.error('[Webhook MP] Erro ao confirmar:', err.message);
+      }
+    }
+  },
+
+  /** Verifica pagamentos pendentes no gateway e confirma automaticamente */
   async sincronizarPagamentos(req, res) {
     try {
-      const WooviService = require('../services/wooviService');
+      const PaymentService = require('../services/paymentService');
       const prisma = require('../lib/prisma');
 
       const pendentes = await prisma.reserva.findMany({
@@ -200,11 +226,11 @@ const apiController = {
       const resultados = [];
       for (const r of pendentes) {
         try {
-          const status = await WooviService.consultarStatus(r.wooviCorrelationId);
-          if (status === 'COMPLETED' || status === 'paid' || status === 'CONFIRMED') {
-            await ReservaService.confirmarViaWoovi(r.wooviCorrelationId);
+          const status = await PaymentService.consultarStatus(r.wooviCorrelationId);
+          if (PaymentService.pagamentoConfirmado(status)) {
+            await ReservaService.confirmarViaGateway(r.wooviCorrelationId);
             resultados.push({ id: r.id, acao: 'confirmado' });
-            console.log(`[Sinc Woovi] Reserva #${r.id} confirmada retroativamente`);
+            console.log(`[SyncPIX] Reserva #${r.id} confirmada retroativamente`);
           } else {
             resultados.push({ id: r.id, acao: 'pendente', status });
           }

@@ -1,17 +1,15 @@
 /**
- * Job de sincronização automática de pagamentos Woovi.
- * Roda a cada 2 minutos e confirma reservas cujo pagamento
- * já foi confirmado na Woovi mas o webhook ainda não chegou.
+ * Job de sincronização automática de pagamentos PIX.
+ * Confirma reservas cujo pagamento já foi aprovado mas o webhook ainda não chegou.
  */
 const prisma = require('../lib/prisma');
-const WooviService = require('../services/wooviService');
+const PaymentService = require('../services/paymentService');
 const ReservaService = require('../services/reservaService');
 
-const INTERVALO_MS = 2 * 60 * 1000; // 2 minutos
-const STATUS_PAGOS = ['COMPLETED', 'CONFIRMED', 'paid'];
+const INTERVALO_MS = 2 * 60 * 1000;
 
 async function sincronizar() {
-  if (!WooviService.isPlatformConfigured()) return;
+  if (!PaymentService.isPlatformConfigured()) return;
 
   let pendentes;
   try {
@@ -33,10 +31,10 @@ async function sincronizar() {
   let confirmados = 0;
   for (const reserva of pendentes) {
     try {
-      const status = await WooviService.consultarStatus(reserva.wooviCorrelationId);
-      if (status && STATUS_PAGOS.some(s => status.toUpperCase().includes(s.toUpperCase()))) {
-        await ReservaService.confirmarViaWoovi(reserva.wooviCorrelationId);
-        console.log(`[SyncPIX] Reserva #${reserva.id} confirmada automaticamente (status Woovi: ${status})`);
+      const status = await PaymentService.consultarStatus(reserva.wooviCorrelationId);
+      if (PaymentService.pagamentoConfirmado(status)) {
+        await ReservaService.confirmarViaGateway(reserva.wooviCorrelationId);
+        console.log(`[SyncPIX] Reserva #${reserva.id} confirmada automaticamente (status: ${status})`);
         confirmados++;
       }
     } catch (e) {
@@ -52,7 +50,6 @@ async function sincronizar() {
 }
 
 function iniciar() {
-  // Primeira rodada após 30s (aguarda o servidor subir)
   setTimeout(() => {
     sincronizar();
     setInterval(sincronizar, INTERVALO_MS);

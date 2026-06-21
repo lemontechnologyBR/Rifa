@@ -91,8 +91,8 @@ const RifaService = {
     if (!pixFinal) {
       throw new Error('Configure sua chave PIX na Carteira antes de criar rifas.');
     }
-    const WooviService = require('./wooviService');
-    if (!WooviService.isConfigured(tenant)) {
+    const PaymentService = require('./paymentService');
+    if (!PaymentService.isConfigured(tenant)) {
       throw new Error('Configure sua chave PIX na Carteira para receber pagamentos.');
     }
 

@@ -7,7 +7,7 @@ const { gerarPayloadPix, simularEnvioEmail } = require('../lib/helpers');
 const { reservaExpirada, obterExpiraEmReserva } = require('../lib/reservaConfig');
 const LogService = require('./logService');
 const IndicacaoService = require('./indicacaoService');
-const WooviService = require('./wooviService');
+const PaymentService = require('./paymentService');
 
 const ReservaService = {
   async expirarSeNecessario(reservaId) {
@@ -91,28 +91,25 @@ const ReservaService = {
     }));
   },
 
-  /** Monta pagamento — Woovi (automático) ou erro se carteira inativa */
+  /** Monta pagamento PIX via gateway ativo (Mercado Pago ou Woovi legado) */
   async montarPagamento(reserva, rifa, tenant, usuario) {
-    if (!WooviService.isConfigured(tenant)) {
+    if (!PaymentService.isConfigured(tenant)) {
       throw new Error('Pagamentos indisponíveis. O organizador deve configurar a Carteira.');
     }
-    return this.montarPagamentoWoovi(reserva, rifa, tenant, usuario);
-  },
 
-  async montarPagamentoWoovi(reserva, rifa, tenant, usuario) {
     const correlationID = reserva.codigoPagamento || `reserva-${reserva.id}`;
     const { TAXA_PLATAFORMA, ORGANIZADOR_PERCENTUAL } = require('../lib/config');
+    const provider = PaymentService.getProvider();
 
-    // Comprador paga o valor exato da cota (sem acréscimo).
-    // Plataforma retém 10%; organizador recebe 90% via split Woovi.
     const valorCobrado = reserva.valorTotal;
     const valorOrganizador = reserva.valorTotal * ORGANIZADOR_PERCENTUAL;
 
-    const charge = await WooviService.criarCobranca(tenant, {
+    const charge = await PaymentService.criarCobranca(tenant, {
       correlationID,
       valorReais: valorCobrado,
       valorOrganizadorReais: valorOrganizador,
       comentario: `Rifa: ${rifa.titulo}`.slice(0, 120),
+      expiraEm: obterExpiraEmReserva(reserva),
       cliente: {
         nome: usuario.nome,
         email: usuario.email,
@@ -121,10 +118,12 @@ const ReservaService = {
       }
     });
 
+    const paymentRef = charge.paymentId || charge.correlationID;
+
     await prisma.reserva.update({
       where: { id: reserva.id },
       data: {
-        wooviCorrelationId: charge.correlationID,
+        wooviCorrelationId: String(paymentRef),
         wooviBrCode: charge.brCode || null
       }
     });
@@ -133,7 +132,7 @@ const ReservaService = {
       || (charge.brCode ? `https://chart.googleapis.com/chart?chs=250x250&cht=qr&chl=${encodeURIComponent(charge.brCode)}` : '');
 
     return {
-      metodo: 'woovi',
+      metodo: provider || 'pix',
       valor: valorCobrado,
       valorOrganizador,
       taxaPlataforma: reserva.valorTotal * TAXA_PLATAFORMA,
@@ -205,15 +204,16 @@ const ReservaService = {
     await LogService.registrar(adminUsuario, 'confirmar_pagamento', `Reserva #${reservaId}`, tenantId);
   },
 
-  /** Confirma pagamento via webhook Woovi */
-  async confirmarViaWoovi(correlationID) {
-    if (!correlationID) throw new Error('Correlation ID ausente.');
+  /** Confirma pagamento via webhook do gateway (Woovi ou Mercado Pago) */
+  async confirmarViaGateway(referencia) {
+    if (!referencia) throw new Error('Referência de pagamento ausente.');
 
+    const ref = String(referencia);
     const reserva = await prisma.reserva.findFirst({
       where: {
         OR: [
-          { wooviCorrelationId: String(correlationID) },
-          { codigoPagamento: String(correlationID) }
+          { wooviCorrelationId: ref },
+          { codigoPagamento: ref }
         ]
       }
     });
@@ -227,9 +227,15 @@ const ReservaService = {
 
     await this._confirmarInterno(atualizada.id);
     await this._posConfirmacao(atualizada);
-    await LogService.registrar('woovi', 'confirmar_pagamento_auto', `Reserva #${atualizada.id} — ${correlationID}`);
+    const origem = PaymentService.getProvider() || 'gateway';
+    await LogService.registrar(origem, 'confirmar_pagamento_auto', `Reserva #${atualizada.id} — ${ref}`);
 
     return atualizada;
+  },
+
+  /** @deprecated alias Woovi */
+  async confirmarViaWoovi(referencia) {
+    return this.confirmarViaGateway(referencia);
   },
 
   /** Confirma via webhook simulado (modo manual) */

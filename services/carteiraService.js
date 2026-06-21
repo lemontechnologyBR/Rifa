@@ -1,11 +1,23 @@
 /**
- * Carteira do organizador — chave PIX para recebimentos via Woovi (plataforma).
+ * Carteira do organizador — chave PIX para recebimentos via Mercado Pago.
  */
 const prisma = require('../lib/prisma');
-const WooviService = require('./wooviService');
+const PaymentService = require('./paymentService');
 const { chavesPixEquivalentes, validarChavePixPorTipo } = require('../lib/pixKey');
+const { ORGANIZADOR_PERCENTUAL } = require('../lib/config');
 
 const CarteiraService = {
+  async totalSacado(tenantId) {
+    const agg = await prisma.saque.aggregate({
+      where: {
+        tenantId: Number(tenantId),
+        status: { in: ['solicitado', 'concluido'] }
+      },
+      _sum: { valorBruto: true }
+    });
+    return agg._sum.valorBruto || 0;
+  },
+
   async obterResumo(tenantId) {
     const rifas = await prisma.rifa.findMany({
       where: { tenantId: Number(tenantId) },
@@ -17,13 +29,15 @@ const CarteiraService = {
         saldoConfirmado: 0,
         pendente: 0,
         cotasConfirmadas: 0,
-        reservasPendentes: 0
+        reservasPendentes: 0,
+        totalSacado: 0,
+        saldoDisponivel: 0
       };
     }
 
     const whereBase = { rifaId: { in: rifaIds } };
 
-    const [confirmado, pendente] = await Promise.all([
+    const [confirmado, pendente, totalSacado] = await Promise.all([
       prisma.reserva.aggregate({
         where: { ...whereBase, statusPagamento: 'confirmado' },
         _sum: { valorTotal: true },
@@ -33,8 +47,12 @@ const CarteiraService = {
         where: { ...whereBase, statusPagamento: 'pendente' },
         _sum: { valorTotal: true },
         _count: { id: true }
-      })
+      }),
+      this.totalSacado(tenantId)
     ]);
+
+    const saldoConfirmado = confirmado._sum.valorTotal || 0;
+    const saldoDisponivel = Math.max(0, saldoConfirmado * ORGANIZADOR_PERCENTUAL - totalSacado);
 
     const cotasConfirmadas = await prisma.reservaNumero.count({
       where: {
@@ -43,10 +61,12 @@ const CarteiraService = {
     });
 
     return {
-      saldoConfirmado: confirmado._sum.valorTotal || 0,
+      saldoConfirmado,
       pendente: pendente._sum.valorTotal || 0,
       cotasConfirmadas,
-      reservasPendentes: pendente._count.id || 0
+      reservasPendentes: pendente._count.id || 0,
+      totalSacado,
+      saldoDisponivel
     };
   },
 
@@ -75,12 +95,12 @@ const CarteiraService = {
 
     await this.assertPixChaveDisponivel(tenantId, pix);
 
-    if (!WooviService.isPlatformConfigured()) {
+    if (!PaymentService.isPlatformConfigured()) {
       throw new Error('Pagamentos temporariamente indisponíveis. Tente novamente mais tarde.');
     }
 
     const atualizado = { ...tenant, pixChave: pix };
-    await WooviService.ensureSubconta(atualizado);
+    await PaymentService.ensureTenantReady(atualizado);
 
     return prisma.tenant.update({
       where: { id: Number(tenantId) },

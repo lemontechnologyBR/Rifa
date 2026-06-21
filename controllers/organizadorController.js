@@ -159,11 +159,10 @@ const organizadorController = {
     try {
       const CarteiraService = require('../services/carteiraService');
       const SaqueService = require('../services/saqueService');
-      const WooviService = require('../services/wooviService');
-      const { ORGANIZADOR_PERCENTUAL } = require('../lib/config');
+      const PaymentService = require('../services/paymentService');
       const { detectarTipoChavePix, labelTipoPix } = require('../lib/pixKey');
       const resumo = await CarteiraService.obterResumo(req.tenant.id);
-      const saldoDisp = resumo.saldoConfirmado * ORGANIZADOR_PERCENTUAL;
+      const saldoDisp = resumo.saldoDisponivel;
       const saque = SaqueService.calcularResumo(saldoDisp);
       const pixTipoDetectado = detectarTipoChavePix(req.tenant.pixChave);
       const pixTipo = req.query.tipo || pixTipoDetectado || 'cpf';
@@ -173,7 +172,8 @@ const organizadorController = {
         tenant: req.tenant,
         resumo,
         saque,
-        carteiraOk: WooviService.isConfigured(req.tenant),
+        carteiraOk: PaymentService.isConfigured(req.tenant),
+        gateway: PaymentService.getProvider(),
         pixTipo,
         pixTipoLabel: labelTipoPix(pixTipoDetectado),
         adminBase: `/${req.tenant.slug}/admin`,
@@ -203,17 +203,16 @@ const organizadorController = {
 
   async solicitarSaque(req, res) {
     try {
-      const WooviService = require('../services/wooviService');
+      const PaymentService = require('../services/paymentService');
       const CarteiraService = require('../services/carteiraService');
       const SaqueService = require('../services/saqueService');
-      const { ORGANIZADOR_PERCENTUAL } = require('../lib/config');
 
-      if (!WooviService.isConfigured(req.tenant)) {
+      if (!PaymentService.isConfigured(req.tenant)) {
         return res.redirect(`/${req.tenant.slug}/admin/carteira?erro=${encodeURIComponent('Configure sua chave PIX antes de sacar.')}`);
       }
 
       const resumoCarteira = await CarteiraService.obterResumo(req.tenant.id);
-      const saldoDisp = resumoCarteira.saldoConfirmado * ORGANIZADOR_PERCENTUAL;
+      const saldoDisp = resumoCarteira.saldoDisponivel;
 
       const { resumo: saqueResumo } = await SaqueService.processarSaque(
         req.tenant,
@@ -225,7 +224,9 @@ const organizadorController = {
       const taxaMsg = saqueResumo.taxa > 0
         ? ` Taxa de saque: R$ ${saqueResumo.taxa.toFixed(2).replace('.', ',')}.`
         : '';
-      const msg = `Saque solicitado com sucesso! Você receberá ${valorFmt} na sua chave PIX.${taxaMsg}`;
+      const msg = PaymentService.getProvider() === 'mercadopago'
+        ? `Saque registrado! Você receberá ${valorFmt} na sua chave PIX em até 1 dia útil.${taxaMsg}`
+        : `Saque solicitado com sucesso! Você receberá ${valorFmt} na sua chave PIX.${taxaMsg}`;
 
       res.redirect(`/${req.tenant.slug}/admin/carteira?msg=${encodeURIComponent(msg)}`);
     } catch (err) {
@@ -306,7 +307,7 @@ const organizadorController = {
   },
 
   async participantes(req, res) {
-    const WooviService = require('../services/wooviService');
+    const PaymentService = require('../services/paymentService');
     const ab = `/${req.tenant.slug}/admin`;
     const rifa = await RifaService.buscarPorId(req.params.id, req.tenant.id);
     if (!rifa) return res.status(404).send('Rifa não encontrada');
@@ -319,7 +320,7 @@ const organizadorController = {
       tenant: req.tenant, adminBase: ab, tenantBase: `/${req.tenant.slug}`,
       adminUsuario: req.session.organizadorNome, active: 'rifas', pageTitle: 'Participantes',
       rifa, reservas, stats,
-      wooviAtivo: WooviService.isConfigured(req.tenant),
+      pagamentoAtivo: PaymentService.isConfigured(req.tenant),
       mensagem: req.query.msg || null,
       erro: req.query.erro || null,
       csrfToken: res.locals.csrfToken

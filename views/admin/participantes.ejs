@@ -57,7 +57,7 @@
               <td class="p-3"><span class="text-xs px-2 py-1 rounded-full capitalize <%= r.statusPagamento==='confirmado'?'bg-green-100 text-green-700':r.statusPagamento==='cancelado'?'bg-red-100 text-red-700':'bg-yellow-100 text-yellow-700' %>"><%= r.statusPagamento %></span></td>
               <td class="p-3">
                 <% if (r.statusPagamento === 'pendente') { %>
-                  <% if (!wooviAtivo) { %>
+                  <% if (!pagamentoAtivo) { %>
                   <form method="POST" action="<%= adminBase %>/rifas/<%= rifa.id %>/reservas/<%= r.id %>/confirmar" class="inline">
                     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <button class="text-xs bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700">Confirmar</button>

@@ -34,10 +34,10 @@
         <p class="text-xs text-gray-400 mt-1"><%= resumo.cotasConfirmadas %> cota(s) pagas</p>
       </article>
       <article class="admin-metric-card">
-        <% const saldoSaque = resumo.saldoConfirmado * 0.95; %>
+        <% const saldoSaque = resumo.saldoDisponivel != null ? resumo.saldoDisponivel : resumo.saldoConfirmado * 0.95; %>
         <p class="admin-metric-label mb-1">Disponível para saque</p>
         <p class="admin-metric-value text-violet-600">R$ <%= saldoSaque.toFixed(2).replace('.', ',') %></p>
-        <p class="text-xs text-gray-400 mt-1">95% do saldo confirmado</p>
+        <p class="text-xs text-gray-400 mt-1">95% do saldo confirmado<% if (resumo.totalSacado > 0) { %> · R$ <%= resumo.totalSacado.toFixed(2).replace('.', ',') %> já sacado<% } %></p>
       </article>
       <article class="admin-metric-card">
         <p class="admin-metric-label mb-1">Aguardando PIX</p>
@@ -61,7 +61,7 @@
     </div>
 
     <%
-      const saldoDisp = saque ? saque.saldoDisponivel : resumo.saldoConfirmado * 0.95;
+      const saldoDisp = saque ? saque.saldoDisponivel : (resumo.saldoDisponivel != null ? resumo.saldoDisponivel : resumo.saldoConfirmado * 0.95);
       const saqueGratis = saque ? saque.saqueGratis : saldoDisp >= 500;
       const podeSacar = saque ? saque.podeSacar : saldoDisp >= 50;
       const taxaSaque = saque ? saque.taxa : (saqueGratis ? 0 : 3.50);
