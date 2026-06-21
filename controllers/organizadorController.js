@@ -179,7 +179,7 @@ const organizadorController = {
       const SaqueService = require('../services/saqueService');
       const PaymentService = require('../services/paymentService');
       const { detectarTipoChavePix, labelTipoPix } = require('../lib/pixKey');
-      const resumo = await CarteiraService.obterResumo(req.tenant.id);
+      const resumo = await CarteiraService.obterResumo(req.tenant.id, req.tenant);
       const saldoDisp = resumo.saldoDisponivel;
       const saque = SaqueService.calcularResumo(saldoDisp);
       const pixTipoDetectado = detectarTipoChavePix(req.tenant.pixChave);
@@ -187,6 +187,14 @@ const organizadorController = {
       const mpSplitConfigured = MercadoPagoOAuthService.isSplitConfigured();
       const mpConnected = MercadoPagoOAuthService.isTenantConnected(req.tenant);
       const provider = PaymentService.getProvider(req.tenant);
+      const {
+        TAXA_PLATAFORMA,
+        TAXA_PLATAFORMA_WOOVI,
+        ORGANIZADOR_PERCENTUAL,
+        ORGANIZADOR_PERCENTUAL_WOOVI
+      } = require('../lib/config');
+      const taxaPlataforma = provider === 'woovi' ? TAXA_PLATAFORMA_WOOVI : TAXA_PLATAFORMA;
+      const organizadorPercentual = provider === 'woovi' ? ORGANIZADOR_PERCENTUAL_WOOVI : ORGANIZADOR_PERCENTUAL;
 
       res.render('admin/carteira', {
         titulo: 'Carteira',
@@ -198,6 +206,8 @@ const organizadorController = {
         mpConnected,
         usesSplit: provider === 'mercadopago',
         gateway: provider,
+        taxaPlataforma,
+        organizadorPercentual,
         pixTipo,
         pixTipoLabel: labelTipoPix(pixTipoDetectado),
         adminBase: `/${req.tenant.slug}/admin`,

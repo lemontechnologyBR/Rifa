@@ -136,11 +136,16 @@ const ReservaService = {
     }
 
     const correlationID = reserva.codigoPagamento || `reserva-${reserva.id}`;
-    const { TAXA_PLATAFORMA, ORGANIZADOR_PERCENTUAL } = require('../lib/config');
+    const {
+      TAXA_PLATAFORMA,
+      ORGANIZADOR_PERCENTUAL,
+      ORGANIZADOR_PERCENTUAL_WOOVI
+    } = require('../lib/config');
     const provider = PaymentService.getProvider(tenant);
 
     const valorCobrado = reserva.valorTotal;
-    const valorOrganizador = reserva.valorTotal * ORGANIZADOR_PERCENTUAL;
+    const orgPct = provider === 'woovi' ? ORGANIZADOR_PERCENTUAL_WOOVI : ORGANIZADOR_PERCENTUAL;
+    const valorOrganizador = reserva.valorTotal * orgPct;
 
     const charge = await PaymentService.criarCobranca(tenant, {
       correlationID,

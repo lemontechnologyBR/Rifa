@@ -45,7 +45,7 @@
         <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700">
           <i data-lucide="zap" class="w-3.5 h-3.5"></i> Modalidade: Mercado Pago Direto
         </span>
-        <span class="text-xs text-gray-500">95% cai na sua conta MP na hora do pagamento</span>
+        <span class="text-xs text-gray-500"><%= Math.round((organizadorPercentual||0.95)*100) %>% cai na sua conta MP na hora do pagamento</span>
       <% } else { %>
         <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300 border border-sky-200 dark:border-sky-700">
           <i data-lucide="building-2" class="w-3.5 h-3.5"></i> Modalidade: Plataforma VouRifar
@@ -63,13 +63,13 @@
       <article class="admin-metric-card">
         <% const saldoSaque = resumo.saldoDisponivel != null ? resumo.saldoDisponivel : resumo.saldoConfirmado * 0.95; %>
         <% if (mpOk) { %>
-          <p class="admin-metric-label mb-1">Sua parte (95%)</p>
-          <p class="admin-metric-value text-violet-600">R$ <%= (resumo.saldoConfirmado * 0.95).toFixed(2).replace('.', ',') %></p>
+          <p class="admin-metric-label mb-1">Sua parte (<%= Math.round((organizadorPercentual||0.95)*100) %>%)</p>
+          <p class="admin-metric-value text-violet-600">R$ <%= (resumo.saldoConfirmado * (organizadorPercentual||0.95)).toFixed(2).replace('.', ',') %></p>
           <p class="text-xs text-gray-400 mt-1">Creditado direto na sua conta MP</p>
         <% } else { %>
           <p class="admin-metric-label mb-1">Disponível para saque</p>
           <p class="admin-metric-value text-violet-600">R$ <%= saldoSaque.toFixed(2).replace('.', ',') %></p>
-          <p class="text-xs text-gray-400 mt-1">95% do saldo confirmado<% if (resumo.totalSacado > 0) { %> · R$ <%= resumo.totalSacado.toFixed(2).replace('.', ',') %> já sacado<% } %></p>
+          <p class="text-xs text-gray-400 mt-1"><%= Math.round((organizadorPercentual||0.93)*100) %>% do saldo confirmado<% if (resumo.totalSacado > 0) { %> · R$ <%= resumo.totalSacado.toFixed(2).replace('.', ',') %> já sacado<% } %></p>
         <% } %>
       </article>
       <article class="admin-metric-card">
@@ -110,7 +110,7 @@
         <div class="admin-config-section-icon blue"><i data-lucide="link" class="w-5 h-5"></i></div>
         <div>
           <h2 class="font-bold text-base">Conta Mercado Pago</h2>
-          <p class="text-sm text-gray-500 dark:text-gray-400">Conecte sua conta para receber 95% de cada venda automaticamente. A plataforma retém 5% na hora do pagamento.</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Conecte sua conta para receber <%= Math.round((organizadorPercentual||0.95)*100) %>% de cada venda automaticamente. A plataforma retém <%= Math.round((taxaPlataforma||0.05)*100) %>% na hora do pagamento.</p>
         </div>
       </div>
 
@@ -272,7 +272,7 @@
             autocomplete="off"
             spellcheck="false">
           <p class="admin-hint" x-text="hint()"></p>
-          <p class="admin-hint mt-1">A plataforma retém 5% do valor arrecadado. Você recebe 95% de cada venda diretamente nesta chave.</p>
+          <p class="admin-hint mt-1">A plataforma retém <%= Math.round((taxaPlataforma||0.07)*100) %>% do valor arrecadado. Você recebe <%= Math.round((organizadorPercentual||0.93)*100) %>% de cada venda — solicite o saque quando quiser.</p>
         </div>
 
         <button type="submit" class="admin-btn-primary px-6 py-3 text-sm">
@@ -294,7 +294,7 @@
           </li>
           <li class="flex items-start gap-2.5">
             <span class="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
-            <span><strong class="text-gray-700 dark:text-gray-200">95%</strong> cai na sua conta MP na hora — a plataforma retém <strong class="text-gray-700 dark:text-gray-200">5%</strong> automaticamente</span>
+            <span><strong class="text-gray-700 dark:text-gray-200"><%= Math.round((organizadorPercentual||0.95)*100) %>%</strong> cai na sua conta MP na hora — a plataforma retém <strong class="text-gray-700 dark:text-gray-200"><%= Math.round((taxaPlataforma||0.05)*100) %>%</strong> automaticamente</span>
           </li>
           <li class="flex items-start gap-2.5">
             <span class="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">✓</span>
@@ -329,7 +329,7 @@
             </li>
             <li class="flex items-start gap-2.5">
               <span class="w-5 h-5 rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-400 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
-              <span><strong class="text-gray-700 dark:text-gray-200">95%</strong> acumula no seu saldo — a plataforma retém 5%</span>
+              <span><strong class="text-gray-700 dark:text-gray-200"><%= Math.round((organizadorPercentual||0.93)*100) %>%</strong> acumula no seu saldo — a plataforma retém <%= Math.round((taxaPlataforma||0.07)*100) %>%</span>
             </li>
             <li class="flex items-start gap-2.5">
               <span class="w-5 h-5 rounded-full bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-400 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">4</span>

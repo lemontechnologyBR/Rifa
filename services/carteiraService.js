@@ -5,7 +5,7 @@ const prisma = require('../lib/prisma');
 const PaymentService = require('./paymentService');
 const MercadoPagoOAuthService = require('./mercadoPagoOAuthService');
 const { chavesPixEquivalentes, validarChavePixPorTipo } = require('../lib/pixKey');
-const { ORGANIZADOR_PERCENTUAL } = require('../lib/config');
+const { ORGANIZADOR_PERCENTUAL, ORGANIZADOR_PERCENTUAL_WOOVI } = require('../lib/config');
 
 const CarteiraService = {
   usesSplit(tenant) {
@@ -23,7 +23,7 @@ const CarteiraService = {
     return agg._sum.valorBruto || 0;
   },
 
-  async obterResumo(tenantId) {
+  async obterResumo(tenantId, tenant = null) {
     const rifas = await prisma.rifa.findMany({
       where: { tenantId: Number(tenantId) },
       select: { id: true }
@@ -57,7 +57,9 @@ const CarteiraService = {
     ]);
 
     const saldoConfirmado = confirmado._sum.valorTotal || 0;
-    const saldoDisponivel = Math.max(0, saldoConfirmado * ORGANIZADOR_PERCENTUAL - totalSacado);
+    const provider = tenant ? PaymentService.getProvider(tenant) : null;
+    const orgPct = provider === 'woovi' ? ORGANIZADOR_PERCENTUAL_WOOVI : ORGANIZADOR_PERCENTUAL;
+    const saldoDisponivel = Math.max(0, saldoConfirmado * orgPct - totalSacado);
 
     const cotasConfirmadas = await prisma.reservaNumero.count({
       where: {
@@ -93,14 +95,15 @@ const CarteiraService = {
   },
 
   async salvarConfig(tenantId, { pix_chave, pix_tipo }) {
-    if (MercadoPagoOAuthService.isSplitConfigured()) {
-      throw new Error('Pagamentos são feitos via Mercado Pago. Conecte sua conta na seção acima.');
-    }
-
     const pix = validarChavePixPorTipo(pix_tipo, pix_chave);
 
     const tenant = await prisma.tenant.findUnique({ where: { id: Number(tenantId) } });
     if (!tenant) throw new Error('Conta não encontrada.');
+
+    // Bloquear apenas se este tenant específico está usando MP direto
+    if (MercadoPagoOAuthService.isTenantConnected(tenant)) {
+      throw new Error('Sua conta já recebe via Mercado Pago. Para usar chave PIX, desconecte o MP primeiro.');
+    }
 
     await this.assertPixChaveDisponivel(tenantId, pix);
 
