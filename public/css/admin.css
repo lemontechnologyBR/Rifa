@@ -744,9 +744,31 @@
   overflow: hidden;
 }
 .admin-config-section-icon.mercadopago img {
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 0.625rem;
+  width: auto;
+  height: 2rem;
+  max-width: 9.5rem;
+  border-radius: 0;
+  display: block;
+}
+.admin-mp-connect-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.75rem;
+  background: #ffe600;
+  color: #0a0080;
+  font-size: 0.875rem;
+  font-weight: 700;
+  transition: background 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+.admin-mp-connect-btn:hover {
+  background: #f5db00;
+}
+.admin-mp-connect-btn img {
+  height: 1.375rem;
+  width: auto;
   display: block;
 }
 .dark .admin-config-section-icon { background: rgba(16, 185, 129, 0.15); color: #6ee7b7; }

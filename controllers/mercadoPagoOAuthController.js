@@ -37,7 +37,7 @@ const mercadoPagoOAuthController = {
       }
 
       const payload = MercadoPagoOAuthService.verifyState(String(state));
-      const tokenData = await MercadoPagoOAuthService.exchangeCode(req, String(code));
+      const tokenData = await MercadoPagoOAuthService.exchangeCode(req, String(code), String(state));
       await MercadoPagoOAuthService.salvarTokens(payload.tenantId, tokenData);
 
       await LogService.registrar(

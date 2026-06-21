@@ -36,12 +36,20 @@ const MercadoPagoOAuthService = {
   },
 
   getCallbackUrl(req) {
-    const base = getAppUrl(req).replace(/\/$/, '');
     const custom = process.env.MERCADOPAGO_CALLBACK_URL?.trim();
-    if (custom && /\/auth\/mercadopago\/callback\/?$/.test(custom)) {
+    if (custom) {
       return custom.replace(/\/$/, '');
     }
+    const base = getAppUrl(req).replace(/\/$/, '');
     return `${base}/auth/mercadopago/callback`;
+  },
+
+  getOAuthDiagnostics(req) {
+    return {
+      redirectUri: this.getCallbackUrl(req),
+      clientId: this.getClientId(),
+      authBase: 'https://auth.mercadopago.com.br/authorization'
+    };
   },
 
   encodeState(payload) {
@@ -75,14 +83,18 @@ const MercadoPagoOAuthService = {
   },
 
   buildAuthUrl(req, state) {
+    const redirectUri = this.getCallbackUrl(req);
     const params = new URLSearchParams({
       client_id: this.getClientId(),
       response_type: 'code',
       platform_id: 'mp',
-      redirect_uri: this.getCallbackUrl(req),
+      redirect_uri: redirectUri,
       state
     });
-    return `https://auth.mercadopago.com.br/authorization?${params.toString()}`;
+    params.set('scope', 'read write offline_access');
+    const url = `https://auth.mercadopago.com.br/authorization?${params.toString()}`;
+    console.log(`[MP OAuth] redirect_uri=${redirectUri} client_id=${this.getClientId()}`);
+    return url;
   },
 
   async _tokenRequest(bodyParams) {
@@ -103,14 +115,16 @@ const MercadoPagoOAuthService = {
     return JSON.parse(raw);
   },
 
-  async exchangeCode(req, code) {
-    return this._tokenRequest({
+  async exchangeCode(req, code, state = null) {
+    const body = {
       client_id: this.getClientId(),
       client_secret: this.getClientSecret(),
       grant_type: 'authorization_code',
       code: String(code),
       redirect_uri: this.getCallbackUrl(req)
-    });
+    };
+    if (state) body.state = String(state);
+    return this._tokenRequest(body);
   },
 
   async refreshAccessToken(refreshToken) {
