@@ -393,12 +393,15 @@
     }
   });
 
-  document.getElementById('btn-fechar-sucesso')?.addEventListener('click', () => {
-    if (pollingInterval) clearInterval(pollingInterval);
-    if (pixTimerInterval) clearInterval(pixTimerInterval);
-    document.getElementById('modal-sucesso').classList.add('hidden');
-    location.reload();
-  });
+  function fecharModalSucesso(recarregar = true) {
+    if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
+    if (pixTimerInterval) { clearInterval(pixTimerInterval); pixTimerInterval = null; }
+    document.getElementById('modal-sucesso')?.classList.add('hidden');
+    syncScrollLock();
+    if (recarregar) location.reload();
+  }
+
+  document.getElementById('btn-fechar-sucesso')?.addEventListener('click', () => fecharModalSucesso(true));
 
   function iniciarCountdownPix(expiraEm) {
     if (pixTimerInterval) clearInterval(pixTimerInterval);
@@ -442,7 +445,9 @@
           if (el) { el.textContent = '✅ Pagamento confirmado!'; el.className = 'text-xs mt-2 text-green-600 font-bold'; }
           showToast('Pagamento confirmado!', 'success');
           clearInterval(pollingInterval);
-          if (pixTimerInterval) clearInterval(pixTimerInterval);
+          pollingInterval = null;
+          if (pixTimerInterval) { clearInterval(pixTimerInterval); pixTimerInterval = null; }
+          setTimeout(() => fecharModalSucesso(true), 1500);
         } else if (data.status === 'expirado') {
           if (el) { el.textContent = '⏱️ Reserva expirada — prazo de pagamento encerrado.'; el.className = 'text-xs mt-2 text-red-600 font-bold'; }
           clearInterval(pollingInterval);

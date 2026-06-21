@@ -322,7 +322,11 @@
         if (d.status === 'confirmado') {
           clearInterval(pollIv);
           if (statusEl) { statusEl.textContent = '✅ Pagamento confirmado!'; statusEl.className = 'text-sm font-bold text-emerald-600 text-center mt-2'; }
-          setTimeout(function(){ window.location.href = tenantBase + '/comprovante/' + data.reservaId; }, 1500);
+          setTimeout(function() {
+            ms.classList.add('hidden');
+            document.body.classList.remove('modal-open');
+            window.location.href = tenantBase + '/comprovante/' + data.reservaId;
+          }, 1500);
         }
         if (d.status === 'expirado') { clearInterval(pollIv); location.reload(); }
       }).catch(function(){});
