@@ -12,7 +12,8 @@ const { enviarEmail } = require('../lib/emailService');
 const {
   templateReservaCriada,
   templatePagamentoConfirmado,
-  templateReservaExpirada
+  templateReservaExpirada,
+  templateVendaOrganizador
 } = require('../lib/emailTemplates');
 
 const ReservaService = {
@@ -347,19 +348,32 @@ const ReservaService = {
       }
     });
 
-    // Envia email de confirmação em background
+    // Envia emails de confirmação em background (comprador + organizadores)
     setImmediate(async () => {
       try {
         const reservaFull = await prisma.reserva.findUnique({
           where: { id: Number(reservaId) },
           include: {
             usuario: true,
-            rifa: { include: { tenant: true } },
+            rifa: {
+              include: {
+                tenant: {
+                  include: { organizadores: { select: { email: true, nome: true } } }
+                }
+              }
+            },
             reservaNumeros: { include: { numero: true } }
           }
         });
-        if (reservaFull?.usuario?.email && reservaFull.rifa) {
-          const numeros = reservaFull.reservaNumeros.map(rn => rn.numero.numero);
+
+        if (!reservaFull?.rifa) return;
+
+        const numeros = reservaFull.reservaNumeros.map(rn => rn.numero.numero);
+        const tenant = reservaFull.rifa.tenant;
+        const tenantSlug = tenant.slug;
+
+        // Email para o comprador
+        if (reservaFull.usuario?.email) {
           await enviarEmail({
             para: reservaFull.usuario.email,
             assunto: `Pagamento confirmado — Rifa "${reservaFull.rifa.titulo}" ✓`,
@@ -367,9 +381,31 @@ const ReservaService = {
               usuario: reservaFull.usuario,
               rifa: reservaFull.rifa,
               reserva: { ...reservaFull, numeros },
-              tenantSlug: reservaFull.rifa.tenant.slug
+              tenantSlug
             }),
             texto: `Olá ${reservaFull.usuario.nome}! Seu pagamento da reserva #${reservaFull.id} foi confirmado. Números: ${numeros.join(', ')}. Boa sorte!`
+          });
+        }
+
+        // Email para cada organizador do tenant
+        const { ORGANIZADOR_PERCENTUAL, ORGANIZADOR_PERCENTUAL_WOOVI } = require('../lib/config');
+        const provider = PaymentService.getProvider(tenant);
+        const orgPct = provider === 'woovi' ? ORGANIZADOR_PERCENTUAL_WOOVI : ORGANIZADOR_PERCENTUAL;
+
+        for (const org of (tenant.organizadores || [])) {
+          if (!org.email) continue;
+          await enviarEmail({
+            para: org.email,
+            assunto: `Nova venda confirmada — ${reservaFull.rifa.titulo} (+R$ ${(reservaFull.valorTotal * orgPct).toFixed(2).replace('.', ',')})`,
+            html: templateVendaOrganizador({
+              rifa: reservaFull.rifa,
+              reserva: reservaFull,
+              usuario: reservaFull.usuario,
+              numeros,
+              tenantSlug,
+              organizadorPercentual: orgPct
+            }),
+            texto: `Nova venda! Rifa "${reservaFull.rifa.titulo}" — Comprador: ${reservaFull.usuario?.nome || 'Anônimo'} — ${numeros.length} cota(s) — Valor: R$ ${reservaFull.valorTotal.toFixed(2).replace('.', ',')} — Sua parte: R$ ${(reservaFull.valorTotal * orgPct).toFixed(2).replace('.', ',')}`
           });
         }
       } catch (e) {
