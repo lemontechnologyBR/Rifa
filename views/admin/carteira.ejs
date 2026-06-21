@@ -47,10 +47,10 @@
       </article>
       <article class="admin-metric-card">
         <% const saldoSaque = resumo.saldoDisponivel != null ? resumo.saldoDisponivel : resumo.saldoConfirmado * 0.95; %>
-        <% if (splitAtivo) { %>
+        <% if (mpSplit) { %>
           <p class="admin-metric-label mb-1">Sua parte (95%)</p>
           <p class="admin-metric-value text-violet-600">R$ <%= (resumo.saldoConfirmado * 0.95).toFixed(2).replace('.', ',') %></p>
-          <p class="text-xs text-gray-400 mt-1">Creditado direto na sua conta MP</p>
+          <p class="text-xs text-gray-400 mt-1"><%= mpOk ? 'Creditado direto na sua conta MP' : 'Conecte o MP para receber automaticamente' %></p>
         <% } else { %>
           <p class="admin-metric-label mb-1">Disponível para saque</p>
           <p class="admin-metric-value text-violet-600">R$ <%= saldoSaque.toFixed(2).replace('.', ',') %></p>
@@ -141,7 +141,7 @@
     </div>
     <% } %>
 
-    <% if (!splitAtivo) { %>
+    <% if (!mpSplit) { %>
     <%
       const saldoDisp = saque ? saque.saldoDisponivel : (resumo.saldoDisponivel != null ? resumo.saldoDisponivel : resumo.saldoConfirmado * 0.95);
       const saqueGratis = saque ? saque.saqueGratis : saldoDisp >= 500;
