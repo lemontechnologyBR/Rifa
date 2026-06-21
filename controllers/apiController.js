@@ -95,15 +95,59 @@ const apiController = {
         nome, telefone, cpf, email, chavePix: chave_pix
       });
 
-      const nums = numeros.map(Number);
+      const modalidade = rifa.modalidade || 'cotas';
+      let nums = numeros.map(Number);
+      const codigoIndicacao = req.session.codigoIndicacao || req.body.codigo_indicacao || null;
+
+      let reservaId;
+      let numsFinais = nums;
+
+      if (modalidade === 'cotas') {
+        const carrinho = await CarrinhoService.obter(req.sessionID, rifa.id);
+        const qtd = carrinho?.numeros?.length || nums.length;
+        const bonusUsado = await IndicacaoService.consumirBonus(usuario.id, qtd);
+        const valorTotal = RifaService.calcularValor(rifa.faixasDesconto, rifa.valorCota, qtd, bonusUsado);
+        if (valorTotal < 5.00) {
+          return res.status(400).json({
+            erro: `Compra mínima de R$ 5,00. Selecione pelo menos ${Math.ceil(5.00 / rifa.valorCota)} número(s).`
+          });
+        }
+
+        const resultado = await NumeroService.finalizarCompraCotas(
+          rifa.id, qtd, usuario.id, valorTotal, req.sessionID, codigoIndicacao
+        );
+        reservaId = resultado.reservaId;
+        numsFinais = resultado.numeros;
+
+        await CarrinhoService.remover(req.sessionID, rifa.id);
+
+        const reserva = await ReservaService.buscarPorId(reservaId, tenant.id);
+        const pagamento = await ReservaService.montarPagamento(reserva, rifa, tenant, usuario);
+        await ReservaService.enviarEmailPagamento(reservaId);
+
+        return res.json({
+          sucesso: true,
+          reservaId,
+          valorTotal,
+          bonusUsado,
+          codigoPagamento: reserva.codigoPagamento,
+          ...pagamento,
+          rifaTitulo: rifa.titulo,
+          numeros: numsFinais,
+          pollingUrl: `/${tenant.slug}/api/reservas/${reservaId}/status`,
+          expiraEm: reserva.expiraEm || null
+        });
+      }
+
       const bonusUsado = await IndicacaoService.consumirBonus(usuario.id, nums.length);
       const valorTotal = RifaService.calcularValor(rifa.faixasDesconto, rifa.valorCota, nums.length, bonusUsado);
       if (valorTotal < 5.00) return res.status(400).json({ erro: `Compra mínima de R$ 5,00. Selecione pelo menos ${Math.ceil(5.00 / rifa.valorCota)} número(s).` });
-      const codigoIndicacao = req.session.codigoIndicacao || req.body.codigo_indicacao || null;
 
-      const { reservaId } = await NumeroService.confirmarCompra(
+      const resultado = await NumeroService.confirmarCompra(
         rifa.id, nums, usuario.id, valorTotal, codigoIndicacao, req.sessionID
       );
+      reservaId = resultado.reservaId;
+      numsFinais = resultado.numeros || nums;
 
       await CarrinhoService.remover(req.sessionID, rifa.id);
 
@@ -119,7 +163,7 @@ const apiController = {
         codigoPagamento: reserva.codigoPagamento,
         ...pagamento,
         rifaTitulo: rifa.titulo,
-        numeros: nums,
+        numeros: numsFinais,
         pollingUrl: `/${tenant.slug}/api/reservas/${reservaId}/status`,
         expiraEm: reserva.expiraEm || null
       });

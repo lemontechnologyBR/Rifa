@@ -247,6 +247,13 @@
         reservaAtiva = true;
       }
 
+      try {
+        await fetchApi(apiBase + '/rifas/' + rifaAtual.id + '/renovar', {
+          method: 'POST',
+          body: JSON.stringify({ numeros: numerosReservados })
+        });
+      } catch (_) { /* backend repõe cotas se necessário */ }
+
       const data = await fetchApi(apiBase + '/rifas/' + rifaAtual.id + '/comprar', {
         method: 'POST',
         body: JSON.stringify({ numeros: numerosReservados, nome, email: email.toLowerCase(), cpf, telefone })

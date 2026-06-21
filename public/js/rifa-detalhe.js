@@ -338,6 +338,13 @@
     };
 
     try {
+      await fetchApi(`${api}/rifas/${RIFA_ID}/renovar`, {
+        method: 'POST',
+        body: JSON.stringify({ numeros: numerosSelecionados })
+      });
+    } catch (_) { /* backend repõe cotas se necessário */ }
+
+    try {
       const data = await fetchApi(`${api}/rifas/${RIFA_ID}/comprar`, {
         method: 'POST',
         body: JSON.stringify(payload)

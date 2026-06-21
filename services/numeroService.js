@@ -191,56 +191,150 @@ const NumeroService = {
     return { numeros: numerosEscolhidos, expiraEm, reservado: !!sessionId };
   },
 
-  /** Confirma compra — cria reserva pendente */
-  async confirmarCompra(rifaId, numeros, usuarioId, valorTotal, codigoIndicacaoUsado = null, sessionId = null) {
+  /** Tenta reservar número para checkout (disponível ou reserva temporária da sessão). */
+  async _claimNumeroTx(tx, rifaId, num, usuarioId, agora, numerosPermitidos) {
+    const registro = await tx.numero.findUnique({
+      where: { rifaId_numero: { rifaId: Number(rifaId), numero: num } }
+    });
+    if (!registro) return null;
+
+    let ok = await tx.numero.updateMany({
+      where: { id: registro.id, status: 'disponivel' },
+      data: { status: 'reservado', reservadoAte: null, usuarioId }
+    });
+
+    if (ok.count === 0 && numerosPermitidos.has(num)) {
+      ok = await tx.numero.updateMany({
+        where: {
+          id: registro.id,
+          status: 'reservado',
+          reservadoAte: { gt: agora },
+          reservaNumeros: { none: {} }
+        },
+        data: { status: 'reservado', reservadoAte: null, usuarioId }
+      });
+    }
+
+    return ok.count === 1 ? registro : null;
+  },
+
+  /** Sorteia e reserva um número disponível dentro da transação. */
+  async _pickAndClaimRandomTx(tx, rifaId, jaEscolhidos, usuarioId) {
+    const exclude = new Set(jaEscolhidos);
+    for (let t = 0; t < 8; t++) {
+      const pool = await tx.numero.findMany({
+        where: {
+          rifaId: Number(rifaId),
+          status: 'disponivel',
+          ...(exclude.size ? { numero: { notIn: [...exclude] } } : {})
+        },
+        select: { id: true, numero: true },
+        take: 40
+      });
+      if (!pool.length) return null;
+      pool.sort(() => Math.random() - 0.5);
+      for (const cand of pool) {
+        const ok = await tx.numero.updateMany({
+          where: { id: cand.id, status: 'disponivel' },
+          data: { status: 'reservado', reservadoAte: null, usuarioId }
+        });
+        if (ok.count === 1) return cand;
+      }
+    }
+    return null;
+  },
+
+  /**
+   * Finaliza compra no modo cotas — repõe números indisponíveis automaticamente.
+   */
+  async finalizarCompraCotas(rifaId, quantidade, usuarioId, valorTotal, sessionId, codigoIndicacaoUsado = null) {
     await this._limparPedidosExpirados();
     await this.limparReservasExpiradas(rifaId);
     const { gerarCodigoPagamento } = require('../lib/helpers');
     const codigoPagamento = gerarCodigoPagamento();
+    const agora = new Date();
+
     const carrinho = sessionId ? await CarrinhoService.obter(sessionId, rifaId) : null;
-    const meusNumeros = new Set(carrinho?.numeros || []);
+    const candidatos = carrinho?.numeros?.length ? [...carrinho.numeros] : [];
+    const numerosPermitidos = new Set(candidatos);
+
+    const resultado = await prisma.$transaction(async (tx) => {
+      const numeroIds = [];
+      const numsConfirmados = [];
+
+      for (const num of candidatos) {
+        if (numsConfirmados.length >= quantidade) break;
+        const claimed = await this._claimNumeroTx(tx, rifaId, num, usuarioId, agora, numerosPermitidos);
+        if (claimed) {
+          numeroIds.push(claimed.id);
+          numsConfirmados.push(num);
+        }
+      }
+
+      while (numsConfirmados.length < quantidade) {
+        const picked = await this._pickAndClaimRandomTx(tx, rifaId, numsConfirmados, usuarioId);
+        if (!picked) break;
+        numeroIds.push(picked.id);
+        numsConfirmados.push(picked.numero);
+      }
+
+      if (numsConfirmados.length < quantidade) {
+        throw new Error(`Apenas ${numsConfirmados.length} números disponíveis.`);
+      }
+
+      const reserva = await tx.reserva.create({
+        data: {
+          usuarioId,
+          rifaId: Number(rifaId),
+          valorTotal,
+          statusPagamento: 'pendente',
+          codigoPagamento,
+          codigoIndicacaoUsado,
+          expiraEm: calcularExpiraEm()
+        }
+      });
+
+      for (const numeroId of numeroIds) {
+        await tx.reservaNumero.create({
+          data: { reservaId: reserva.id, numeroId }
+        });
+      }
+
+      return { reservaId: reserva.id, numeros: numsConfirmados };
+    });
+
+    return { reservaId: resultado.reservaId, codigoPagamento, numeros: resultado.numeros };
+  },
+
+  /** Confirma compra — cria reserva pendente (grade / números escolhidos) */
+  async confirmarCompra(rifaId, numeros, usuarioId, valorTotal, codigoIndicacaoUsado = null, sessionId = null) {
+    await this._limparPedidosExpirados();
+    await this.limparReservasExpiradas(rifaId);
+
+    if (sessionId && numeros.length) {
+      try {
+        await this.reservarTemporario(rifaId, numeros, sessionId, usuarioId);
+      } catch (err) {
+        throw new Error(`Não foi possível confirmar a reserva: ${err.message}`);
+      }
+    }
+
+    const { gerarCodigoPagamento } = require('../lib/helpers');
+    const codigoPagamento = gerarCodigoPagamento();
+    const carrinho = sessionId ? await CarrinhoService.obter(sessionId, rifaId) : null;
+    const nums = carrinho?.numeros?.length ? carrinho.numeros : numeros;
+    const numerosPermitidos = new Set(nums);
     const agora = new Date();
 
     const reservaId = await prisma.$transaction(async (tx) => {
       const numeroIds = [];
 
-      for (const num of numeros) {
-        const registro = await tx.numero.findUnique({
-          where: { rifaId_numero: { rifaId: Number(rifaId), numero: num } }
-        });
-
-        if (!registro) throw new Error(`Número ${num} não existe.`);
-
-        let reservado = await tx.numero.updateMany({
-          where: { id: registro.id, status: 'disponivel' },
-          data: { status: 'reservado', reservadoAte: null, usuarioId }
-        });
-
-        if (reservado.count === 0) {
-          const reservaTemporariaMinha =
-            registro.status === 'reservado' &&
-            registro.reservadoAte &&
-            new Date(registro.reservadoAte) > agora &&
-            meusNumeros.has(num);
-
-          if (reservaTemporariaMinha) {
-            reservado = await tx.numero.updateMany({
-              where: {
-                id: registro.id,
-                status: 'reservado',
-                reservadoAte: { gt: agora },
-                reservaNumeros: { none: {} }
-              },
-              data: { status: 'reservado', reservadoAte: null, usuarioId }
-            });
-          }
-        }
-
-        if (reservado.count === 0) {
+      for (const num of nums) {
+        const claimed = await this._claimNumeroTx(tx, rifaId, num, usuarioId, agora, numerosPermitidos);
+        if (!claimed) {
           throw new Error(`Número ${num} não está disponível.`);
         }
-
-        numeroIds.push(registro.id);
+        numeroIds.push(claimed.id);
       }
 
       const reserva = await tx.reserva.create({
@@ -264,7 +358,7 @@ const NumeroService = {
       return reserva.id;
     });
 
-    return { reservaId, codigoPagamento };
+    return { reservaId, codigoPagamento, numeros: nums };
   }
 };
 
