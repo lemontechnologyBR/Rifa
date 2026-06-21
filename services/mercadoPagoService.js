@@ -2,7 +2,7 @@
  * Integração Mercado Pago — PIX com split OAuth (application_fee) ou legado (conta plataforma).
  */
 const MercadoPagoOAuthService = require('./mercadoPagoOAuthService');
-const { TAXA_PLATAFORMA } = require('../lib/config');
+const { TAXA_APPLICATION_FEE } = require('../lib/config');
 
 const MP_API = process.env.MERCADOPAGO_API_BASE || 'https://api.mercadopago.com';
 
@@ -168,8 +168,9 @@ const MercadoPagoService = {
     let accessToken = this.getAccessToken();
     if (usesSplit) {
       accessToken = await MercadoPagoOAuthService.getSellerAccessToken(tenant);
-      body.application_fee = Math.round(valor * TAXA_PLATAFORMA * 100) / 100;
-      console.log(`[MercadoPago] Split OAuth tenant #${tenant.id} — fee R$ ${body.application_fee}`);
+      // application_fee = 4% (plataforma absorve o 1% do MP para que o organizador receba 95%)
+      body.application_fee = Math.round(valor * TAXA_APPLICATION_FEE * 100) / 100;
+      console.log(`[MercadoPago] Split OAuth tenant #${tenant.id} — fee R$ ${body.application_fee} (organizer recebe ~${Math.round((valor - body.application_fee) * 0.99 * 100) / 100})`);
     }
 
     const data = await this._request('POST', '/v1/payments', body, {
