@@ -191,8 +191,10 @@ const organizadorController = {
         TAXA_PLATAFORMA,
         TAXA_PLATAFORMA_WOOVI,
         ORGANIZADOR_PERCENTUAL,
-        ORGANIZADOR_PERCENTUAL_WOOVI
+        ORGANIZADOR_PERCENTUAL_WOOVI,
+        TAXA_SAQUE
       } = require('../lib/config');
+      // taxas específicas de cada modalidade (sempre passadas para a view)
       const taxaPlataforma = provider === 'woovi' ? TAXA_PLATAFORMA_WOOVI : TAXA_PLATAFORMA;
       const organizadorPercentual = provider === 'woovi' ? ORGANIZADOR_PERCENTUAL_WOOVI : ORGANIZADOR_PERCENTUAL;
 
@@ -208,6 +210,12 @@ const organizadorController = {
         gateway: provider,
         taxaPlataforma,
         organizadorPercentual,
+        // taxas fixas de cada modalidade (para mostrar no comparativo da UI)
+        mpTaxa: TAXA_PLATAFORMA,
+        mpPercentual: ORGANIZADOR_PERCENTUAL,
+        wooviTaxa: TAXA_PLATAFORMA_WOOVI,
+        wooviPercentual: ORGANIZADOR_PERCENTUAL_WOOVI,
+        taxaSaqueValor: TAXA_SAQUE,
         pixTipo,
         pixTipoLabel: labelTipoPix(pixTipoDetectado),
         adminBase: `/${req.tenant.slug}/admin`,

@@ -110,7 +110,7 @@
         <div class="admin-config-section-icon blue"><i data-lucide="link" class="w-5 h-5"></i></div>
         <div>
           <h2 class="font-bold text-base">Conta Mercado Pago</h2>
-          <p class="text-sm text-gray-500 dark:text-gray-400">Conecte sua conta para receber <%= Math.round((organizadorPercentual||0.95)*100) %>% de cada venda automaticamente. A plataforma retém <%= Math.round((taxaPlataforma||0.05)*100) %>% na hora do pagamento.</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Conecte sua conta para receber <strong><%= Math.round((mpPercentual||0.95)*100) %>%</strong> de cada venda automaticamente — sem taxa de saque. A plataforma retém apenas <strong><%= Math.round((mpTaxa||0.05)*100) %>%</strong>.</p>
         </div>
       </div>
 
@@ -172,7 +172,7 @@
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Saldo acima de R$ 500,00 — <strong>saque sem taxa</strong>. Você receberá R$ <strong><%= saldoDisp.toFixed(2).replace('.', ',') %></strong> na sua chave PIX.</p>
             <% } else if (podeSacar) { %>
               <p class="font-bold text-sm text-violet-800 dark:text-violet-300">💰 Saque disponível — R$ <%= saldoDisp.toFixed(2).replace('.', ',') %></p>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Taxa de saque: <strong>R$ 3,50</strong>. Você receberá <strong>R$ <%= saldoLiquido.toFixed(2).replace('.', ',') %></strong> na sua chave PIX. Saques acima de R$ 500,00 são gratuitos.</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Taxa de saque: <strong>R$ <%= (taxaSaqueValor||5.50).toFixed(2).replace('.', ',') %></strong>. Você receberá <strong>R$ <%= saldoLiquido.toFixed(2).replace('.', ',') %></strong> na sua chave PIX. Saques acima de R$ 500,00 são gratuitos.</p>
             <% } else { %>
               <p class="font-bold text-sm text-gray-600 dark:text-gray-400">⏳ Saldo insuficiente para saque</p>
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Mínimo para saque: <strong>R$ 50,00</strong>. Disponível: R$ <%= saldoDisp.toFixed(2).replace('.', ',') %>. Faltam R$ <%= Math.max(0, 50 - saldoDisp).toFixed(2).replace('.', ',') %>.</p>
@@ -272,7 +272,7 @@
             autocomplete="off"
             spellcheck="false">
           <p class="admin-hint" x-text="hint()"></p>
-          <p class="admin-hint mt-1">A plataforma retém <%= Math.round((taxaPlataforma||0.07)*100) %>% do valor arrecadado. Você recebe <%= Math.round((organizadorPercentual||0.93)*100) %>% de cada venda — solicite o saque quando quiser.</p>
+          <p class="admin-hint mt-1">A plataforma retém <strong><%= Math.round((wooviTaxa||0.07)*100) %>%</strong> do valor arrecadado. Você recebe <strong><%= Math.round((wooviPercentual||0.93)*100) %>%</strong> de cada venda — solicite o saque quando quiser.</p>
         </div>
 
         <button type="submit" class="admin-btn-primary px-6 py-3 text-sm">
@@ -294,7 +294,7 @@
           </li>
           <li class="flex items-start gap-2.5">
             <span class="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
-            <span><strong class="text-gray-700 dark:text-gray-200"><%= Math.round((organizadorPercentual||0.95)*100) %>%</strong> cai na sua conta MP na hora — a plataforma retém <strong class="text-gray-700 dark:text-gray-200"><%= Math.round((taxaPlataforma||0.05)*100) %>%</strong> automaticamente</span>
+            <span><strong class="text-gray-700 dark:text-gray-200"><%= Math.round((mpPercentual||0.95)*100) %>%</strong> cai na sua conta MP na hora — a plataforma retém <strong class="text-gray-700 dark:text-gray-200"><%= Math.round((mpTaxa||0.05)*100) %>%</strong> automaticamente</span>
           </li>
           <li class="flex items-start gap-2.5">
             <span class="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">✓</span>
@@ -329,7 +329,7 @@
             </li>
             <li class="flex items-start gap-2.5">
               <span class="w-5 h-5 rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-400 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
-              <span><strong class="text-gray-700 dark:text-gray-200"><%= Math.round((organizadorPercentual||0.93)*100) %>%</strong> acumula no seu saldo — a plataforma retém <%= Math.round((taxaPlataforma||0.07)*100) %>%</span>
+            <span><strong class="text-gray-700 dark:text-gray-200"><%= Math.round((wooviPercentual||0.93)*100) %>%</strong> acumula no seu saldo — a plataforma retém <%= Math.round((wooviTaxa||0.07)*100) %>%</span>
             </li>
             <li class="flex items-start gap-2.5">
               <span class="w-5 h-5 rounded-full bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-400 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">4</span>
@@ -337,7 +337,7 @@
             </li>
             <li class="flex items-start gap-2.5">
               <span class="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">✓</span>
-              <span>Saldo <strong class="text-gray-700 dark:text-gray-200">≥ R$ 500,00</strong>: saque gratuito. Abaixo: taxa de <strong class="text-gray-700 dark:text-gray-200">R$ 3,50</strong></span>
+              <span>Saldo <strong class="text-gray-700 dark:text-gray-200">≥ R$ 500,00</strong>: saque gratuito. Abaixo: taxa de <strong class="text-gray-700 dark:text-gray-200">R$ <%= (taxaSaqueValor||5.50).toFixed(2).replace('.', ',') %></strong></span>
             </li>
           </ol>
         </div>
@@ -351,7 +351,7 @@
             </li>
             <li class="flex items-center gap-2 text-amber-700 dark:text-amber-400">
               <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
-              <span><strong>R$ 3,50</strong> — saque abaixo de R$ 500,00</span>
+              <span><strong>R$ <%= (taxaSaqueValor||5.50).toFixed(2).replace('.', ',') %></strong> — saque abaixo de R$ 500,00</span>
             </li>
             <li class="flex items-center gap-2 text-gray-500 dark:text-gray-400">
               <i data-lucide="arrow-up" class="w-4 h-4 shrink-0"></i>
