@@ -738,6 +738,17 @@
   border-radius: 0.625rem;
   display: block;
 }
+.admin-config-section-icon.mercadopago {
+  background: transparent;
+  padding: 0;
+  overflow: hidden;
+}
+.admin-config-section-icon.mercadopago img {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.625rem;
+  display: block;
+}
 .dark .admin-config-section-icon { background: rgba(16, 185, 129, 0.15); color: #6ee7b7; }
 .dark .admin-config-section-icon.violet { background: rgba(124, 58, 237, 0.2); color: #c4b5fd; }
 .dark .admin-config-section-icon.blue { background: rgba(37, 99, 235, 0.2); color: #93c5fd; }
