@@ -21,6 +21,10 @@
     return resto === parseInt(n.charAt(10), 10);
   }
 
+  function emailValido(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '').trim());
+  }
+
   function initDepoimentos() {
     const form = document.getElementById('form-depoimento');
     if (!form || typeof fetchApi !== 'function') return;
@@ -307,6 +311,12 @@
 
     const fd = new FormData(e.target);
     const cpf = fd.get('cpf');
+    const email = fd.get('email');
+    if (!emailValido(email)) {
+      showToast('Informe um e-mail válido.', 'error');
+      document.getElementById('input-email')?.focus();
+      return;
+    }
     if (!cpfValido(cpf)) {
       showToast('Informe um CPF válido.', 'error');
       document.getElementById('input-cpf')?.focus();
@@ -315,6 +325,7 @@
     const payload = {
       numeros: numerosSelecionados,
       nome: fd.get('nome'),
+      email: String(email).trim().toLowerCase(),
       cpf: fd.get('cpf'),
       telefone: fd.get('telefone'),
       codigo_indicacao: typeof CODIGO_INDICACAO !== 'undefined' ? CODIGO_INDICACAO : ''

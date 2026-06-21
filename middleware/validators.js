@@ -52,6 +52,7 @@ const validarCompra = [
   body('numeros').isArray({ min: 1 }).withMessage('Selecione pelo menos um número.'),
   body('numeros.*').isInt({ min: 1 }).withMessage('Número inválido.'),
   body('nome').optional().trim().isLength({ min: 2 }).withMessage('Nome inválido.'),
+  body('email').trim().isEmail().withMessage('E-mail inválido.'),
   body('cpf').optional().trim().isLength({ min: 11, max: 14 }).withMessage('CPF inválido.'),
   body('telefone').optional().trim().isLength({ min: 10 }).withMessage('Telefone inválido.')
 ];

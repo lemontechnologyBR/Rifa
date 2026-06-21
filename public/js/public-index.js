@@ -26,6 +26,7 @@
     valorTotal: document.getElementById('modal-valor-total'),
     disponiveis: document.getElementById('modal-label-disponiveis'),
     nome: document.getElementById('modal-nome'),
+    email: document.getElementById('modal-email'),
     cpf: document.getElementById('modal-cpf'),
     telefone: document.getElementById('modal-telefone'),
     verDetalhe: document.getElementById('modal-ver-detalhe'),
@@ -33,6 +34,10 @@
     btnMenos: document.getElementById('modal-qtd-menos'),
     btnMais: document.getElementById('modal-qtd-mais')
   };
+
+  function emailValido(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '').trim());
+  }
 
   function fmt(v) {
     return (v || 0).toFixed(2).replace('.', ',');
@@ -199,11 +204,17 @@
     if (!rifaAtual || comprando || maxQtd === 0) return;
 
     const nome = els.nome?.value?.trim();
+    const email = els.email?.value?.trim();
     const cpf = els.cpf?.value?.trim();
     const telefone = els.telefone?.value?.trim();
     if (!nome || nome.length < 2) {
       showToast('Informe seu nome completo.', 'error');
       els.nome?.focus();
+      return;
+    }
+    if (!emailValido(email)) {
+      showToast('Informe um e-mail válido.', 'error');
+      els.email?.focus();
       return;
     }
     if (!cpfValido(cpf)) {
@@ -235,7 +246,7 @@
 
       const data = await fetchApi(apiBase + '/rifas/' + rifaAtual.id + '/comprar', {
         method: 'POST',
-        body: JSON.stringify({ numeros: numerosReservados, nome, cpf, telefone })
+        body: JSON.stringify({ numeros: numerosReservados, nome, email: email.toLowerCase(), cpf, telefone })
       });
 
       reservaAtiva = false;

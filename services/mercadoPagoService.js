@@ -77,13 +77,18 @@ const MercadoPagoService = {
     }
 
     const { first, last } = splitNome(cliente?.nome);
+    const email = String(cliente?.email || '').trim().toLowerCase();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw new Error('E-mail do comprador é obrigatório para pagamento PIX.');
+    }
+
     const body = {
       transaction_amount: Math.round(valor * 100) / 100,
       description: String(comentario || 'Pagamento de rifa').slice(0, 120),
       payment_method_id: 'pix',
       external_reference: String(correlationID),
       payer: {
-        email: cliente?.email || 'comprador@vourifar.com.br',
+        email,
         first_name: first,
         last_name: last
       },

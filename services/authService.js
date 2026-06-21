@@ -149,6 +149,18 @@ const AuthService = {
     const cpfLimpo = limparCpf(cpf);
     if (!cpfValido(cpfLimpo)) throw new Error('CPF inválido.');
 
+    const emailNorm = String(email || '').trim().toLowerCase();
+    if (!emailNorm || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNorm)) {
+      throw new Error('E-mail inválido.');
+    }
+
+    async function assertEmailDisponivel(usuarioId = null) {
+      const outro = await prisma.usuario.findUnique({ where: { email: emailNorm } });
+      if (outro && outro.id !== usuarioId) {
+        throw new Error('Este e-mail já está vinculado a outra conta.');
+      }
+    }
+
     const porCpf = await prisma.usuario.findUnique({ where: { cpf: cpfLimpo } });
     if (porCpf) {
       if (porCpf.telefone !== tel) {
@@ -157,9 +169,10 @@ const AuthService = {
           throw new Error('Este WhatsApp já está vinculado a outro CPF.');
         }
       }
+      await assertEmailDisponivel(porCpf.id);
       return prisma.usuario.update({
         where: { id: porCpf.id },
-        data: { nome, telefone: tel, chavePix: chavePix || porCpf.chavePix }
+        data: { nome, telefone: tel, email: emailNorm, chavePix: chavePix || porCpf.chavePix }
       });
     }
 
@@ -170,11 +183,14 @@ const AuthService = {
         throw new Error('Este telefone já está vinculado a outro CPF.');
       }
 
+      await assertEmailDisponivel(usuario.id);
       return prisma.usuario.update({
         where: { id: usuario.id },
-        data: { nome, cpf: cpfLimpo, chavePix: chavePix || usuario.chavePix }
+        data: { nome, cpf: cpfLimpo, email: emailNorm, chavePix: chavePix || usuario.chavePix }
       });
     }
+
+    await assertEmailDisponivel();
 
     let codigo = gerarCodigoIndicacao();
     while (await prisma.usuario.findUnique({ where: { codigoIndicacao: codigo } })) {
@@ -184,7 +200,7 @@ const AuthService = {
     return prisma.usuario.create({
       data: {
         nome,
-        email: email || `guest.${tel}@rifas.local`,
+        email: emailNorm,
         telefone: tel,
         cpf: cpfLimpo,
         chavePix: chavePix || null,

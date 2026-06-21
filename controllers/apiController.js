@@ -74,14 +74,18 @@ const apiController = {
 
   async comprar(req, res) {
     try {
-      const { numeros, nome, telefone, cpf, chave_pix } = req.body;
+      const { numeros, nome, telefone, cpf, email, chave_pix } = req.body;
       const tenant = req.tenant;
 
       const rifa = await RifaService.buscarPorId(req.params.id, tenant.id);
       if (!rifa || rifa.status !== 'ativa') return res.status(404).json({ erro: 'Rifa não encontrada.' });
 
-      if (!nome || !telefone || !cpf) return res.status(400).json({ erro: 'Nome, CPF e telefone são obrigatórios.' });
-      const usuario = await AuthService.buscarOuCriarConvidado({ nome, telefone, cpf, chavePix: chave_pix });
+      if (!nome || !telefone || !cpf || !email) {
+        return res.status(400).json({ erro: 'Nome, e-mail, CPF e telefone são obrigatórios.' });
+      }
+      const usuario = await AuthService.buscarOuCriarConvidado({
+        nome, telefone, cpf, email, chavePix: chave_pix
+      });
 
       const nums = numeros.map(Number);
       const bonusUsado = await IndicacaoService.consumirBonus(usuario.id, nums.length);
