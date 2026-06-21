@@ -6,35 +6,42 @@ const { TAXA_PLATAFORMA } = require('../lib/config');
 
 const MP_API = process.env.MERCADOPAGO_API_BASE || 'https://api.mercadopago.com';
 
-function isPixQrKeyError(message) {
+// Códigos e textos do MP que indicam conta sem chave PIX
+const PIX_KEY_ERROR_CODES = new Set([4074, 13253]);
+
+function isPixQrKeyError(message, causeCode) {
+  if (causeCode && PIX_KEY_ERROR_CODES.has(Number(causeCode))) return true;
   const msg = String(message || '').toLowerCase();
   return msg.includes('without key enabled for qr') ||
     msg.includes('collector user without key') ||
-    msg.includes('chave pix') && msg.includes('qr');
+    msg.includes('rendernull') ||
+    (msg.includes('financial identity') && msg.includes('use case'));
 }
 
-function mensagemPixOrganizador() {
-  return 'Organizador: ative a chave PIX na conta Mercado Pago conectada (app ou site MP → PIX) para receber pagamentos via QR Code.';
+/** Mensagem amigável para o comprador (não revela detalhes técnicos) */
+function mensagemClientePixIndisponivel() {
+  return 'Pagamento PIX indisponível no momento. Entre em contato com o organizador do sorteio.';
 }
 
 function parseMpError(raw) {
   try {
     const data = typeof raw === 'string' ? JSON.parse(raw) : raw;
     const msg = data?.message || data?.error;
-    if (typeof msg === 'string' && msg.trim()) {
-      if (isPixQrKeyError(msg)) return mensagemPixOrganizador();
-      return msg;
-    }
     const cause = data?.cause?.[0];
-    if (cause?.description) {
-      if (isPixQrKeyError(cause.description)) return mensagemPixOrganizador();
-      return cause.description;
-    }
-    if (cause?.code) return String(cause.code);
+    const causeCode = cause?.code;
+    const causeDesc = cause?.description;
+
+    // Verifica primeiro pelo código numérico (mais confiável)
+    if (isPixQrKeyError(msg, causeCode)) return mensagemClientePixIndisponivel();
+    if (isPixQrKeyError(causeDesc, causeCode)) return mensagemClientePixIndisponivel();
+
+    if (typeof msg === 'string' && msg.trim()) return msg;
+    if (typeof causeDesc === 'string' && causeDesc.trim()) return causeDesc;
+    if (causeCode) return String(causeCode);
   } catch (_) { /* ignore */ }
   const fallback = typeof raw === 'string' ? raw.trim() : 'Falha na API Mercado Pago.';
-  if (isPixQrKeyError(fallback)) return mensagemPixOrganizador();
-  return fallback;
+  if (isPixQrKeyError(fallback)) return mensagemClientePixIndisponivel();
+  return fallback || 'Falha na API Mercado Pago.';
 }
 
 function splitNome(nome) {
@@ -93,8 +100,10 @@ const MercadoPagoService = {
     const res = await fetch(`${MP_API}${path}`, options);
     const raw = await res.text();
     if (!res.ok) {
-      console.error(`[MercadoPago] ${method} ${path} → ${res.status}:`, raw.slice(0, 500));
-      throw new Error(parseMpError(raw) || `Mercado Pago HTTP ${res.status}`);
+      const errMsg = parseMpError(raw) || `Mercado Pago HTTP ${res.status}`;
+      console.error(`[MercadoPago] ${method} ${path} → ${res.status}: ${raw.slice(0, 400)}`);
+      console.error(`[MercadoPago] Mensagem retornada ao cliente: ${errMsg}`);
+      throw new Error(errMsg);
     }
     try { return JSON.parse(raw); } catch (_) { return {}; }
   },
