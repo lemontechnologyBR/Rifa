@@ -122,7 +122,13 @@ const apiController = {
         await CarrinhoService.remover(req.sessionID, rifa.id);
 
         const reserva = await ReservaService.buscarPorId(reservaId, tenant.id);
-        const pagamento = await ReservaService.montarPagamento(reserva, rifa, tenant, usuario);
+        let pagamento;
+        try {
+          pagamento = await ReservaService.montarPagamento(reserva, rifa, tenant, usuario);
+        } catch (pagErr) {
+          try { await ReservaService.cancelar(reservaId, 'system', tenant.id); } catch (_) {}
+          throw pagErr;
+        }
         await ReservaService.enviarEmailPagamento(reservaId);
 
         return res.json({
@@ -152,7 +158,13 @@ const apiController = {
       await CarrinhoService.remover(req.sessionID, rifa.id);
 
       const reserva = await ReservaService.buscarPorId(reservaId, tenant.id);
-      const pagamento = await ReservaService.montarPagamento(reserva, rifa, tenant, usuario);
+      let pagamento;
+      try {
+        pagamento = await ReservaService.montarPagamento(reserva, rifa, tenant, usuario);
+      } catch (pagErr) {
+        try { await ReservaService.cancelar(reservaId, 'system', tenant.id); } catch (_) {}
+        throw pagErr;
+      }
       await ReservaService.enviarEmailPagamento(reservaId);
 
       res.json({

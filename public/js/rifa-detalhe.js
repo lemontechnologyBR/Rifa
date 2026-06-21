@@ -315,6 +315,9 @@
     e.preventDefault();
     if (!numerosSelecionados.length) return showToast('Nenhuma cota reservada.', 'error');
 
+    const btnConfirmar = document.getElementById('btn-confirmar');
+    if (btnConfirmar?.dataset.loading === 'true') return;
+
     const fd = new FormData(e.target);
     const cpf = fd.get('cpf');
     const email = fd.get('email');
@@ -328,6 +331,13 @@
       document.getElementById('input-cpf')?.focus();
       return;
     }
+
+    if (btnConfirmar) {
+      btnConfirmar.dataset.loading = 'true';
+      btnConfirmar.disabled = true;
+      btnConfirmar.textContent = 'Processando…';
+    }
+
     const payload = {
       numeros: numerosSelecionados,
       nome: fd.get('nome'),
@@ -403,6 +413,11 @@
       if (data.pollingUrl) iniciarPollingPagamento(data.pollingUrl);
     } catch (err) {
       showToast(err.message, 'error');
+      if (btnConfirmar) {
+        btnConfirmar.dataset.loading = 'false';
+        btnConfirmar.disabled = false;
+        btnConfirmar.textContent = 'Pagar via PIX';
+      }
     }
   });
 

@@ -315,6 +315,10 @@ const NumeroService = {
       try {
         await this.reservarTemporario(rifaId, numeros, sessionId, usuarioId);
       } catch (err) {
+        const numMsg = err.message.match(/Número (\d+)/);
+        if (numMsg) {
+          throw new Error(`Número ${numMsg[1]} foi reservado por outro participante. Por favor, selecione um número diferente.`);
+        }
         throw new Error(`Não foi possível confirmar a reserva: ${err.message}`);
       }
     }
@@ -332,7 +336,7 @@ const NumeroService = {
       for (const num of nums) {
         const claimed = await this._claimNumeroTx(tx, rifaId, num, usuarioId, agora, numerosPermitidos);
         if (!claimed) {
-          throw new Error(`Número ${num} não está disponível.`);
+          throw new Error(`Número ${num} foi reservado por outro participante. Por favor, selecione um número diferente.`);
         }
         numeroIds.push(claimed.id);
       }
