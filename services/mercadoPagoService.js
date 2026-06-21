@@ -1,7 +1,9 @@
 /**
- * Integração Mercado Pago — PIX via Checkout API (/v1/payments).
- * Token da plataforma no .env; organizador cadastra chave PIX na Carteira (saque).
+ * Integração Mercado Pago — PIX com split OAuth (application_fee) ou legado (conta plataforma).
  */
+const MercadoPagoOAuthService = require('./mercadoPagoOAuthService');
+const { TAXA_PLATAFORMA } = require('../lib/config');
+
 const MP_API = process.env.MERCADOPAGO_API_BASE || 'https://api.mercadopago.com';
 
 function parseMpError(raw) {
@@ -29,12 +31,24 @@ const MercadoPagoService = {
     return String(process.env.MERCADOPAGO_ACCESS_TOKEN || '').trim();
   },
 
+  getPublicKey() {
+    return String(process.env.MERCADOPAGO_PUBLIC_KEY || '').trim();
+  },
+
   isPlatformConfigured() {
-    return !!this.getAccessToken();
+    return !!this.getAccessToken() || MercadoPagoOAuthService.isSplitConfigured();
+  },
+
+  usesSplit(tenant) {
+    return MercadoPagoOAuthService.isSplitConfigured() && MercadoPagoOAuthService.isTenantConnected(tenant);
   },
 
   isConfigured(tenant) {
-    return this.isPlatformConfigured() && !!tenant?.pixChave;
+    if (!this.isPlatformConfigured()) return false;
+    if (MercadoPagoOAuthService.isSplitConfigured()) {
+      return MercadoPagoOAuthService.isTenantConnected(tenant);
+    }
+    return !!tenant?.pixChave;
   },
 
   notificationUrl() {
@@ -42,8 +56,8 @@ const MercadoPagoService = {
     return base ? `${base}/webhooks/mercadopago` : '';
   },
 
-  async _request(method, path, body = null, extraHeaders = {}) {
-    const token = this.getAccessToken();
+  async _request(method, path, body = null, extraHeaders = {}, accessToken = null) {
+    const token = accessToken || this.getAccessToken();
     if (!token) throw new Error('Mercado Pago não configurado na plataforma.');
 
     const options = {
@@ -68,6 +82,9 @@ const MercadoPagoService = {
 
   async criarCobranca(tenant, { correlationID, valorReais, comentario, cliente, expiraEm }) {
     if (!this.isConfigured(tenant)) {
+      if (MercadoPagoOAuthService.isSplitConfigured()) {
+        throw new Error('Conecte sua conta Mercado Pago na Carteira para receber pagamentos.');
+      }
       throw new Error('Informe sua chave PIX na Carteira para receber pagamentos.');
     }
 
@@ -95,7 +112,8 @@ const MercadoPagoService = {
       metadata: {
         tenant_id: String(tenant.id),
         tenant_slug: tenant.slug || '',
-        organizer_pix: tenant.pixChave || ''
+        mp_user_id: tenant.mpUserId || '',
+        split: this.usesSplit(tenant) ? 'oauth' : 'legacy'
       }
     };
 
@@ -118,9 +136,16 @@ const MercadoPagoService = {
       }
     }
 
+    let accessToken = this.getAccessToken();
+    if (this.usesSplit(tenant)) {
+      accessToken = await MercadoPagoOAuthService.getSellerAccessToken(tenant);
+      body.application_fee = Math.round(valor * TAXA_PLATAFORMA * 100) / 100;
+      console.log(`[MercadoPago] Split OAuth tenant #${tenant.id} — fee R$ ${body.application_fee}`);
+    }
+
     const data = await this._request('POST', '/v1/payments', body, {
       'X-Idempotency-Key': String(correlationID).slice(0, 64)
-    });
+    }, accessToken);
 
     const tx = data?.point_of_interaction?.transaction_data || {};
     const qrBase64 = tx.qr_code_base64
@@ -133,13 +158,14 @@ const MercadoPagoService = {
       brCode: tx.qr_code || '',
       qrCodeImage: qrBase64,
       ticketUrl: tx.ticket_url || '',
-      status: data.status || 'pending'
+      status: data.status || 'pending',
+      split: this.usesSplit(tenant)
     };
   },
 
-  async obterPagamento(paymentId) {
+  async obterPagamento(paymentId, accessToken = null) {
     if (!paymentId) throw new Error('ID do pagamento ausente.');
-    return this._request('GET', `/v1/payments/${encodeURIComponent(String(paymentId))}`);
+    return this._request('GET', `/v1/payments/${encodeURIComponent(String(paymentId))}`, null, {}, accessToken);
   },
 
   async consultarStatus(paymentId) {

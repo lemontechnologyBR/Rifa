@@ -94,7 +94,7 @@ const ReservaService = {
   /** Monta pagamento PIX via gateway ativo (Mercado Pago ou Woovi legado) */
   async montarPagamento(reserva, rifa, tenant, usuario) {
     if (!PaymentService.isConfigured(tenant)) {
-      throw new Error('Pagamentos indisponíveis. O organizador deve configurar a Carteira.');
+      throw new Error('Pagamentos indisponíveis. O organizador deve conectar a Carteira (Mercado Pago ou PIX).');
     }
 
     const correlationID = reserva.codigoPagamento || `reserva-${reserva.id}`;

@@ -12,7 +12,7 @@
   dataSorteio: '',
   modalidade: 'cotas',
   get podeGrade() { return this.totalCotas >= 1 && this.totalCotas <= 100; },
-  carteiraOk: <%= tenant.pixChave ? 'true' : 'false' %>,
+  carteiraOk: <%= typeof carteiraOk !== 'undefined' ? carteiraOk : (tenant.pixChave ? 'true' : 'false') %>,
   get taxaCota() { return Math.max(0, this.valorCota) * 0; },
   get compradorPaga() { return Math.max(0, this.valorCota); },
   get faturamentoTotal() { return Math.max(0, this.valorCota) * 0.95 * Math.max(0, this.totalCotas); },

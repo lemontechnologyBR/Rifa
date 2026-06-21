@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router({ mergeParams: true });
 const publicController = require('../controllers/publicController');
+const mercadoPagoOAuthController = require('../controllers/mercadoPagoOAuthController');
 const organizadorController = require('../controllers/organizadorController');
 const apiController = require('../controllers/apiController');
 const googleAuthController = require('../controllers/googleAuthController');
@@ -62,6 +63,8 @@ admin.get('/auth/google', googleAuthController.iniciarLoginTenant);
 admin.post('/login', authLimiter, organizadorController.login);admin.get('/logout', organizadorController.logout);
 admin.get('/', requireOrganizador, organizadorController.dashboard);
 admin.get('/rifas', requireOrganizador, organizadorController.listarRifas);
+admin.get('/carteira/mp/conectar', requireOrganizador, mercadoPagoOAuthController.conectar);
+admin.post('/carteira/mp/desconectar', requireOrganizador, mercadoPagoOAuthController.desconectar);
 admin.get('/carteira', requireOrganizador, organizadorController.carteiraForm);
 admin.post('/carteira', requireOrganizador, organizadorController.salvarCarteira);
 admin.post('/carteira/saque', requireOrganizador, organizadorController.solicitarSaque);

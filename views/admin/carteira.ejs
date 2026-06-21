@@ -7,7 +7,9 @@
   <%- include('partials/nav', {
     active: 'carteira',
     pageTitle: 'Carteira',
-    pageSubtitle: 'Onde você recebe os pagamentos dos sorteios',
+    pageSubtitle: typeof usesSplit !== 'undefined' && usesSplit
+      ? 'Pagamentos repassados automaticamente via Mercado Pago'
+      : 'Onde você recebe os pagamentos dos sorteios',
     tenant,
     adminBase,
     tenantBase,
@@ -23,9 +25,19 @@
     <% if (typeof onboarding !== 'undefined' && onboarding) { %>
       <div class="admin-alert admin-alert-success mb-4">
         <i data-lucide="party-popper" class="w-4 h-4 shrink-0"></i>
-        <span><strong>Bem-vindo ao VouRifar!</strong> Primeiro passo: cadastre sua chave PIX abaixo para começar a vender.</span>
+        <span><strong>Bem-vindo ao VouRifar!</strong>
+          <% if (typeof mpSplitConfigured !== 'undefined' && mpSplitConfigured) { %>
+            Primeiro passo: conecte sua conta Mercado Pago abaixo para começar a vender.
+          <% } else { %>
+            Primeiro passo: cadastre sua chave PIX abaixo para começar a vender.
+          <% } %>
+        </span>
       </div>
     <% } %>
+
+    <% const splitAtivo = typeof usesSplit !== 'undefined' && usesSplit; %>
+    <% const mpSplit = typeof mpSplitConfigured !== 'undefined' && mpSplitConfigured; %>
+    <% const mpOk = typeof mpConnected !== 'undefined' && mpConnected; %>
 
     <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
       <article class="admin-metric-card">
@@ -35,9 +47,15 @@
       </article>
       <article class="admin-metric-card">
         <% const saldoSaque = resumo.saldoDisponivel != null ? resumo.saldoDisponivel : resumo.saldoConfirmado * 0.95; %>
-        <p class="admin-metric-label mb-1">Disponível para saque</p>
-        <p class="admin-metric-value text-violet-600">R$ <%= saldoSaque.toFixed(2).replace('.', ',') %></p>
-        <p class="text-xs text-gray-400 mt-1">95% do saldo confirmado<% if (resumo.totalSacado > 0) { %> · R$ <%= resumo.totalSacado.toFixed(2).replace('.', ',') %> já sacado<% } %></p>
+        <% if (splitAtivo) { %>
+          <p class="admin-metric-label mb-1">Sua parte (95%)</p>
+          <p class="admin-metric-value text-violet-600">R$ <%= (resumo.saldoConfirmado * 0.95).toFixed(2).replace('.', ',') %></p>
+          <p class="text-xs text-gray-400 mt-1">Creditado direto na sua conta MP</p>
+        <% } else { %>
+          <p class="admin-metric-label mb-1">Disponível para saque</p>
+          <p class="admin-metric-value text-violet-600">R$ <%= saldoSaque.toFixed(2).replace('.', ',') %></p>
+          <p class="text-xs text-gray-400 mt-1">95% do saldo confirmado<% if (resumo.totalSacado > 0) { %> · R$ <%= resumo.totalSacado.toFixed(2).replace('.', ',') %> já sacado<% } %></p>
+        <% } %>
       </article>
       <article class="admin-metric-card">
         <p class="admin-metric-label mb-1">Aguardando PIX</p>
@@ -45,21 +63,86 @@
         <p class="text-xs text-gray-400 mt-1"><%= resumo.reservasPendentes %> reserva(s)</p>
       </article>
       <article class="admin-metric-card">
-        <p class="admin-metric-label mb-1">Chave PIX</p>
-        <% if (tenant.pixChave) { %>
-          <p class="text-sm font-bold mt-2 text-emerald-600 flex items-center gap-1.5">
-            <i data-lucide="check-circle-2" class="w-4 h-4"></i> Ativa
-          </p>
-          <p class="text-xs text-gray-500 mt-1 truncate" title="<%= tenant.pixChave %>"><%= pixTipoLabel %>: <%= tenant.pixChave %></p>
+        <% if (mpSplit) { %>
+          <p class="admin-metric-label mb-1">Mercado Pago</p>
+          <% if (mpOk) { %>
+            <p class="text-sm font-bold mt-2 text-emerald-600 flex items-center gap-1.5">
+              <i data-lucide="check-circle-2" class="w-4 h-4"></i> Conectada
+            </p>
+            <p class="text-xs text-gray-500 mt-1 truncate" title="<%= tenant.mpNickname || tenant.mpUserId %>"><%= tenant.mpNickname || ('Conta #' + tenant.mpUserId) %></p>
+          <% } else { %>
+            <p class="text-sm font-bold mt-2 text-amber-600 flex items-center gap-1.5">
+              <i data-lucide="circle-dashed" class="w-4 h-4"></i> Não conectada
+            </p>
+            <p class="text-xs text-gray-400 mt-1">Conecte para receber</p>
+          <% } %>
         <% } else { %>
-          <p class="text-sm font-bold mt-2 text-amber-600 flex items-center gap-1.5">
-            <i data-lucide="circle-dashed" class="w-4 h-4"></i> Não cadastrada
-          </p>
-          <p class="text-xs text-gray-400 mt-1">Cadastre abaixo para receber</p>
+          <p class="admin-metric-label mb-1">Chave PIX</p>
+          <% if (tenant.pixChave) { %>
+            <p class="text-sm font-bold mt-2 text-emerald-600 flex items-center gap-1.5">
+              <i data-lucide="check-circle-2" class="w-4 h-4"></i> Ativa
+            </p>
+            <p class="text-xs text-gray-500 mt-1 truncate" title="<%= tenant.pixChave %>"><%= pixTipoLabel %>: <%= tenant.pixChave %></p>
+          <% } else { %>
+            <p class="text-sm font-bold mt-2 text-amber-600 flex items-center gap-1.5">
+              <i data-lucide="circle-dashed" class="w-4 h-4"></i> Não cadastrada
+            </p>
+            <p class="text-xs text-gray-400 mt-1">Cadastre abaixo para receber</p>
+          <% } %>
         <% } %>
       </article>
     </div>
 
+    <% if (mpSplit) { %>
+    <div class="admin-panel-card p-6 mb-6 border-l-4 <%= mpOk ? 'border-emerald-500' : 'border-sky-500' %>">
+      <div class="admin-config-section-head mb-4">
+        <div class="admin-config-section-icon" style="background:#009ee3;color:#fff;display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:12px;font-weight:800;font-size:11px;">MP</div>
+        <div>
+          <h2 class="font-bold text-base">Conta Mercado Pago</h2>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Conecte sua conta para receber 95% de cada venda automaticamente. A plataforma retém 5% na hora do pagamento.</p>
+        </div>
+      </div>
+
+      <% if (mpOk) { %>
+      <div class="rounded-xl border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/30 dark:border-emerald-800/50 p-4 mb-4">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+          <div class="flex items-start gap-3 flex-1">
+            <div class="w-9 h-9 rounded-lg bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center shrink-0">
+              <i data-lucide="badge-check" class="w-5 h-5 text-emerald-600"></i>
+            </div>
+            <div>
+              <p class="font-semibold text-emerald-800 dark:text-emerald-300 text-sm">Conta conectada</p>
+              <p class="text-sm text-emerald-700 dark:text-emerald-400 mt-0.5"><%= tenant.mpNickname || ('Usuário MP #' + tenant.mpUserId) %></p>
+              <% if (tenant.mpConnectedAt) { %>
+              <p class="text-xs text-emerald-600/80 mt-1">Desde <%= new Date(tenant.mpConnectedAt).toLocaleDateString('pt-BR') %></p>
+              <% } %>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Cada PIX pago cai na sua conta MP — sem saque manual, sem espera.</p>
+            </div>
+          </div>
+          <form method="POST" action="<%= adminBase %>/carteira/mp/desconectar" onsubmit="return confirm('Desconectar Mercado Pago? Novas vendas ficarão bloqueadas até reconectar.')">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition shrink-0">
+              <i data-lucide="unlink" class="w-4 h-4"></i>
+              Desconectar
+            </button>
+          </form>
+        </div>
+      </div>
+      <% } else { %>
+      <div class="rounded-xl border border-sky-200 bg-sky-50 dark:bg-sky-950/20 dark:border-sky-800/40 p-4 mb-4">
+        <p class="font-semibold text-sky-800 dark:text-sky-300 text-sm mb-1">Conecte sua conta para vender</p>
+        <p class="text-xs text-sky-700 dark:text-sky-400">Você será redirecionado ao Mercado Pago para autorizar o VouRifar. Seus dados bancários ficam só no MP — a plataforma nunca guarda sua senha.</p>
+      </div>
+      <a href="<%= adminBase %>/carteira/mp/conectar"
+        class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-bold transition shadow">
+        <i data-lucide="link" class="w-4 h-4"></i>
+        Conectar Mercado Pago
+      </a>
+      <% } %>
+    </div>
+    <% } %>
+
+    <% if (!splitAtivo) { %>
     <%
       const saldoDisp = saque ? saque.saldoDisponivel : (resumo.saldoDisponivel != null ? resumo.saldoDisponivel : resumo.saldoConfirmado * 0.95);
       const saqueGratis = saque ? saque.saqueGratis : saldoDisp >= 500;
@@ -95,13 +178,15 @@
             Sacar agora
           </button>
         </form>
-        <% } else if (!tenant.pixChave) { %>
+        <% } else if (!tenant.pixChave && !mpSplit) { %>
         <span class="text-xs text-gray-400 shrink-0">Configure a chave PIX para sacar</span>
         <% } %>
       </div>
     </div>
+    <% } %>
 
     <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
+      <% if (!mpSplit) { %>
       <form method="POST" action="<%= adminBase %>/carteira" class="admin-panel-card p-6 space-y-5 lg:col-span-3"
         x-data="{
           tipo: '<%= pixTipo %>',
@@ -185,8 +270,32 @@
           <span x-text="pixAtiva ? 'Atualizar chave PIX' : 'Salvar chave PIX'"></span>
         </button>
       </form>
+      <% } else { %>
+      <div class="admin-panel-card p-6 lg:col-span-3">
+        <h2 class="font-bold text-base mb-3">Como funciona o repasse automático</h2>
+        <ol class="text-sm text-gray-500 dark:text-gray-400 space-y-3 list-none">
+          <li class="flex items-start gap-2.5">
+            <span class="w-5 h-5 rounded-full bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-400 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
+            <span>Comprador paga o <strong class="text-gray-700 dark:text-gray-200">valor exato</strong> da cota via PIX</span>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <span class="w-5 h-5 rounded-full bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-400 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">2</span>
+            <span>O Mercado Pago confirma o pagamento e reserva a cota automaticamente</span>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <span class="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
+            <span><strong class="text-gray-700 dark:text-gray-200">95%</strong> cai na sua conta MP na hora — a plataforma retém <strong class="text-gray-700 dark:text-gray-200">5%</strong> automaticamente</span>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <span class="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">✓</span>
+            <span>Sem saque manual, sem taxa de saque — o dinheiro já é seu no Mercado Pago</span>
+          </li>
+        </ol>
+      </div>
+      <% } %>
 
       <aside class="lg:col-span-2 space-y-4">
+        <% if (!mpSplit) { %>
         <div class="admin-panel-card p-5">
           <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Tipos de chave</p>
           <ul class="text-sm text-gray-500 dark:text-gray-400 space-y-2">
@@ -245,6 +354,30 @@
           <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600 shrink-0"></i>
           <span>Cada conta usa uma chave PIX exclusiva. A mesma chave não pode ser cadastrada em dois sistemas.</span>
         </div>
+        <% } else { %>
+        <div class="admin-panel-card p-5">
+          <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Segurança</p>
+          <ul class="text-sm text-gray-500 dark:text-gray-400 space-y-2">
+            <li class="flex items-start gap-2">
+              <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5"></i>
+              <span>O dinheiro nunca passa pela conta da plataforma — vai direto para você</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <i data-lucide="lock" class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5"></i>
+              <span>Autorização OAuth oficial do Mercado Pago — revogável a qualquer momento</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <i data-lucide="user-check" class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5"></i>
+              <span>Cada conta MP só pode ser vinculada a uma loja VouRifar</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="admin-tip !mb-0">
+          <i data-lucide="info" class="w-4 h-4 text-sky-600 shrink-0"></i>
+          <span>Use a mesma conta Mercado Pago onde você já recebe PIX. Contas PJ e PF são aceitas.</span>
+        </div>
+        <% } %>
       </aside>
     </div>
 

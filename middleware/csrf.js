@@ -27,6 +27,7 @@ function validarCSRF(req, res, next) {
   if (req.originalUrl.includes('/api/pagamentos/sincronizar')) return next();
   if (req.originalUrl.includes('/webhooks/woovi')) return next();
   if (req.originalUrl.includes('/webhooks/mercadopago')) return next();
+  if (req.originalUrl.includes('/auth/mercadopago/callback')) return next();
 
   const token = req.body?._csrf || req.headers['x-csrf-token'];
 

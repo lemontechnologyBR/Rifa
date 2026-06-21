@@ -87,13 +87,20 @@ const RifaService = {
     } = dados;
 
     const tenant = await prisma.tenant.findUnique({ where: { id: Number(tenantId) } });
-    const pixFinal = chave_pix || tenant?.pixChave;
-    if (!pixFinal) {
-      throw new Error('Configure sua chave PIX na Carteira antes de criar rifas.');
-    }
     const PaymentService = require('./paymentService');
+    const MercadoPagoOAuthService = require('./mercadoPagoOAuthService');
+    const splitAtivo = MercadoPagoOAuthService.isSplitConfigured() && MercadoPagoOAuthService.isTenantConnected(tenant);
+
     if (!PaymentService.isConfigured(tenant)) {
-      throw new Error('Configure sua chave PIX na Carteira para receber pagamentos.');
+      const msg = MercadoPagoOAuthService.isSplitConfigured()
+        ? 'Conecte sua conta Mercado Pago na Carteira antes de criar rifas.'
+        : 'Configure sua chave PIX na Carteira antes de criar rifas.';
+      throw new Error(msg);
+    }
+
+    const pixFinal = chave_pix || tenant?.pixChave;
+    if (!splitAtivo && !pixFinal) {
+      throw new Error('Configure sua chave PIX na Carteira antes de criar rifas.');
     }
 
     const rifa = await prisma.$transaction(async (tx) => {

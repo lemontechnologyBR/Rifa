@@ -28,6 +28,12 @@ model Tenant {
   wooviAppId    String?  @map("woovi_app_id")
   pixChave      String?  @map("pix_chave")
   wooviAtivo    Boolean  @default(false) @map("woovi_ativo")
+  mpUserId      String?  @map("mp_user_id")
+  mpAccessToken String?  @map("mp_access_token")
+  mpRefreshToken String? @map("mp_refresh_token")
+  mpTokenExpiresAt DateTime? @map("mp_token_expires_at")
+  mpNickname    String?  @map("mp_nickname")
+  mpConnectedAt DateTime? @map("mp_connected_at")
   status        String   @default("ativo")
   createdAt     DateTime @default(now()) @map("created_at")
 

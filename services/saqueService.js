@@ -30,6 +30,11 @@ const SaqueService = {
   },
 
   async processarSaque(tenant, saldoDisponivel, adminUsuario) {
+    const MercadoPagoOAuthService = require('./mercadoPagoOAuthService');
+    if (MercadoPagoOAuthService.isSplitConfigured() && MercadoPagoOAuthService.isTenantConnected(tenant)) {
+      throw new Error('Com Mercado Pago conectado, os pagamentos caem direto na sua conta — não é necessário sacar.');
+    }
+
     const resumo = this.calcularResumo(saldoDisponivel);
 
     if (!resumo.podeSacar) {

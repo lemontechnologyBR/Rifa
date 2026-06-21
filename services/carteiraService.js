@@ -1,12 +1,17 @@
 /**
- * Carteira do organizador — chave PIX para recebimentos via Mercado Pago.
+ * Carteira do organizador — Mercado Pago OAuth (split) ou chave PIX legada.
  */
 const prisma = require('../lib/prisma');
 const PaymentService = require('./paymentService');
+const MercadoPagoOAuthService = require('./mercadoPagoOAuthService');
 const { chavesPixEquivalentes, validarChavePixPorTipo } = require('../lib/pixKey');
 const { ORGANIZADOR_PERCENTUAL } = require('../lib/config');
 
 const CarteiraService = {
+  usesSplit(tenant) {
+    return MercadoPagoOAuthService.isSplitConfigured() && MercadoPagoOAuthService.isTenantConnected(tenant);
+  },
+
   async totalSacado(tenantId) {
     const agg = await prisma.saque.aggregate({
       where: {
@@ -88,6 +93,10 @@ const CarteiraService = {
   },
 
   async salvarConfig(tenantId, { pix_chave, pix_tipo }) {
+    if (MercadoPagoOAuthService.isSplitConfigured()) {
+      throw new Error('Pagamentos são feitos via Mercado Pago. Conecte sua conta na seção acima.');
+    }
+
     const pix = validarChavePixPorTipo(pix_tipo, pix_chave);
 
     const tenant = await prisma.tenant.findUnique({ where: { id: Number(tenantId) } });

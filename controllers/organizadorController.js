@@ -97,10 +97,12 @@ const organizadorController = {
       busca: ''
     });
     const ab = `/${req.tenant.slug}/admin`;
+    const PaymentService = require('../services/paymentService');
 
     res.render('admin/rifas', {
       titulo: `Rifas — ${req.tenant.nome}`,
       tenant: req.tenant,
+      carteiraOk: PaymentService.isConfigured(req.tenant),
       adminBase: ab,
       tenantBase: `/${req.tenant.slug}`,
       rifas,
@@ -158,6 +160,7 @@ const organizadorController = {
   async carteiraForm(req, res, next) {
     try {
       const CarteiraService = require('../services/carteiraService');
+      const MercadoPagoOAuthService = require('../services/mercadoPagoOAuthService');
       const SaqueService = require('../services/saqueService');
       const PaymentService = require('../services/paymentService');
       const { detectarTipoChavePix, labelTipoPix } = require('../lib/pixKey');
@@ -166,6 +169,8 @@ const organizadorController = {
       const saque = SaqueService.calcularResumo(saldoDisp);
       const pixTipoDetectado = detectarTipoChavePix(req.tenant.pixChave);
       const pixTipo = req.query.tipo || pixTipoDetectado || 'cpf';
+      const mpSplitConfigured = MercadoPagoOAuthService.isSplitConfigured();
+      const mpConnected = MercadoPagoOAuthService.isTenantConnected(req.tenant);
 
       res.render('admin/carteira', {
         titulo: 'Carteira',
@@ -173,6 +178,9 @@ const organizadorController = {
         resumo,
         saque,
         carteiraOk: PaymentService.isConfigured(req.tenant),
+        mpSplitConfigured,
+        mpConnected,
+        usesSplit: mpSplitConfigured && mpConnected,
         gateway: PaymentService.getProvider(),
         pixTipo,
         pixTipoLabel: labelTipoPix(pixTipoDetectado),
@@ -206,9 +214,17 @@ const organizadorController = {
       const PaymentService = require('../services/paymentService');
       const CarteiraService = require('../services/carteiraService');
       const SaqueService = require('../services/saqueService');
+      const MercadoPagoOAuthService = require('../services/mercadoPagoOAuthService');
 
       if (!PaymentService.isConfigured(req.tenant)) {
-        return res.redirect(`/${req.tenant.slug}/admin/carteira?erro=${encodeURIComponent('Configure sua chave PIX antes de sacar.')}`);
+        const msg = MercadoPagoOAuthService.isSplitConfigured()
+          ? 'Conecte sua conta Mercado Pago antes de sacar.'
+          : 'Configure sua chave PIX antes de sacar.';
+        return res.redirect(`/${req.tenant.slug}/admin/carteira?erro=${encodeURIComponent(msg)}`);
+      }
+
+      if (MercadoPagoOAuthService.isSplitConfigured() && MercadoPagoOAuthService.isTenantConnected(req.tenant)) {
+        return res.redirect(`/${req.tenant.slug}/admin/carteira?erro=${encodeURIComponent('Pagamentos caem direto na sua conta Mercado Pago — saque manual não se aplica.')}`);
       }
 
       const resumoCarteira = await CarteiraService.obterResumo(req.tenant.id);

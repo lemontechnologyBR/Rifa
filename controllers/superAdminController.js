@@ -23,7 +23,7 @@ function mapTenants(rows) {
   return rows.map((t) => ({
     ...t,
     createdAtFmt: fmtDate(t.createdAt),
-    pixOk: !!(t.pixChave || t.wooviAtivo),
+    pixOk: !!(t.pixChave || t.wooviAtivo || t.mpAccessToken),
     org: t.organizadores?.[0] || null
   }));
 }
