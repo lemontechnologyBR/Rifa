@@ -3,11 +3,17 @@
  */
 
 const prisma = require('../lib/prisma');
-const { gerarPayloadPix, simularEnvioEmail } = require('../lib/helpers');
+const { gerarPayloadPix } = require('../lib/helpers');
 const { reservaExpirada, obterExpiraEmReserva } = require('../lib/reservaConfig');
 const LogService = require('./logService');
 const IndicacaoService = require('./indicacaoService');
 const PaymentService = require('./paymentService');
+const { enviarEmail } = require('../lib/emailService');
+const {
+  templateReservaCriada,
+  templatePagamentoConfirmado,
+  templateReservaExpirada
+} = require('../lib/emailTemplates');
 
 const ReservaService = {
   async expirarSeNecessario(reservaId) {
@@ -34,7 +40,7 @@ const ReservaService = {
   },
 
   async _expirarInterno(reservaId) {
-    return prisma.$transaction(async (tx) => {
+    const resultado = await prisma.$transaction(async (tx) => {
       const reserva = await tx.reserva.findUnique({ where: { id: Number(reservaId) } });
       if (!reserva || reserva.statusPagamento !== 'pendente') return reserva;
 
@@ -53,6 +59,38 @@ const ReservaService = {
 
       return { ...reserva, statusPagamento: 'expirado' };
     });
+
+    // Envia email de expiração em background (não bloqueia)
+    setImmediate(async () => {
+      try {
+        const reservaFull = await prisma.reserva.findUnique({
+          where: { id: Number(reservaId) },
+          include: {
+            usuario: true,
+            rifa: { include: { tenant: true } },
+            reservaNumeros: { include: { numero: true } }
+          }
+        });
+        if (reservaFull?.usuario?.email && reservaFull.rifa) {
+          const numeros = reservaFull.reservaNumeros.map(rn => rn.numero.numero);
+          await enviarEmail({
+            para: reservaFull.usuario.email,
+            assunto: `Sua reserva na rifa "${reservaFull.rifa.titulo}" expirou`,
+            html: templateReservaExpirada({
+              usuario: reservaFull.usuario,
+              rifa: reservaFull.rifa,
+              reserva: { ...reservaFull, numeros },
+              tenantSlug: reservaFull.rifa.tenant.slug
+            }),
+            texto: `Olá ${reservaFull.usuario.nome}, sua reserva #${reservaFull.id} na rifa "${reservaFull.rifa.titulo}" expirou por falta de pagamento. Acesse ${process.env.APP_URL}/${reservaFull.rifa.tenant.slug} para participar novamente.`
+          });
+        }
+      } catch (e) {
+        console.error('[Email] Falha ao enviar email de expiração:', e.message);
+      }
+    });
+
+    return resultado;
   },
 
   async buscarPorId(id, tenantId = null) {
@@ -167,31 +205,44 @@ const ReservaService = {
     };
   },
 
-  /** Envia e-mail simulado com dados de pagamento */
+  /** Envia e-mail com dados de pagamento PIX (reserva criada) */
   async enviarEmailPagamento(reservaId) {
-    const reserva = await this.buscarPorId(reservaId);
-    if (!reserva) return;
+    setImmediate(async () => {
+      try {
+        const reserva = await this.buscarPorId(reservaId);
+        if (!reserva || !reserva.usuario?.email) return;
 
-    let pagamento;
-    if (reserva.wooviBrCode) {
-      pagamento = {
-        copiaCola: reserva.wooviBrCode,
-        instrucoes: 'Pague via PIX. A confirmação é automática após o pagamento.'
-      };
-    } else {
-      pagamento = await this.montarPagamento(
-        reserva,
-        reserva.rifa,
-        reserva.rifa.tenant,
-        reserva.usuario
-      );
-    }
+        let copiaCola = reserva.wooviBrCode || null;
+        let qrCodeUrl = null;
 
-    simularEnvioEmail(
-      reserva.usuario.email,
-      `Pagamento Rifa — ${reserva.rifa.titulo}`,
-      `Olá ${reserva.usuario.nome},\n\nReserva #${reserva.id}\nValor: R$ ${reserva.valorTotal.toFixed(2)}\n\n${pagamento.instrucoes}\n\nPIX Copia e Cola:\n${pagamento.copiaCola}`
-    );
+        if (!copiaCola) {
+          try {
+            const pag = await this.montarPagamento(reserva, reserva.rifa, reserva.rifa.tenant, reserva.usuario);
+            copiaCola = pag.copiaCola || null;
+            qrCodeUrl = pag.qrCodeUrl || null;
+          } catch (_) {}
+        } else {
+          qrCodeUrl = `https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=${encodeURIComponent(copiaCola)}`;
+        }
+
+        await enviarEmail({
+          para: reserva.usuario.email,
+          assunto: `Pague sua reserva na rifa "${reserva.rifa.titulo}" 🎟️`,
+          html: templateReservaCriada({
+            usuario: reserva.usuario,
+            rifa: reserva.rifa,
+            reserva: { ...reserva, numeros: reserva.numeros || [] },
+            copiaCola,
+            qrCodeUrl,
+            expiraEm: reserva.expiraEm,
+            tenantSlug: reserva.rifa.tenant.slug
+          }),
+          texto: `Olá ${reserva.usuario.nome}!\n\nReserva #${reserva.id} criada.\nRifa: ${reserva.rifa.titulo}\nValor: R$ ${reserva.valorTotal.toFixed(2)}\n\nPIX Copia e Cola:\n${copiaCola || 'Disponível no comprovante'}\n\nAcesse: ${process.env.APP_URL}/${reserva.rifa.tenant.slug}/comprovante/${reserva.id}`
+        });
+      } catch (e) {
+        console.error('[Email] Falha ao enviar email de pagamento:', e.message);
+      }
+    });
   },
 
   /** Confirma pagamento manual (admin) */
@@ -288,6 +339,36 @@ const ReservaService = {
       const vinculos = await tx.reservaNumero.findMany({ where: { reservaId: reserva.id } });
       for (const v of vinculos) {
         await tx.numero.update({ where: { id: v.numeroId }, data: { status: 'vendido' } });
+      }
+    });
+
+    // Envia email de confirmação em background
+    setImmediate(async () => {
+      try {
+        const reservaFull = await prisma.reserva.findUnique({
+          where: { id: Number(reservaId) },
+          include: {
+            usuario: true,
+            rifa: { include: { tenant: true } },
+            reservaNumeros: { include: { numero: true } }
+          }
+        });
+        if (reservaFull?.usuario?.email && reservaFull.rifa) {
+          const numeros = reservaFull.reservaNumeros.map(rn => rn.numero.numero);
+          await enviarEmail({
+            para: reservaFull.usuario.email,
+            assunto: `Pagamento confirmado — Rifa "${reservaFull.rifa.titulo}" ✓`,
+            html: templatePagamentoConfirmado({
+              usuario: reservaFull.usuario,
+              rifa: reservaFull.rifa,
+              reserva: { ...reservaFull, numeros },
+              tenantSlug: reservaFull.rifa.tenant.slug
+            }),
+            texto: `Olá ${reservaFull.usuario.nome}! Seu pagamento da reserva #${reservaFull.id} foi confirmado. Números: ${numeros.join(', ')}. Boa sorte!`
+          });
+        }
+      } catch (e) {
+        console.error('[Email] Falha ao enviar email de confirmação:', e.message);
       }
     });
   },

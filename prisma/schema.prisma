@@ -60,13 +60,15 @@ model Saque {
 }
 
 model Organizador {
-  id        Int      @id @default(autoincrement())
-  tenantId  Int      @map("tenant_id")
-  nome      String
-  email     String   @unique
-  senhaHash String?  @map("senha_hash")
-  googleId  String?  @unique @map("google_id")
-  createdAt DateTime @default(now()) @map("created_at")
+  id               Int       @id @default(autoincrement())
+  tenantId         Int       @map("tenant_id")
+  nome             String
+  email            String    @unique
+  senhaHash        String?   @map("senha_hash")
+  googleId         String?   @unique @map("google_id")
+  tokenRecuperacao String?   @map("token_recuperacao")
+  tokenExpira      DateTime? @map("token_expira")
+  createdAt        DateTime  @default(now()) @map("created_at")
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 

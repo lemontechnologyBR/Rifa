@@ -428,6 +428,122 @@ const organizadorController = {
       logs,
       csrfToken: res.locals.csrfToken
     });
+  },
+
+  /* ── Recuperação de senha ─────────────────────────────────── */
+  esqueciSenhaForm(req, res) {
+    res.render('admin/esqueci-senha', {
+      titulo: 'Recuperar senha',
+      tenant: req.tenant,
+      adminBase: `/${req.tenant.slug}/admin`,
+      tenantBase: `/${req.tenant.slug}`,
+      mensagem: req.query.ok ? 'Se o e-mail estiver cadastrado, você receberá as instruções em breve.' : null,
+      erro: null,
+      csrfToken: res.locals.csrfToken
+    });
+  },
+
+  async esqueciSenha(req, res) {
+    const { email } = req.body;
+    const prisma = require('../lib/prisma');
+    const { gerarTokenRecuperacao } = require('../lib/helpers');
+    const { enviarEmail } = require('../lib/emailService');
+    const { templateRecuperacaoSenha } = require('../lib/emailTemplates');
+
+    try {
+      const org = await prisma.organizador.findFirst({
+        where: { email: String(email || '').toLowerCase(), tenantId: req.tenant.id }
+      });
+
+      if (org) {
+        const token = gerarTokenRecuperacao();
+        const expira = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2 horas
+        await prisma.organizador.update({
+          where: { id: org.id },
+          data: { tokenRecuperacao: token, tokenExpira: expira }
+        });
+
+        await enviarEmail({
+          para: org.email,
+          assunto: 'Redefinição de senha — VouRifar',
+          html: templateRecuperacaoSenha({ organizador: org, token, tenantSlug: req.tenant.slug }),
+          texto: `Olá ${org.nome}, acesse o link para redefinir sua senha: ${process.env.APP_URL}/${req.tenant.slug}/admin/resetar-senha?token=${token}`
+        });
+      }
+
+      // Sempre redireciona com "ok" para não revelar se o email existe
+      res.redirect(`/${req.tenant.slug}/admin/esqueci-senha?ok=1`);
+    } catch (err) {
+      console.error('[RecuperacaoSenha]', err.message);
+      res.render('admin/esqueci-senha', {
+        titulo: 'Recuperar senha',
+        tenant: req.tenant,
+        adminBase: `/${req.tenant.slug}/admin`,
+        tenantBase: `/${req.tenant.slug}`,
+        mensagem: null,
+        erro: 'Ocorreu um erro. Tente novamente.',
+        csrfToken: res.locals.csrfToken
+      });
+    }
+  },
+
+  async resetarSenhaForm(req, res) {
+    const { token } = req.query;
+    res.render('admin/resetar-senha', {
+      titulo: 'Redefinir senha',
+      tenant: req.tenant,
+      adminBase: `/${req.tenant.slug}/admin`,
+      tenantBase: `/${req.tenant.slug}`,
+      token: token || '',
+      erro: null,
+      csrfToken: res.locals.csrfToken
+    });
+  },
+
+  async resetarSenha(req, res) {
+    const { token, senha, confirmar } = req.body;
+    const prisma = require('../lib/prisma');
+    const bcrypt = require('bcrypt');
+
+    const renderErro = (erro) => res.render('admin/resetar-senha', {
+      titulo: 'Redefinir senha',
+      tenant: req.tenant,
+      adminBase: `/${req.tenant.slug}/admin`,
+      tenantBase: `/${req.tenant.slug}`,
+      token: token || '',
+      erro,
+      csrfToken: res.locals.csrfToken
+    });
+
+    try {
+      if (!token) return renderErro('Token inválido.');
+      if (!senha || senha.length < 6) return renderErro('A senha deve ter no mínimo 6 caracteres.');
+      if (senha !== confirmar) return renderErro('As senhas não coincidem.');
+
+      const org = await prisma.organizador.findFirst({
+        where: {
+          tokenRecuperacao: token,
+          tenantId: req.tenant.id,
+          tokenExpira: { gt: new Date() }
+        }
+      });
+
+      if (!org) return renderErro('Link inválido ou expirado. Solicite uma nova recuperação.');
+
+      await prisma.organizador.update({
+        where: { id: org.id },
+        data: {
+          senhaHash: bcrypt.hashSync(senha, 10),
+          tokenRecuperacao: null,
+          tokenExpira: null
+        }
+      });
+
+      res.redirect(`/${req.tenant.slug}/admin/login?erro=${encodeURIComponent('Senha redefinida com sucesso! Faça login.')}`);
+    } catch (err) {
+      console.error('[ResetarSenha]', err.message);
+      renderErro('Ocorreu um erro. Tente novamente.');
+    }
   }
 };
 
