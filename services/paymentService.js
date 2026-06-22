@@ -8,6 +8,8 @@ const MercadoPagoService = require('./mercadoPagoService');
 
 const { TAXA_PLATAFORMA, TAXA_PLATAFORMA_WOOVI } = require('../lib/config');
 
+const WOOVI_ENABLED = process.env.WOOVI_ENABLED === 'true';
+
 /** Detecta o provider correto para um tenant específico. */
 function getProviderForTenant(tenant) {
   if (tenant && MercadoPagoService.isConfigured(tenant)) return 'mercadopago';
