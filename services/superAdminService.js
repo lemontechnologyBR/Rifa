@@ -78,7 +78,15 @@ const SuperAdminService = {
           rifa: {
             select: {
               titulo: true,
-              tenant: { select: { nome: true, slug: true } }
+              tenant: {
+                select: {
+                  nome: true,
+                  slug: true,
+                  mpUserId: true,
+                  mpAccessToken: true,
+                  pixChave: true
+                }
+              }
             }
           },
           _count: { select: { reservaNumeros: true } }

@@ -25,7 +25,12 @@
   <article class="super-metric">
     <p class="super-metric-label">Receita plataforma</p>
     <p class="super-metric-value super-metric-value--green">R$ <%= metricas.receitaPlataformaFmt %></p>
-    <p class="super-metric-hint">Comissão (5%)</p>
+    <p class="super-metric-hint">
+      MP <%= Math.round((metricas.taxaMp || 0.05) * 100) %>% · Plataforma <%= Math.round((metricas.taxaWoovi || 0.07) * 100) %>%
+      <% if (metricas.receitaMp > 0 || metricas.receitaWoovi > 0) { %>
+        · R$ <%= metricas.receitaMpFmt %> MP · R$ <%= metricas.receitaWooviFmt %> Plataforma
+      <% } %>
+    </p>
   </article>
 </section>
 

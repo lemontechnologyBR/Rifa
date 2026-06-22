@@ -27,7 +27,9 @@
       <div><dt>Vendas confirmadas</dt><dd><%= info.reservasConfirmadas %></div>
       <div><dt>Reservas pendentes</dt><dd><%= info.reservasPendentes %></div>
       <div><dt>GMV total</dt><dd>R$ <%= metricas.gmvTotalFmt %></div>
-      <div><dt>Receita plataforma (5%)</dt><dd class="super-dl-green">R$ <%= metricas.receitaPlataformaFmt %></div>
+      <div><dt>Receita plataforma</dt><dd class="super-dl-green">R$ <%= metricas.receitaPlataformaFmt %></div>
+      <div><dt>Receita MP (<%= Math.round((metricas.taxaMp || 0.05) * 100) %>%)</dt><dd>R$ <%= metricas.receitaMpFmt %></div>
+      <div><dt>Receita Plataforma (<%= Math.round((metricas.taxaWoovi || 0.07) * 100) %>%)</dt><dd>R$ <%= metricas.receitaWooviFmt %></div>
     </dl>
   </section>
 </div>

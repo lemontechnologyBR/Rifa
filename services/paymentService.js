@@ -6,7 +6,7 @@
 const WooviService = require('./wooviService');
 const MercadoPagoService = require('./mercadoPagoService');
 
-const WOOVI_ENABLED = process.env.WOOVI_ENABLED === 'true';
+const { TAXA_PLATAFORMA, TAXA_PLATAFORMA_WOOVI } = require('../lib/config');
 
 /** Detecta o provider correto para um tenant específico. */
 function getProviderForTenant(tenant) {
@@ -89,6 +89,23 @@ const PaymentService = {
     if (mpRef) return mpRef;
     if (WOOVI_ENABLED) return WooviService.extrairCorrelationId(payload);
     return null;
+  },
+
+  /** Provider usado na cobrança (referência salva > config atual do tenant). */
+  getProviderForReserva(reserva, tenant) {
+    return detectProviderFromRef(reserva?.wooviCorrelationId) || getProviderForTenant(tenant);
+  },
+
+  /** Taxa retida pela plataforma em uma venda confirmada. */
+  getTaxaPlataformaReserva(reserva, tenant) {
+    const provider = this.getProviderForReserva(reserva, tenant);
+    if (provider === 'mercadopago') return TAXA_PLATAFORMA;
+    return TAXA_PLATAFORMA_WOOVI;
+  },
+
+  /** Valor em reais retido pela plataforma em uma venda. */
+  calcularReceitaReserva(reserva, tenant) {
+    return Number(reserva?.valorTotal || 0) * this.getTaxaPlataformaReserva(reserva, tenant);
   }
 };
 

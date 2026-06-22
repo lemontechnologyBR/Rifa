@@ -19,7 +19,7 @@
   <div class="super-table-wrap">
     <table class="super-table">
       <thead>
-        <tr><th>Data</th><th>Comprador</th><th>Sorteio</th><th>Sistema</th><th>Cotas</th><th>Valor</th><th>Comissão (5%)</th><th>Status</th></tr>
+        <tr><th>Data</th><th>Comprador</th><th>Sorteio</th><th>Sistema</th><th>Cotas</th><th>Valor</th><th>Comissão</th><th>Status</th></tr>
       </thead>
       <tbody>
         <% if (!vendas.length) { %><tr><td colspan="8" class="super-empty">Nenhuma venda encontrada.</td></tr><% } %>
@@ -34,7 +34,10 @@
             <td><a href="/<%= v.rifa.tenant.slug %>/" target="_blank" rel="noopener" class="super-action-link"><%= v.rifa.tenant.nome %></a></td>
             <td><%= v.cotas %></td>
             <td>R$ <%= v.valorFmt %></td>
-            <td>R$ <%= v.taxaFmt %></td>
+            <td>
+              R$ <%= v.taxaFmt %>
+              <span class="super-tenant-email">(<%= v.taxaPctLabel %>)</span>
+            </td>
             <td><span class="super-badge super-badge--<%= v.statusPagamento === 'confirmado' ? 'ativo' : 'suspenso' %>"><%= v.statusPagamento %></span></td>
           </tr>
         <% }); %>

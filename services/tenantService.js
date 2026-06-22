@@ -3,8 +3,9 @@
  */
 const prisma = require('../lib/prisma');
 const { slugify, isSlugReservado } = require('../lib/reservedSlugs');
+const PaymentService = require('./paymentService');
 
-const { TAXA_PLATAFORMA } = require('../lib/config');
+const { TAXA_PLATAFORMA, TAXA_PLATAFORMA_WOOVI } = require('../lib/config');
 
 function buildWhere({ busca, status } = {}) {
   const where = {};
@@ -133,6 +134,43 @@ const TenantService = {
 
     const gmvTotal = receita._sum.valorTotal || 0;
 
+    // Receita real por modalidade (5% MP · 7% Plataforma/Woovi)
+    const reservasConfirmadasLista = await prisma.reserva.findMany({
+      where: { statusPagamento: 'confirmado' },
+      select: {
+        valorTotal: true,
+        wooviCorrelationId: true,
+        rifa: {
+          select: {
+            tenant: {
+              select: { mpUserId: true, mpAccessToken: true, pixChave: true }
+            }
+          }
+        }
+      }
+    });
+
+    let receitaPlataforma = 0;
+    let receitaMp = 0;
+    let receitaWoovi = 0;
+    let gmvMp = 0;
+    let gmvWoovi = 0;
+
+    for (const r of reservasConfirmadasLista) {
+      const tenant = r.rifa?.tenant;
+      const provider = PaymentService.getProviderForReserva(r, tenant);
+      const valor = Number(r.valorTotal || 0);
+      const comissao = PaymentService.calcularReceitaReserva(r, tenant);
+      receitaPlataforma += comissao;
+      if (provider === 'mercadopago') {
+        receitaMp += comissao;
+        gmvMp += valor;
+      } else {
+        receitaWoovi += comissao;
+        gmvWoovi += valor;
+      }
+    }
+
     return {
       totalTenants,
       tenantsSuspensos,
@@ -140,7 +178,13 @@ const TenantService = {
       rifasAtivas,
       reservasConfirmadas,
       gmvTotal,
-      receitaPlataforma: gmvTotal * TAXA_PLATAFORMA,
+      gmvMp,
+      gmvWoovi,
+      receitaPlataforma,
+      receitaMp,
+      receitaWoovi,
+      taxaMp: TAXA_PLATAFORMA,
+      taxaWoovi: TAXA_PLATAFORMA_WOOVI,
       novosTenantsMes,
       totalOrganizadores
     };

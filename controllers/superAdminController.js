@@ -4,6 +4,7 @@
 const TenantService = require('../services/tenantService');
 const SuperAdminService = require('../services/superAdminService');
 const AuthService = require('../services/authService');
+const PaymentService = require('../services/paymentService');
 
 function fmtMoney(v) {
   return Number(v || 0).toFixed(2).replace('.', ',');
@@ -73,7 +74,9 @@ const superAdminController = {
       metricas: {
         ...metricas,
         gmvTotalFmt: fmtMoney(metricas.gmvTotal),
-        receitaPlataformaFmt: fmtMoney(metricas.receitaPlataforma)
+        receitaPlataformaFmt: fmtMoney(metricas.receitaPlataforma),
+        receitaMpFmt: fmtMoney(metricas.receitaMp),
+        receitaWooviFmt: fmtMoney(metricas.receitaWoovi)
       },
       recentes: recentes.map((t) => ({
         ...t,
@@ -132,13 +135,19 @@ const superAdminController = {
     res.render('super/vendas', renderLocals(req, res, {
       titulo: 'Vendas',
       active: 'vendas',
-      vendas: listagem.vendas.map((v) => ({
-        ...v,
-        createdAtFmt: fmtDateTime(v.createdAt),
-        valorFmt: fmtMoney(v.valorTotal),
-        taxaFmt: fmtMoney(v.valorTotal * require('../lib/config').TAXA_PLATAFORMA),
-        cotas: v._count?.reservaNumeros || 0
-      })),
+      vendas: listagem.vendas.map((v) => {
+        const tenant = v.rifa?.tenant;
+        const taxaPct = PaymentService.getTaxaPlataformaReserva(v, tenant);
+        const comissao = PaymentService.calcularReceitaReserva(v, tenant);
+        return {
+          ...v,
+          createdAtFmt: fmtDateTime(v.createdAt),
+          valorFmt: fmtMoney(v.valorTotal),
+          taxaFmt: fmtMoney(comissao),
+          taxaPctLabel: `${Math.round(taxaPct * 100)}%`,
+          cotas: v._count?.reservaNumeros || 0
+        };
+      }),
       paginas: listagem.paginas,
       page: listagem.page,
       total: listagem.total,
@@ -178,6 +187,8 @@ const superAdminController = {
       metricas: {
         ...metricas,
         receitaPlataformaFmt: fmtMoney(metricas.receitaPlataforma),
+        receitaMpFmt: fmtMoney(metricas.receitaMp),
+        receitaWooviFmt: fmtMoney(metricas.receitaWoovi),
         gmvTotalFmt: fmtMoney(metricas.gmvTotal)
       },
       info

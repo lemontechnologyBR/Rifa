@@ -457,6 +457,54 @@
   color: #64748b;
 }
 
+.super-badge--modalidade-mp {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.super-badge--modalidade-woovi {
+  background: #ede9fe;
+  color: #5b21b6;
+  border: 1px solid #ddd6fe;
+}
+
+.super-badge--modalidade-none {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.super-badge--saldo-ok {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.super-badge--saldo-medio {
+  background: #f5f3ff;
+  color: #6d28d9;
+  border: 1px solid #ddd6fe;
+}
+
+.super-valor-mp {
+  font-weight: 700;
+  color: #0369a1;
+  font-size: 0.8125rem;
+}
+
+.super-valor-muted {
+  color: #94a3b8;
+  font-size: 0.8125rem;
+}
+
+.super-valor-hint {
+  display: block;
+  font-size: 0.625rem;
+  color: #94a3b8;
+  margin-top: 0.125rem;
+}
+
 .super-actions {
   display: flex;
   flex-wrap: wrap;

@@ -77,35 +77,28 @@
             <!-- Modalidade -->
             <td>
               <% if (isMp) { %>
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300">
-                  MP Direto · <%= pctLabel %>%
-                </span>
+                <span class="super-badge super-badge--modalidade-mp">MP Direto · <%= pctLabel %>%</span>
               <% } else if (isWoovi) { %>
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300">
-                  Plataforma · <%= pctLabel %>%
-                </span>
+                <span class="super-badge super-badge--modalidade-woovi">Plataforma · <%= pctLabel %>%</span>
               <% } else { %>
-                <span class="text-gray-400 text-xs"><%= payment.gatewayLabel || 'Não configurado' %></span>
+                <span class="super-badge super-badge--modalidade-none"><%= payment.gatewayLabel || 'Não configurado' %></span>
               <% } %>
             </td>
 
             <!-- Disponível / recebido -->
             <td>
               <% if (saldoDisp >= 50 && isWoovi) { %>
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold
-                  <%= saldoDisp >= 500 ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300' : 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300' %>">
+                <span class="super-badge <%= saldoDisp >= 500 ? 'super-badge--saldo-ok' : 'super-badge--saldo-medio' %>">
                   <%= saldoDisp >= 500 ? '✓' : '$' %> R$ <%= saldoDisp.toFixed(2).replace('.', ',') %>
                 </span>
-                <span class="block text-[10px] text-gray-400 mt-0.5">para saque</span>
+                <span class="super-valor-hint">para saque</span>
               <% } else if (saldoDisp > 0 && isMp) { %>
-                <span class="font-bold text-emerald-600 dark:text-emerald-400 text-xs">
-                  R$ <%= saldoDisp.toFixed(2).replace('.', ',') %>
-                </span>
-                <span class="block text-[10px] text-gray-400 mt-0.5">creditado no MP</span>
+                <span class="super-valor-mp">R$ <%= saldoDisp.toFixed(2).replace('.', ',') %></span>
+                <span class="super-valor-hint">creditado no MP</span>
               <% } else if (saldoDisp > 0) { %>
-                <span class="text-gray-400 text-xs">R$ <%= saldoDisp.toFixed(2).replace('.', ',') %></span>
+                <span class="super-valor-muted">R$ <%= saldoDisp.toFixed(2).replace('.', ',') %></span>
               <% } else { %>
-                <span class="text-gray-400">—</span>
+                <span class="super-valor-muted">—</span>
               <% } %>
             </td>
 
