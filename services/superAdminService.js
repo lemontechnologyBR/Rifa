@@ -2,6 +2,37 @@
  * Consultas agregadas para o Super Admin.
  */
 const prisma = require('../lib/prisma');
+const PaymentService = require('./paymentService');
+const {
+  ORGANIZADOR_PERCENTUAL,
+  ORGANIZADOR_PERCENTUAL_WOOVI
+} = require('../lib/config');
+
+function paymentInfoForTenant(tenant) {
+  const provider = PaymentService.getProvider(tenant);
+  if (provider === 'mercadopago') {
+    return {
+      gateway: 'mercadopago',
+      gatewayLabel: 'MP Direto',
+      organizadorPercentual: ORGANIZADOR_PERCENTUAL,
+      taxaPlataforma: 1 - ORGANIZADOR_PERCENTUAL
+    };
+  }
+  if (provider === 'woovi') {
+    return {
+      gateway: 'woovi',
+      gatewayLabel: 'Plataforma',
+      organizadorPercentual: ORGANIZADOR_PERCENTUAL_WOOVI,
+      taxaPlataforma: 1 - ORGANIZADOR_PERCENTUAL_WOOVI
+    };
+  }
+  return {
+    gateway: null,
+    gatewayLabel: 'Não configurado',
+    organizadorPercentual: ORGANIZADOR_PERCENTUAL_WOOVI,
+    taxaPlataforma: 1 - ORGANIZADOR_PERCENTUAL_WOOVI
+  };
+}
 
 const SuperAdminService = {
   async listarRifas({ page = 1, limite = 15, busca = '', status = 'todos' } = {}) {
@@ -78,7 +109,18 @@ const SuperAdminService = {
       prisma.organizador.findMany({
         where,
         include: {
-          tenant: { select: { id: true, nome: true, slug: true, status: true, pixChave: true } }
+          tenant: {
+            select: {
+              id: true,
+              nome: true,
+              slug: true,
+              status: true,
+              pixChave: true,
+              mpUserId: true,
+              mpAccessToken: true,
+              mpConnectedAt: true
+            }
+          }
         },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limite,
@@ -112,10 +154,38 @@ const SuperAdminService = {
       }
     }
 
-    const organizadoresComSaldo = organizadores.map(o => ({
-      ...o,
-      saldo: saldoMap[o.tenant.id] || { confirmado: 0, pendente: 0 }
-    }));
+    let sacadoMap = {};
+    if (tenantIds.length) {
+      const saques = await prisma.saque.groupBy({
+        by: ['tenantId'],
+        where: {
+          tenantId: { in: tenantIds },
+          status: { in: ['solicitado', 'concluido'] }
+        },
+        _sum: { valorBruto: true }
+      });
+      for (const s of saques) {
+        sacadoMap[s.tenantId] = s._sum.valorBruto || 0;
+      }
+    }
+
+    const organizadoresComSaldo = organizadores.map(o => {
+      const saldo = saldoMap[o.tenant.id] || { confirmado: 0, pendente: 0 };
+      const payment = paymentInfoForTenant(o.tenant);
+      const totalSacado = sacadoMap[o.tenant.id] || 0;
+      const parteBruta = saldo.confirmado * payment.organizadorPercentual;
+      const saldoDisponivel = payment.gateway === 'mercadopago'
+        ? parteBruta
+        : Math.max(0, parteBruta - totalSacado);
+
+      return {
+        ...o,
+        saldo,
+        payment,
+        totalSacado,
+        saldoDisponivel
+      };
+    });
 
     return { organizadores: organizadoresComSaldo, total, paginas: Math.max(1, Math.ceil(total / limite)), page };
   },

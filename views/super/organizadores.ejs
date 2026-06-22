@@ -22,7 +22,8 @@
           <th>Sistema</th>
           <th>Saldo confirmado</th>
           <th>Pendente</th>
-          <th>Disponível (95%)</th>
+          <th>Modalidade</th>
+          <th>Disponível</th>
           <th>Login</th>
           <th>Cadastro</th>
           <th>Ações</th>
@@ -30,13 +31,18 @@
       </thead>
       <tbody>
         <% if (!organizadores.length) { %>
-          <tr><td colspan="9" class="super-empty">Nenhum organizador encontrado.</td></tr>
+          <tr><td colspan="10" class="super-empty">Nenhum organizador encontrado.</td></tr>
         <% } %>
         <% organizadores.forEach(function(o) {
           const saldoConf = o.saldo ? o.saldo.confirmado : 0;
           const saldoPend = o.saldo ? o.saldo.pendente : 0;
-          const saldoDisp = saldoConf * 0.95;
+          const payment = o.payment || {};
+          const pct = payment.organizadorPercentual || 0.93;
+          const pctLabel = Math.round(pct * 100);
+          const saldoDisp = o.saldoDisponivel != null ? o.saldoDisponivel : saldoConf * pct;
           const temPix = !!(o.tenant.pixChave);
+          const isMp = payment.gateway === 'mercadopago';
+          const isWoovi = payment.gateway === 'woovi';
         %>
           <tr>
             <td class="super-tenant-name"><%= o.nome %></td>
@@ -68,13 +74,34 @@
               <% } %>
             </td>
 
-            <!-- Disponível para saque (95%) -->
+            <!-- Modalidade -->
             <td>
-              <% if (saldoDisp >= 50) { %>
+              <% if (isMp) { %>
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300">
+                  MP Direto · <%= pctLabel %>%
+                </span>
+              <% } else if (isWoovi) { %>
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300">
+                  Plataforma · <%= pctLabel %>%
+                </span>
+              <% } else { %>
+                <span class="text-gray-400 text-xs"><%= payment.gatewayLabel || 'Não configurado' %></span>
+              <% } %>
+            </td>
+
+            <!-- Disponível / recebido -->
+            <td>
+              <% if (saldoDisp >= 50 && isWoovi) { %>
                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold
                   <%= saldoDisp >= 500 ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300' : 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300' %>">
                   <%= saldoDisp >= 500 ? '✓' : '$' %> R$ <%= saldoDisp.toFixed(2).replace('.', ',') %>
                 </span>
+                <span class="block text-[10px] text-gray-400 mt-0.5">para saque</span>
+              <% } else if (saldoDisp > 0 && isMp) { %>
+                <span class="font-bold text-emerald-600 dark:text-emerald-400 text-xs">
+                  R$ <%= saldoDisp.toFixed(2).replace('.', ',') %>
+                </span>
+                <span class="block text-[10px] text-gray-400 mt-0.5">creditado no MP</span>
               <% } else if (saldoDisp > 0) { %>
                 <span class="text-gray-400 text-xs">R$ <%= saldoDisp.toFixed(2).replace('.', ',') %></span>
               <% } else { %>
@@ -91,7 +118,7 @@
             <td>
               <div class="flex items-center gap-2">
                 <a href="/<%= o.tenant.slug %>/admin" target="_blank" rel="noopener" class="super-action-link">Painel</a>
-                <% if (!temPix) { %>
+                <% if (!temPix && !isMp) { %>
                   <span class="text-[10px] text-red-500 font-bold">Sem PIX</span>
                 <% } %>
               </div>
