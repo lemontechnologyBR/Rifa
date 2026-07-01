@@ -3,7 +3,9 @@
    * Variáveis esperadas (todas opcionais com fallback):
    *   seoTitle        — título completo da página
    *   seoDescription  — descrição (max 160 chars)
+   *   seoKeywords     — palavras-chave (string ou array)
    *   seoImage        — URL absoluta da imagem OG
+   *   seoImageAlt     — texto alternativo da imagem OG
    *   seoUrl          — URL canônica absoluta
    *   seoType         — og:type (website | article | product)
    *   seoNoIndex      — true para noindex (admin/painel)
@@ -13,12 +15,17 @@
   const _baseUrl    = (typeof res !== 'undefined' && res.locals && res.locals.baseUrl) ? res.locals.baseUrl : _appUrl;
 
   const _seoTitle   = (typeof seoTitle !== 'undefined' && seoTitle) ? seoTitle : ((typeof titulo !== 'undefined' ? titulo : 'VouRifar') + ' | ' + ((typeof tenant !== 'undefined' && tenant) ? tenant.nome : 'VouRifar'));
-  const _seoDesc    = (typeof seoDescription !== 'undefined' && seoDescription) ? String(seoDescription).slice(0, 160) : 'Crie e participe de rifas online com pagamento via PIX. Plataforma segura, rápida e 100% mobile.';
+  const _seoDesc    = (typeof seoDescription !== 'undefined' && seoDescription) ? String(seoDescription).slice(0, 160) : 'Plataforma para criar e gerenciar rifas online com pagamento via PIX. Link exclusivo, cotas ilimitadas e painel completo para organizadores.';
   const _seoImage   = (typeof seoImage !== 'undefined' && seoImage) ? seoImage : `${_baseUrl}/img/vourifar-logo.png`;
+  const _seoImageAlt = (typeof seoImageAlt !== 'undefined' && seoImageAlt) ? seoImageAlt : _seoTitle;
   const _seoUrl     = (typeof seoUrl !== 'undefined' && seoUrl) ? seoUrl : _baseUrl;
   const _seoType    = (typeof seoType !== 'undefined' && seoType) ? seoType : 'website';
   const _noIndex    = (typeof seoNoIndex !== 'undefined' && seoNoIndex) === true;
   const _siteName   = (typeof tenant !== 'undefined' && tenant) ? tenant.nome : 'VouRifar';
+  const _keywordsRaw = (typeof seoKeywords !== 'undefined' && seoKeywords)
+    ? (Array.isArray(seoKeywords) ? seoKeywords.join(', ') : String(seoKeywords))
+    : '';
+  const _keywords   = _keywordsRaw.slice(0, 500);
 %>
 
   <%# ── Indexação ──────────────────────────────────────── %>
@@ -26,17 +33,28 @@
   <meta name="robots" content="noindex, nofollow">
   <% } else { %>
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+  <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large">
   <% } %>
 
   <%# ── SEO básico ─────────────────────────────────────── %>
   <meta name="description" content="<%= _seoDesc %>">
+  <% if (_keywords) { %>
+  <meta name="keywords" content="<%= _keywords %>">
+  <% } %>
+  <meta name="author" content="VouRifar">
+  <meta name="language" content="pt-BR">
+  <meta name="geo.region" content="BR">
   <link rel="canonical" href="<%= _seoUrl %>">
+  <link rel="alternate" hreflang="pt-BR" href="<%= _seoUrl %>">
+  <link rel="alternate" hreflang="x-default" href="<%= _seoUrl %>">
 
   <%# ── Open Graph (Facebook, WhatsApp, LinkedIn) ──────── %>
   <meta property="og:type"        content="<%= _seoType %>">
   <meta property="og:title"       content="<%= _seoTitle %>">
   <meta property="og:description" content="<%= _seoDesc %>">
   <meta property="og:image"       content="<%= _seoImage %>">
+  <meta property="og:image:secure_url" content="<%= _seoImage %>">
+  <meta property="og:image:alt"   content="<%= _seoImageAlt %>">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:url"         content="<%= _seoUrl %>">
@@ -48,6 +66,7 @@
   <meta name="twitter:title"       content="<%= _seoTitle %>">
   <meta name="twitter:description" content="<%= _seoDesc %>">
   <meta name="twitter:image"       content="<%= _seoImage %>">
+  <meta name="twitter:image:alt"   content="<%= _seoImageAlt %>">
 
   <%# ── JSON-LD Structured Data ────────────────────────── %>
   <% if (typeof seoJsonLd !== 'undefined' && seoJsonLd) { %>

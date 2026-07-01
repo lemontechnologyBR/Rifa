@@ -81,7 +81,7 @@ app.get('/sitemap.xml', async (req, res) => {
     const now = new Date().toISOString().split('T')[0];
     const urls = [
       `<url><loc>${appUrl}/</loc><lastmod>${now}</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>`,
-      `<url><loc>${appUrl}/cadastro</loc><lastmod>${now}</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>`,
+      `<url><loc>${appUrl}/cadastro</loc><lastmod>${now}</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>`,
       `<url><loc>${appUrl}/acessar</loc><lastmod>${now}</lastmod><changefreq>monthly</changefreq><priority>0.5</priority></url>`,
     ];
 

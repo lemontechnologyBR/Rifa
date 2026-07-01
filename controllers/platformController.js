@@ -5,51 +5,15 @@ const TenantService = require('../services/tenantService');
 const AuthService = require('../services/authService');
 const GoogleAuthService = require('../services/googleAuthService');
 const { slugify } = require('../lib/reservedSlugs');
+const { platformLandingMeta, cadastroMeta, platformFaq } = require('../lib/seoMeta');
 
 const platformController = {
   landing(req, res) {
     const appUrl = res.locals.baseUrl || process.env.APP_URL || '';
     res.render('platform/landing', {
-      titulo: 'VouRifar — Rifas Online',
-      seoTitle: 'VouRifar — Crie seu Sistema de Rifas Online com PIX',
-      seoDescription: 'Crie sua própria plataforma de rifas online com pagamento via PIX. Gratuito para começar — comissão de 10% sobre o arrecadado. Você recebe 90% de cada venda. Cadastre-se agora!',
-      seoUrl: appUrl + '/',
-      seoType: 'website',
-      seoImage: appUrl + '/img/vourifar-logo.png',
-      seoJsonLd: {
-        '@context': 'https://schema.org',
-        '@graph': [
-          {
-            '@type': 'Organization',
-            name: 'VouRifar',
-            url: appUrl,
-            logo: appUrl + '/img/vourifar-logo.png',
-            description: 'Plataforma SaaS de rifas online com pagamento via PIX'
-          },
-          {
-            '@type': 'WebSite',
-            name: 'VouRifar',
-            url: appUrl,
-            potentialAction: {
-              '@type': 'SearchAction',
-              target: appUrl + '/busca?q={search_term_string}',
-              'query-input': 'required name=search_term_string'
-            }
-          },
-          {
-            '@type': 'SoftwareApplication',
-            name: 'VouRifar',
-            applicationCategory: 'BusinessApplication',
-            operatingSystem: 'Web',
-            offers: {
-              '@type': 'Offer',
-              price: '0',
-              priceCurrency: 'BRL',
-              description: 'Gratuito para o organizador'
-            }
-          }
-        ]
-      }
+      titulo: 'VouRifar — Plataforma de Rifas Online',
+      faqItems: platformFaq(),
+      ...platformLandingMeta(appUrl)
     });
   },
 
@@ -106,11 +70,10 @@ const platformController = {
     const googleProfile = req.session.googleCadastro;
     const viaGoogle = req.query.via === 'google' && googleProfile;
 
+      const appUrl = res.locals.baseUrl || process.env.APP_URL || '';
       res.render('platform/cadastro', {
         titulo: 'Criar seu sistema de rifas',
-        seoTitle: 'Criar Sistema de Rifas Grátis — VouRifar',
-        seoDescription: 'Cadastre-se gratuitamente e crie seu sistema de rifas online em minutos. Pagamento via PIX, sorteio automático.',
-        seoNoIndex: false,
+        ...cadastroMeta(appUrl),
         erro: req.query.erro ? decodeURIComponent(String(req.query.erro).replace(/\+/g, ' ')) : null,
         dados: viaGoogle
           ? { nome: googleProfile.nome, email: googleProfile.email }
@@ -166,8 +129,10 @@ const platformController = {
 
       res.redirect(`/${tenant.slug}/admin/carteira?onboarding=1`);
     } catch (err) {
+      const appUrl = res.locals.baseUrl || process.env.APP_URL || '';
       res.render('platform/cadastro', {
         titulo: 'Criar seu sistema de rifas',
+        ...cadastroMeta(appUrl),
         erro: err.message,
         dados,
         viaGoogle: !!useGoogle,

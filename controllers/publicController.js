@@ -7,6 +7,7 @@ const ReservaService = require('../services/reservaService');
 const CarrinhoService = require('../services/carrinhoService');
 const { TEMPO_RESERVA_MIN, obterExpiraEmReserva } = require('../lib/reservaConfig');
 const { anexarBrandingRifas, brandingEfetivo } = require('../lib/rifaBranding');
+const { tenantIndexMeta, rifaDetalheMeta, truncate, tenantKeywords } = require('../lib/seoMeta');
 
 const tenantLocals = (req) => ({
   tenant: req.tenant,
@@ -42,28 +43,10 @@ const publicController = {
     if (req.query.ref) req.session.codigoIndicacao = req.query.ref;
 
     const baseUrl = res.locals.baseUrl || '';
-    const tenantUrl = `${baseUrl}/${req.tenant.slug}/`;
-    const tenantDesc = req.tenant.descricao
-      ? `${req.tenant.nome} — ${req.tenant.descricao}. Participe das rifas online com pagamento via PIX.`
-      : `${req.tenant.nome} — Rifas online com pagamento via PIX. Concorra a prêmios incríveis com cotas a partir de R$ 1,00.`;
 
     res.render('public/index', {
       titulo: req.tenant.nome,
-      seoTitle: `${req.tenant.nome} — Rifas Online`,
-      seoDescription: tenantDesc.slice(0, 160),
-      seoUrl: tenantUrl,
-      seoType: 'website',
-      seoImage: req.tenant.logoUrl || `${baseUrl}/img/vourifar-logo.png`,
-      seoJsonLd: {
-        '@context': 'https://schema.org',
-        '@type': 'Store',
-        name: req.tenant.nome,
-        url: tenantUrl,
-        description: tenantDesc,
-        ...(req.tenant.logoUrl ? { image: req.tenant.logoUrl } : {}),
-        ...(req.tenant.whatsapp ? { telephone: req.tenant.whatsapp } : {}),
-        ...(req.tenant.instagram ? { sameAs: [`https://instagram.com/${req.tenant.instagram}`] } : {})
-      },
+      ...tenantIndexMeta({ baseUrl, tenant: req.tenant }),
       rifas: rifasComBrand, page, paginas, total,
       rifasEncerradas,
       ...tenantLocals(req)
@@ -73,15 +56,47 @@ const publicController = {
   async encerradas(req, res) {
     const page = parseInt(req.query.page) || 1;
     const { rifas, paginas } = await RifaService.listarEncerradas(req.tenant.id, page, 12);
-    res.render('public/encerradas', { titulo: 'Rifas Encerradas', rifas, page, paginas, ...tenantLocals(req) });
+    const baseUrl = res.locals.baseUrl || '';
+    const pageUrl = `${baseUrl}/${req.tenant.slug}/encerradas`;
+    res.render('public/encerradas', {
+      titulo: 'Rifas Encerradas',
+      seoTitle: `Rifas Encerradas — ${req.tenant.nome}`,
+      seoDescription: truncate(`Confira rifas encerradas e ganhadores em ${req.tenant.nome}. Histórico de rifas online realizadas com transparência.`),
+      seoKeywords: tenantKeywords(req.tenant.nome),
+      seoUrl: pageUrl,
+      seoImage: req.tenant.logoUrl || `${baseUrl}/img/vourifar-logo.png`,
+      seoImageAlt: `Rifas encerradas — ${req.tenant.nome}`,
+      rifas, page, paginas,
+      ...tenantLocals(req)
+    });
   },
 
   comoFunciona(req, res) {
-    res.render('public/como-funciona', { titulo: 'Como funciona', ...tenantLocals(req) });
+    const baseUrl = res.locals.baseUrl || '';
+    const pageUrl = `${baseUrl}/${req.tenant.slug}/como-funciona`;
+    res.render('public/como-funciona', {
+      titulo: 'Como funciona',
+      seoTitle: `Como Funciona — Rifas Online ${req.tenant.nome}`,
+      seoDescription: truncate(`Saiba como participar das rifas online de ${req.tenant.nome}. Escolha cotas, pague via PIX e acompanhe suas reservas.`),
+      seoKeywords: tenantKeywords(req.tenant.nome),
+      seoUrl: pageUrl,
+      seoImage: req.tenant.logoUrl || `${baseUrl}/img/vourifar-logo.png`,
+      seoImageAlt: `Como funciona — ${req.tenant.nome}`,
+      ...tenantLocals(req)
+    });
   },
 
   politicaPrivacidade(req, res) {
-    res.render('public/politica-privacidade', { titulo: 'Política de privacidade', ...tenantLocals(req) });
+    const baseUrl = res.locals.baseUrl || '';
+    const pageUrl = `${baseUrl}/${req.tenant.slug}/politica-privacidade`;
+    res.render('public/politica-privacidade', {
+      titulo: 'Política de privacidade',
+      seoTitle: `Política de Privacidade — ${req.tenant.nome}`,
+      seoDescription: truncate(`Política de privacidade e proteção de dados de ${req.tenant.nome} na plataforma VouRifar.`),
+      seoUrl: pageUrl,
+      seoNoIndex: true,
+      ...tenantLocals(req)
+    });
   },
 
   async detalhe(req, res) {
@@ -101,41 +116,9 @@ const publicController = {
       `🎟️ Participe da rifa "${rifa.titulo}"! ${res.locals.baseUrl}/${req.tenant.slug}/rifas/${rifa.id}`
     );
 
-    const baseUrl = res.locals.baseUrl || '';
-    const rifaUrl = `${baseUrl}/${req.tenant.slug}/rifas/${rifa.id}`;
-    const rifaDesc = rifa.descricao
-      ? `${rifa.titulo} — ${String(rifa.descricao).replace(/<[^>]+>/g, '').slice(0, 100)}. Cota: R$ ${Number(rifa.valorCota).toFixed(2).replace('.', ',')}. Participe agora!`
-      : `${rifa.titulo} — Participe desta rifa em ${req.tenant.nome}. Cota: R$ ${Number(rifa.valorCota).toFixed(2).replace('.', ',')}. Pagamento via PIX.`;
-    const rifaImage = rifa.imagemUrl || req.tenant.logoUrl || `${baseUrl}/img/vourifar-logo.png`;
-
-    const rifaJsonLd = {
-      '@context': 'https://schema.org',
-      '@type': 'Product',
-      name: rifa.titulo,
-      description: rifaDesc,
-      image: rifaImage,
-      url: rifaUrl,
-      brand: { '@type': 'Brand', name: req.tenant.nome },
-      offers: {
-        '@type': 'Offer',
-        priceCurrency: 'BRL',
-        price: Number(rifa.valorCota).toFixed(2),
-        availability: rifa.status === 'ativa'
-          ? 'https://schema.org/InStock'
-          : 'https://schema.org/SoldOut',
-        url: rifaUrl,
-        seller: { '@type': 'Organization', name: req.tenant.nome }
-      }
-    };
-
     res.render('public/rifa-detalhe', {
       titulo: rifa.titulo,
-      seoTitle: `${rifa.titulo} — ${req.tenant.nome}`,
-      seoDescription: rifaDesc.slice(0, 160),
-      seoUrl: rifaUrl,
-      seoType: 'product',
-      seoImage: rifaImage,
-      seoJsonLd: rifaJsonLd,
+      ...rifaDetalheMeta({ baseUrl: res.locals.baseUrl || '', tenant: req.tenant, rifa }),
       rifa, numeros, stats, carrinhoNumeros,
       comentarios: rifa.comentarios,
       whatsappMsg,
@@ -156,12 +139,25 @@ const publicController = {
     res.locals.rifaBrand = rifaBrand;
     if (rifa.status !== 'finalizada') return res.redirect(`/${req.tenant.slug}/rifas/${rifa.id}`);
 
-    res.render('public/sorteio-resultado', { titulo: `Resultado — ${rifa.titulo}`, rifa, ...tenantLocals(req) });
+    const baseUrl = res.locals.baseUrl || '';
+    const pageUrl = `${baseUrl}/${req.tenant.slug}/rifas/${rifa.id}/resultado`;
+    res.render('public/sorteio-resultado', {
+      titulo: `Resultado — ${rifa.titulo}`,
+      seoTitle: `Resultado — ${rifa.titulo} | ${req.tenant.nome}`,
+      seoDescription: truncate(`Resultado da rifa ${rifa.titulo} em ${req.tenant.nome}. Confira o número sorteado e o ganhador.`),
+      seoUrl: pageUrl,
+      seoImage: rifa.imagemUrl || req.tenant.logoUrl || `${baseUrl}/img/vourifar-logo.png`,
+      seoImageAlt: `Resultado — ${rifa.titulo}`,
+      rifa,
+      ...tenantLocals(req)
+    });
   },
 
   minhasReservas(req, res) {
     res.render('public/minhas-reservas', {
-      titulo: 'Minhas Reservas', resultado: null, cpf: '', erro: null, csrfToken: res.locals.csrfToken,
+      titulo: 'Minhas Reservas',
+      seoNoIndex: true,
+      resultado: null, cpf: '', erro: null, csrfToken: res.locals.csrfToken,
       ...tenantLocals(req)
     });
   },
@@ -188,6 +184,7 @@ const publicController = {
     const pagamento = ReservaService.montarPagamentoPix(reserva, reserva.rifa);
     res.render('public/comprovante', {
       titulo: `Comprovante #${reserva.id}`,
+      seoNoIndex: true,
       reserva, pagamento,
       tempoReservaMin: TEMPO_RESERVA_MIN,
       reservaExpiraEm: obterExpiraEmReserva(reserva).toISOString(),
