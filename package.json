@@ -14,7 +14,15 @@
     "postinstall": "prisma generate",
     "test": "jest --coverage",
     "test:watch": "jest --watch",
-    "webhook:simular": "node scripts/simular-webhook.js"
+    "webhook:simular": "node scripts/simular-webhook.js",
+    "google-ads:auth": "node scripts/google-ads-auth.js",
+    "google-ads:test": "node scripts/google-ads-auth.js --test",
+    "google-ads:create-campaign": "node scripts/google-ads-create-campaign.js",
+    "google-ads:keyword-ideas": "node scripts/google-ads-keyword-ideas.js",
+    "google-ads:keywords": "node scripts/google-ads-print-keywords.js",
+    "google-ads:generate-keywords": "node scripts/google-ads-generate-keywords.js",
+    "google-ads:ad-copy": "node scripts/google-ads-print-ad-copy.js",
+    "google-ads:sitelinks": "node scripts/google-ads-print-sitelinks.js"
   },
   "keywords": [
     "rifas",

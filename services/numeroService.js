@@ -7,37 +7,71 @@ const CarrinhoService = require('./carrinhoService');
 const { TEMPO_RESERVA_MS, calcularExpiraEm } = require('../lib/reservaConfig');
 
 const NumeroService = {
-  async _limparPedidosExpirados() {
+  async _limparPedidosExpirados(rifaId = null) {
     const ReservaService = require('./reservaService');
-    await ReservaService.limparExpiradas();
+    await ReservaService.limparExpiradas(null, rifaId);
   },
+
   async listarPorRifa(rifaId) {
-    await this._limparPedidosExpirados();
-    await this.limparReservasExpiradas(rifaId);
+    await this.sincronizarStatusNumeros(rifaId);
     return prisma.numero.findMany({
       where: { rifaId: Number(rifaId) },
       orderBy: { numero: 'asc' }
     });
   },
 
-  /** Remove reservas temporárias expiradas */
-  async limparReservasExpiradas(rifaId) {
+  /**
+   * Libera números presos: reserva temporária expirada, pedido PIX expirado/cancelado,
+   * ou reserva já marcada expirada/cancelada sem liberar o número.
+   */
+  async sincronizarStatusNumeros(rifaId) {
+    const id = Number(rifaId);
     const agora = new Date();
+
+    await this._limparPedidosExpirados(id);
+
     await prisma.numero.updateMany({
       where: {
-        rifaId: Number(rifaId),
+        rifaId: id,
         status: 'reservado',
         reservadoAte: { lt: agora },
         reservaNumeros: { none: {} }
       },
       data: { status: 'disponivel', reservadoAte: null, usuarioId: null }
     });
+
+    await prisma.numero.updateMany({
+      where: {
+        rifaId: id,
+        status: 'reservado',
+        reservaNumeros: {
+          some: {
+            reserva: { statusPagamento: { in: ['expirado', 'cancelado'] } }
+          }
+        }
+      },
+      data: { status: 'disponivel', reservadoAte: null, usuarioId: null }
+    });
+
+    await prisma.numero.updateMany({
+      where: {
+        rifaId: id,
+        status: 'reservado',
+        reservadoAte: null,
+        reservaNumeros: { none: {} }
+      },
+      data: { status: 'disponivel', usuarioId: null }
+    });
+  },
+
+  /** @deprecated use sincronizarStatusNumeros */
+  async limparReservasExpiradas(rifaId) {
+    return this.sincronizarStatusNumeros(rifaId);
   },
 
   /** Reserva temporária + persiste carrinho na sessão */
   async reservarTemporario(rifaId, numeros, sessionId, usuarioId = null) {
-    await this._limparPedidosExpirados();
-    await this.limparReservasExpiradas(rifaId);
+    await this.sincronizarStatusNumeros(rifaId);
     const expiraEm = calcularExpiraEm();
     const carrinhoExistente = await CarrinhoService.obter(sessionId, rifaId);
     const meusNumeros = new Set(carrinhoExistente?.numeros || []);
@@ -96,10 +130,10 @@ const NumeroService = {
         }
       });
 
-      if (registro && registro.reservadoAte) {
+      if (registro) {
         await prisma.numero.update({
           where: { id: registro.id },
-          data: { status: 'disponivel', reservadoAte: null }
+          data: { status: 'disponivel', reservadoAte: null, usuarioId: null }
         });
       }
     }
@@ -107,8 +141,7 @@ const NumeroService = {
 
   /** Escolhe números aleatórios disponíveis (somente leitura — use escolherEReservarAleatorios na API) */
   async escolherAleatorios(rifaId, quantidade) {
-    await this._limparPedidosExpirados();
-    await this.limparReservasExpiradas(rifaId);
+    await this.sincronizarStatusNumeros(rifaId);
     const disponiveis = await prisma.numero.findMany({
       where: { rifaId: Number(rifaId), status: 'disponivel' },
       select: { numero: true }
@@ -127,8 +160,7 @@ const NumeroService = {
    * sessionId opcional: quando informado, persiste carrinho da sessão.
    */
   async escolherEReservarAleatorios(rifaId, quantidade, sessionId, usuarioId = null) {
-    await this._limparPedidosExpirados();
-    await this.limparReservasExpiradas(rifaId);
+    await this.sincronizarStatusNumeros(rifaId);
     const expiraEm = calcularExpiraEm();
     const numerosEscolhidos = [];
 
@@ -248,8 +280,7 @@ const NumeroService = {
    * Finaliza compra no modo cotas — repõe números indisponíveis automaticamente.
    */
   async finalizarCompraCotas(rifaId, quantidade, usuarioId, valorTotal, sessionId, codigoIndicacaoUsado = null) {
-    await this._limparPedidosExpirados();
-    await this.limparReservasExpiradas(rifaId);
+    await this.sincronizarStatusNumeros(rifaId);
     const { gerarCodigoPagamento } = require('../lib/helpers');
     const codigoPagamento = gerarCodigoPagamento();
     const agora = new Date();
@@ -308,8 +339,7 @@ const NumeroService = {
 
   /** Confirma compra — cria reserva pendente (grade / números escolhidos) */
   async confirmarCompra(rifaId, numeros, usuarioId, valorTotal, codigoIndicacaoUsado = null, sessionId = null) {
-    await this._limparPedidosExpirados();
-    await this.limparReservasExpiradas(rifaId);
+    await this.sincronizarStatusNumeros(rifaId);
 
     if (sessionId && numeros.length) {
       try {

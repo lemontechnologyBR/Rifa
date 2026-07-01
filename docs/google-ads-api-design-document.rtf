@@ -1,0 +1,179 @@
+{\rtf1\ansi\deff0\nouicompat
+{\fonttbl{\f0\fnil\fcharset0 Calibri;}{\f1\fnil\fcharset0 Arial;}}
+{\colortbl;\red0\green0\blue0;\red0\green102\blue204;}
+\viewkind4\uc1\pard\sa200\sl276\slmult1\f0\fs28\b Google Ads API Design Document\b0\fs22\par
+\pard\sa200\sl276\slmult1\b Company:\b0  VouRifar (Lemon Technology)\par
+\b Product URL:\b0  https://vourifar.com.br\par
+\b Document version:\b0  1.0\par
+\b Date:\b0  June 2026\par
+\b Contact:\b0  elivemmo@gmail.com\par
+\pard\sa200\sl276\slmult1\par
+
+\pard\sa200\sl276\slmult1\b\fs26 1. Executive Summary\b0\fs22\par
+\pard\sa200\sl276\slmult1
+VouRifar is a Brazilian SaaS platform that enables organizers to create and manage online raffles (\'93rifas\'94) with automated PIX payment processing. The Google Ads API integration is an \b internal marketing automation tool\b0  used exclusively by VouRifar platform administrators to create, manage, and monitor Google Search campaigns that drive user acquisition for the VouRifar platform.\par
+\par
+This tool is \b not offered to third parties\b0  and is not a public-facing product. End users (raffle organizers and buyers) never interact with the Google Ads API. Only authorized VouRifar staff access campaign management features through a secured super-admin interface and CLI scripts.\par
+\par
+
+\pard\sa200\sl276\slmult1\b\fs26 2. Business Model and Purpose of API Usage\b0\fs22\par
+\pard\sa200\sl276\slmult1\b 2.1 Business model\b0\par
+VouRifar operates as a multi-tenant SaaS platform. Organizers register for free, create raffle campaigns, and receive payments via PIX (through Mercado Pago Direct or platform-managed Woovi). The platform earns a commission (5\'967%) on each sale. Revenue depends on acquiring new organizers to the platform.\par
+\par
+\b 2.2 Why we use the Google Ads API\b0\par
+We use the Google Ads API to programmatically:\par
+\pard{\pntext\f1\'B7\tab}{\*\pn\pnlvlblt\pnf1\pnindent0{\pntxtb\'B7}}\fi-360\li720\sa120 Create and manage Search campaigns promoting VouRifar to potential raffle organizers in Brazil.\par
+{\pntext\f1\'B7\tab}Create ad groups, keywords, and responsive search ads with consistent messaging and landing page URLs.\par
+{\pntext\f1\'B7\tab}Pause, enable, or adjust budgets and bids based on performance without manual changes in the Google Ads web UI.\par
+{\pntext\f1\'B7\tab}Retrieve campaign performance metrics (impressions, clicks, conversions, cost) for internal reporting dashboards.\par
+\pard\sa200\sl276\slmult1\par
+
+\pard\sa200\sl276\slmult1\b\fs26 3. Tool Overview\b0\fs22\par
+\pard\sa200\sl276\slmult1\b 3.1 Tool name\b0\par
+VouRifar Google Ads Campaign Manager (internal component of the VouRifar platform)\par
+\par
+\b 3.2 Users\b0\par
+\pard{\pntext\f1\'B7\tab}{\*\pn\pnlvlblt\pnf1\pnindent0{\pntxtb\'B7}}\fi-360\li720\sa120\b Internal only:\b0  VouRifar platform administrators (1\'963 authorized staff accounts).\par
+{\pntext\f1\'B7\tab}\b External users:\b0  None. Organizers and buyers on vourifar.com.br do not access Google Ads functionality.\par
+\pard\sa200\sl276\slmult1\par
+\b 3.3 Deployment\b0\par
+The tool runs on VouRifar\'92s production VPS (Node.js/Express application) and local development environments. Google Ads credentials are stored as server-side environment variables and are never exposed to browsers or end users.\par
+\par
+
+\pard\sa200\sl276\slmult1\b\fs26 4. System Architecture\b0\fs22\par
+\pard\sa200\sl276\slmult1
+\b 4.1 High-level architecture\b0\par
+\par
+[Administrator Browser]\par
+        |\par
+        v  (HTTPS, session auth)\par
+[VouRifar Super Admin Panel / CLI Scripts]\par
+        |\par
+        v  (server-side only)\par
+[Google Ads Service Layer  \'97  Node.js]\par
+        |\par
+        v  (OAuth 2.0 + Developer Token)\par
+[Google Ads API v22  \'97  REST]\par
+        |\par
+        v\par
+[Google Ads Account  \'97  Customer ID 470-119-0207]\par
+\par
+\b 4.2 Technology stack\b0\par
+\pard{\pntext\f1\'B7\tab}{\*\pn\pnlvlblt\pnf1\pnindent0{\pntxtb\'B7}}\fi-360\li720\sa120 Runtime: Node.js 22+, Express.js\par
+{\pntext\f1\'B7\tab}Authentication to Google: OAuth 2.0 (offline access, refresh token stored in environment variables)\par
+{\pntext\f1\'B7\tab}API transport: HTTPS REST calls to googleads.googleapis.com/v22\par
+{\pntext\f1\'B7\tab}Initial implementation: scripts/google-ads-auth.js (OAuth setup and connection test)\par
+{\pntext\f1\'B7\tab}Planned: services/googleAdsService.js integrated with super-admin routes\par
+\pard\sa200\sl276\slmult1\par
+
+\pard\sa200\sl276\slmult1\b\fs26 5. Authentication and Authorization\b0\fs22\par
+\pard\sa200\sl276\slmult1\b 5.1 Google Ads API authentication\b0\par
+\pard{\pntext\f1\'B7\tab}{\*\pn\pnlvlblt\pnf1\pnindent0{\pntxtb\'B7}}\fi-360\li720\sa120\b Developer Token:\b0  Stored in GOOGLE_ADS_DEVELOPER_TOKEN (server environment variable).\par
+{\pntext\f1\'B7\tab}\b OAuth 2.0 Client ID / Secret:\b0  Stored in GOOGLE_ADS_CLIENT_ID and GOOGLE_ADS_CLIENT_SECRET.\par
+{\pntext\f1\'B7\tab}\b Refresh Token:\b0  Obtained once via local OAuth flow (scripts/google-ads-auth.js); stored in GOOGLE_ADS_REFRESH_TOKEN. Used server-side to obtain short-lived access tokens.\par
+{\pntext\f1\'B7\tab}\b Customer ID:\b0  GOOGLE_ADS_CUSTOMER_ID = 4701190207 (VouRifar MCC / advertising account).\par
+{\pntext\f1\'B7\tab}\b Login Customer ID:\b0  GOOGLE_ADS_LOGIN_CUSTOMER_ID = 4701190207 (manager account context).\par
+\pard\sa200\sl276\slmult1\par
+\b 5.2 OAuth flow (one-time setup)\b0\par
+1. Administrator runs npm run google-ads:auth on a secure machine.\par
+2. Local HTTP server listens on localhost:8765/callback.\par
+3. Administrator authorizes via Google OAuth consent screen (scope: https://www.googleapis.com/auth/adwords).\par
+4. Authorization code is exchanged for refresh token; token is saved to server .env.\par
+5. Refresh token is never transmitted to end users or stored in client-side code.\par
+\par
+\b 5.3 Application access control\b0\par
+Only authenticated super-admin sessions can trigger Google Ads operations. Admin routes are protected by session middleware and role checks. API credentials remain on the server at all times.\par
+\par
+
+\pard\sa200\sl276\slmult1\b\fs26 6. Google Ads API Operations Used\b0\fs22\par
+\pard\sa200\sl276\slmult1
+We plan to use the following Google Ads API services and methods (API version v22):\par
+\par
+\b 6.1 Read operations (GoogleAdsService.Search / SearchStream)\b0\par
+\pard{\pntext\f1\'B7\tab}{\*\pn\pnlvlblt\pnf1\pnindent0{\pntxtb\'B7}}\fi-360\li720\sa120 List accessible customers (customers:listAccessibleCustomers)\par
+{\pntext\f1\'B7\tab}Query campaigns: id, name, status, budget, bidding strategy\par
+{\pntext\f1\'B7\tab}Query ad groups: id, name, status, campaign association\par
+{\pntext\f1\'B7\tab}Query ads: responsive search ad headlines, descriptions, final URLs\par
+{\pntext\f1\'B7\tab}Query keywords: text, match type, status\par
+{\pntext\f1\'B7\tab}Query performance metrics: impressions, clicks, cost_micros, conversions (campaign and ad group level)\par
+\pard\sa200\sl276\slmult1\par
+\b 6.2 Write operations (GoogleAdsService.Mutate)\b0\par
+\pard{\pntext\f1\'B7\tab}{\*\pn\pnlvlblt\pnf1\pnindent0{\pntxtb\'B7}}\fi-360\li720\sa120 Create CampaignBudget\par
+{\pntext\f1\'B7\tab}Create Campaign (type: SEARCH)\par
+{\pntext\f1\'B7\tab}Create AdGroup\par
+{\pntext\f1\'B7\tab}Create AdGroupCriterion (keywords)\par
+{\pntext\f1\'B7\tab}Create AdGroupAd (ResponsiveSearchAd)\par
+{\pntext\f1\'B7\tab}Update campaign/ad group/ad status (ENABLED / PAUSED)\par
+{\pntext\f1\'B7\tab}Update campaign budget amounts\par
+\pard\sa200\sl276\slmult1\par
+\b 6.3 Campaign types supported\b0\par
+\b Search campaigns only.\b0  We do not plan to use Shopping, Display, Video, Performance Max, or App campaigns at this time.\par
+\par
+\b 6.4 Geographic and language targeting\b0\par
+Brazil (country code BR), Portuguese language ads, BRL currency.\par
+\par
+
+\pard\sa200\sl276\slmult1\b\fs26 7. Data Flow\b0\fs22\par
+\pard\sa200\sl276\slmult1\b 7.1 Campaign creation flow\b0\par
+1. Administrator submits campaign parameters in super-admin UI (name, daily budget, keywords, ad copy, landing URL).\par
+2. VouRifar server validates input and builds MutateOperation requests.\par
+3. Server obtains access token via refresh token exchange.\par
+4. Server sends mutate request to Google Ads API with developer-token and login-customer-id headers.\par
+5. Google returns resource names; server stores campaign mapping in internal logs (optional).\par
+6. Administrator sees confirmation and campaign ID in admin dashboard.\par
+\par
+\b 7.2 Reporting flow\b0\par
+1. Scheduled job or manual action triggers GAQL query for date range.\par
+2. Server retrieves metrics via SearchStream.\par
+3. Metrics displayed in super-admin dashboard; no data is sold or shared externally.\par
+\par
+\b 7.3 Data retention\b0\par
+Performance snapshots may be cached in the application database for up to 90 days for internal analytics. OAuth tokens and developer token are stored only in encrypted server environment configuration. No Google Ads data is exposed to tenant organizers or public API endpoints.\par
+\par
+
+\pard\sa200\sl276\slmult1\b\fs26 8. Expected API Usage Volume\b0\fs22\par
+\pard\sa200\sl276\slmult1
+Estimated daily operations (well within Basic Access limits of 15,000 operations/day and 1,000 get operations/day):\par
+\par
+\b Activity\b0\tab\b Est. operations/day\b0\par
+Campaign creation (manual)\tab 10\'9650\par
+Campaign status/budget updates\tab 20\'96100\par
+Performance reporting queries\tab 50\'96200\par
+Connection health checks\tab 1\'965\par
+\b Total estimated\b0\tab\b 100\'96350 operations/day\b0\par
+\par
+We do not anticipate requiring Standard Access in the foreseeable future.\par
+\par
+
+\pard\sa200\sl276\slmult1\b\fs26 9. Error Handling and Monitoring\b0\fs22\par
+\pard{\pntext\f1\'B7\tab}{\*\pn\pnlvlblt\pnf1\pnindent0{\pntxtb\'B7}}\fi-360\li720\sa120 HTTP errors and GoogleAdsFailure details are logged server-side with request ID.\par
+{\pntext\f1\'B7\tab}Transient errors (429, 5xx) use exponential backoff with a maximum of 3 retries.\par
+{\pntext\f1\'B7\tab}Invalid mutate requests are rejected before API call via input validation.\par
+{\pntext\f1\'B7\tab}OAuth token refresh failures alert administrators via application logs.\par
+{\pntext\f1\'B7\tab}Daily connection test available via npm run google-ads:test.\par
+\pard\sa200\sl276\slmult1\par
+
+\pard\sa200\sl276\slmult1\b\fs26 10. Security and Compliance\b0\fs22\par
+\pard{\pntext\f1\'B7\tab}{\*\pn\pnlvlblt\pnf1\pnindent0{\pntxtb\'B7}}\fi-360\li720\sa120\b Internal use only:\b0  Tool is not distributed to clients or resold.\par
+{\pntext\f1\'B7\tab}\b Credential isolation:\b0  All Google Ads credentials stored server-side; never in client JavaScript or mobile apps.\par
+{\pntext\f1\'B7\tab}\b Access control:\b0  Super-admin authentication required for all campaign operations.\par
+{\pntext\f1\'B7\tab}\b Policy compliance:\b0  Ads promote VouRifar\'92s legitimate SaaS platform (raffle management software), not individual gambling or lottery products. Landing pages comply with Google Ads policies.\par
+{\pntext\f1\'B7\tab}\b No third-party token sharing:\b0  Developer token is used exclusively for VouRifar\'92s own advertising account.\par
+\pard\sa200\sl276\slmult1\par
+
+\pard\sa200\sl276\slmult1\b\fs26 11. User Interface (Planned)\b0\fs22\par
+\pard\sa200\sl276\slmult1
+Phase 1 (current): CLI scripts for OAuth setup and API connectivity testing.\par
+Phase 2 (planned): Super-admin web page at /super/google-ads with:\par
+\pard{\pntext\f1\'B7\tab}{\*\pn\pnlvlblt\pnf1\pnindent0{\pntxtb\'B7}}\fi-360\li720\sa120 Connection status indicator\par
+{\pntext\f1\'B7\tab}Form to create Search campaign (budget, keywords, ad text, final URL https://vourifar.com.br)\par
+{\pntext\f1\'B7\tab}List of active/paused campaigns with key metrics\par
+{\pntext\f1\'B7\tab}Buttons to pause/resume campaigns\par
+\pard\sa200\sl276\slmult1\par
+
+\pard\sa200\sl276\slmult1\b\fs26 12. Summary\b0\fs22\par
+\pard\sa200\sl276\slmult1
+VouRifar requests Basic Access to the Google Ads API to manage its own Search advertising campaigns for platform user acquisition. The integration is internal, low-volume, server-side, and uses standard OAuth 2.0 authentication. We will use Search campaign management and reporting capabilities only, with estimated usage far below Basic Access daily limits.\par
+\par
+\b End of document\b0\par
+}

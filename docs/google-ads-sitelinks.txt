@@ -1,0 +1,38 @@
+# Sitelinks VouRifar — Google Ads
+# Texto: máx. 25 | Descrição 1 e 2: máx. 35 cada
+
+---
+text: Demo
+desc1: Veja demonstração ao vivo
+desc2: Loja exemplo funcionando
+url: https://vourifar.com.br/demo/
+
+---
+text: Criar Grátis
+desc1: Cadastre-se sem mensalidade
+desc2: Comece sua rifa em minutos
+url: https://vourifar.com.br/cadastro
+
+---
+text: Acessar Conta
+desc1: Entre no painel do organizador
+desc2: Gerencie rifas e sorteios
+url: https://vourifar.com.br/acessar
+
+---
+text: Rifas com PIX
+desc1: Pagamento automático via PIX
+desc2: Receba na hora, sem esforço
+url: https://vourifar.com.br/cadastro
+
+---
+text: Plataforma Grátis
+desc1: 100% grátis para criar rifas
+desc2: Sem planos nem assinatura
+url: https://vourifar.com.br/cadastro
+
+---
+text: Como Funciona
+desc1: Veja o passo a passo completo
+desc2: Do cadastro ao sorteio
+url: https://vourifar.com.br/demo/como-funciona

@@ -88,6 +88,7 @@
   let pollingInterval = null;
   let pixTimerInterval = null;
   let compraEmAndamento = false;
+  let onReservaLiberada = null;
 
   const modalCompra = document.getElementById('modal-compra');
   const modalSucesso = document.getElementById('modal-sucesso');
@@ -287,6 +288,7 @@
     pararTimer();
     reservaAtiva = false;
     numerosSelecionados = [];
+    if (onReservaLiberada) onReservaLiberada();
   }
 
   function iniciarTimer() {
@@ -482,6 +484,7 @@
           if (pixTimerInterval) clearInterval(pixTimerInterval);
           const timerEl = document.getElementById('pix-expira-timer');
           if (timerEl) timerEl.textContent = '00:00';
+          if (onReservaLiberada) onReservaLiberada();
         } else if (el) {
           const timerEl = document.getElementById('pix-expira-timer');
           const restante = timerEl ? ` · ${timerEl.textContent}` : '';
@@ -621,6 +624,13 @@
     carregarGrade();
     atualizarBotaoGrade();
 
+    onReservaLiberada = () => {
+      selecionadosGrade.clear();
+      renderizarGrade();
+      atualizarBotaoGrade();
+      carregarGrade();
+    };
+
     setInterval(async () => {
       try {
         const data = await fetchApi(`${api}/rifas/${RIFA_ID}/numeros`);
@@ -628,6 +638,6 @@
         renderizarGrade();
         atualizarStatsGrade();
       } catch (e) { /* ignore */ }
-    }, 20000);
+    }, 10000);
   }
 })();

@@ -24,10 +24,11 @@ const ReservaService = {
     return this._expirarInterno(reserva.id);
   },
 
-  async limparExpiradas(tenantId = null) {
+  async limparExpiradas(tenantId = null, rifaId = null) {
     const where = {
       statusPagamento: 'pendente',
-      ...(tenantId ? { rifa: { tenantId: Number(tenantId) } } : {})
+      ...(tenantId ? { rifa: { tenantId: Number(tenantId) } } : {}),
+      ...(rifaId ? { rifaId: Number(rifaId) } : {})
     };
     const pendentes = await prisma.reserva.findMany({ where, select: { id: true, expiraEm: true, createdAt: true, statusPagamento: true } });
     let total = 0;
