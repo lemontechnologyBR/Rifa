@@ -27,11 +27,11 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https://cdn.tailwindcss.com', 'https://unpkg.com', 'https://cdn.jsdelivr.net'],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https://cdn.tailwindcss.com', 'https://unpkg.com', 'https://cdn.jsdelivr.net', 'https://www.googletagmanager.com'],
       styleSrc: ["'self'", "'unsafe-inline'", 'https://cdn.tailwindcss.com', 'https://cdn.jsdelivr.net', 'https://fonts.googleapis.com'],
       imgSrc: ["'self'", 'data:', 'https:', 'http:', 'https://chart.googleapis.com'],
       fontSrc: ["'self'", 'https://fonts.gstatic.com', 'https://cdn.jsdelivr.net'],
-      connectSrc: ["'self'", 'https://cdn.tailwindcss.com', 'https://unpkg.com', 'https://cdn.jsdelivr.net'],
+      connectSrc: ["'self'", 'https://cdn.tailwindcss.com', 'https://unpkg.com', 'https://cdn.jsdelivr.net', 'https://www.googletagmanager.com', 'https://www.google-analytics.com', 'https://region1.google-analytics.com'],
       workerSrc: ["'self'"]
     }
   },
@@ -136,6 +136,22 @@ app.use((req, res, next) => {
   res.locals.pwaScope = '/';
   res.locals.pwaIconUrl = '/img/pwa/icon-192.png';
   res.locals.pwaShortName = brand.PLATFORM_NAME;
+  next();
+});
+
+app.use(async (req, res, next) => {
+  const isAdminArea = req.path.startsWith('/super') || /\/admin(\/|$)/.test(req.path);
+  if (isAdminArea) {
+    res.locals.googleAdsTagId = '';
+    return next();
+  }
+  try {
+    const PlatformSettingsService = require('./services/platformSettingsService');
+    res.locals.googleAdsTagId = await PlatformSettingsService.getActiveGoogleAdsTagId();
+  } catch (err) {
+    console.error('[Marketing] Erro ao carregar tag Google Ads:', err.message);
+    res.locals.googleAdsTagId = '';
+  }
   next();
 });
 

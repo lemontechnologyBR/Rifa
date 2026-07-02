@@ -5,6 +5,7 @@ const TenantService = require('../services/tenantService');
 const SuperAdminService = require('../services/superAdminService');
 const AuthService = require('../services/authService');
 const PaymentService = require('../services/paymentService');
+const PlatformSettingsService = require('../services/platformSettingsService');
 
 function fmtMoney(v) {
   return Number(v || 0).toFixed(2).replace('.', ',');
@@ -193,6 +194,28 @@ const superAdminController = {
       },
       info
     }));
+  },
+
+  async marketing(req, res) {
+    const settings = await PlatformSettingsService.getMarketingSettings();
+    res.render('super/marketing', renderLocals(req, res, {
+      titulo: 'Marketing',
+      active: 'marketing',
+      googleAdsTagId: settings.googleAdsTagId,
+      googleAdsEnabled: settings.googleAdsEnabled
+    }));
+  },
+
+  async salvarMarketing(req, res) {
+    try {
+      await PlatformSettingsService.saveMarketingSettings({
+        tagInput: req.body.google_ads_tag,
+        enabled: req.body.google_ads_enabled === 'on'
+      });
+      res.redirect('/super/marketing?msg=Tag Google Ads salva com sucesso.');
+    } catch (err) {
+      res.redirect(`/super/marketing?erro=${encodeURIComponent(err.message)}`);
+    }
   },
 
   async alterarStatus(req, res) {

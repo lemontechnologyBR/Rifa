@@ -14,6 +14,8 @@ router.get('/rifas', requireAdmin, superAdminController.rifas);
 router.get('/vendas', requireAdmin, superAdminController.vendas);
 router.get('/organizadores', requireAdmin, superAdminController.organizadores);
 router.get('/plataforma', requireAdmin, superAdminController.plataforma);
+router.get('/marketing', requireAdmin, superAdminController.marketing);
+router.post('/marketing', requireAdmin, superAdminController.salvarMarketing);
 router.post('/tenants/:id/status', requireAdmin, superAdminController.alterarStatus);
 
 module.exports = router;
