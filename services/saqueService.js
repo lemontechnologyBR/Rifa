@@ -10,7 +10,6 @@ const {
   SAQUE_MINIMO
 } = require('../lib/config');
 
-const SaqueService = {
   calcularResumo(saldoDisponivel) {
     const saldo = Math.max(0, Number(saldoDisponivel) || 0);
     const saqueGratis = saldo >= SAQUE_GRATIS_MIN;
@@ -79,6 +78,143 @@ const SaqueService = {
     });
   },
 
+  _statusPagamentoConfirmado(status) {
+    const s = String(status || '').toUpperCase();
+    return ['CONFIRMED', 'COMPLETED', 'APPROVED', 'SUCCESS'].includes(s);
+  },
+
+  _statusPagamentoFalhou(status) {
+    const s = String(status || '').toUpperCase();
+    return ['FAILED', 'CANCELLED', 'CANCELED', 'REMOVED'].includes(s);
+  },
+
+  async marcarConcluido(correlationID, endToEndId = null) {
+    if (!correlationID) return null;
+    const saque = await prisma.saque.findFirst({ where: { correlationId: correlationID } });
+    if (!saque || saque.status === 'concluido') return saque;
+
+    const atualizado = await prisma.saque.update({
+      where: { id: saque.id },
+      data: {
+        status: 'concluido',
+        endToEndId: endToEndId || saque.endToEndId,
+        erroMsg: null
+      }
+    });
+    console.log(`[Saque] #${saque.id} concluído — correlationID=${correlationID}`);
+    return atualizado;
+  },
+
+  async marcarFalhou(correlationID, erroMsg = 'Falha no PIX Out') {
+    if (!correlationID) return null;
+    const saque = await prisma.saque.findFirst({ where: { correlationId: correlationID } });
+    if (!saque || saque.status === 'falhou') return saque;
+
+    const atualizado = await prisma.saque.update({
+      where: { id: saque.id },
+      data: {
+        status: 'falhou',
+        erroMsg: String(erroMsg || 'Falha no PIX Out').slice(0, 500)
+      }
+    });
+    console.log(`[Saque] #${saque.id} falhou — ${erroMsg}`);
+    return atualizado;
+  },
+
+  async processarEventoWoovi(body) {
+    const event = String(body?.event || body?.type || '').toUpperCase();
+    const WooviService = require('./wooviService');
+    const correlationID = WooviService.extrairCorrelationMovimento(body);
+    if (!correlationID) {
+      console.warn('[Saque] Webhook movimento sem correlationID');
+      return null;
+    }
+
+    if (event.includes('MOVEMENT_CONFIRMED')) {
+      return this.marcarConcluido(correlationID, body?.transaction?.endToEndId || null);
+    }
+    if (event.includes('MOVEMENT_FAILED')) {
+      const msg = body?.error?.description || body?.error?.code || 'Falha no PIX Out';
+      return this.marcarFalhou(correlationID, msg);
+    }
+    if (event.includes('MOVEMENT_REMOVED')) {
+      return this.marcarFalhou(correlationID, 'Pagamento cancelado/removido');
+    }
+    return null;
+  },
+
+  async sincronizarPendentes() {
+    const WooviService = require('./wooviService');
+    if (!WooviService.isPlatformConfigured()) return 0;
+
+    const pendentes = await prisma.saque.findMany({
+      where: { status: 'processando' },
+      orderBy: { createdAt: 'asc' },
+      take: 30
+    });
+    if (!pendentes.length) return 0;
+
+    let atualizados = 0;
+
+    for (const saque of pendentes) {
+      try {
+        if (saque.correlationId) {
+          const data = await WooviService.consultarPagamento(saque.correlationId);
+          const payment = data?.payment || data;
+          const st = payment?.status;
+          if (this._statusPagamentoConfirmado(st)) {
+            await this.marcarConcluido(saque.correlationId, data?.transaction?.endToEndId);
+            atualizados++;
+            continue;
+          }
+          if (this._statusPagamentoFalhou(st)) {
+            await this.marcarFalhou(saque.correlationId, 'PIX Out rejeitado pela Woovi');
+            atualizados++;
+          }
+          continue;
+        }
+
+        // Saque antigo sem correlationID — tenta casar por valor e horário
+        const valorCentavos = Math.round(saque.valorLiquido * 100);
+        const pagamentos = await WooviService.listarPagamentos(50);
+        const criado = saque.createdAt.getTime();
+        const match = pagamentos.find((row) => {
+          const p = row?.payment || row;
+          if (!p?.correlationID) return false;
+          const pv = Number(p.value || 0);
+          if (pv !== valorCentavos) return false;
+          const t = p.createdAt || p.time || p.updatedAt;
+          if (!t) return true;
+          const diff = Math.abs(new Date(t).getTime() - criado);
+          return diff < 6 * 60 * 60 * 1000;
+        });
+
+        if (!match) continue;
+
+        const p = match.payment || match;
+        await prisma.saque.update({
+          where: { id: saque.id },
+          data: { correlationId: p.correlationID }
+        });
+
+        if (this._statusPagamentoConfirmado(p.status)) {
+          await this.marcarConcluido(p.correlationID, match?.transaction?.endToEndId);
+          atualizados++;
+        } else if (this._statusPagamentoFalhou(p.status)) {
+          await this.marcarFalhou(p.correlationID, 'PIX Out rejeitado pela Woovi');
+          atualizados++;
+        }
+      } catch (err) {
+        console.error(`[SyncSaque] #${saque.id}:`, err.message);
+      }
+    }
+
+    if (atualizados > 0) {
+      console.log(`[SyncSaque] ${atualizados} saque(s) atualizado(s).`);
+    }
+    return atualizados;
+  },
+
   async processarSaque(tenant, saldoDisponivel, adminUsuario, valorBruto = null) {
     const MercadoPagoOAuthService = require('./mercadoPagoOAuthService');
     if (MercadoPagoOAuthService.isSplitConfigured() && MercadoPagoOAuthService.isTenantConnected(tenant)) {
@@ -109,7 +245,7 @@ const SaqueService = {
       }
       const tx = await WooviService.sacarSubconta(tenant, resumo.valorLiquido);
       const statusPix = String(tx?.status || 'CREATED').toUpperCase();
-      const statusDb = ['COMPLETED', 'CONFIRMED', 'SUCCESS'].includes(statusPix) ? 'concluido' : 'processando';
+      const statusDb = this._statusPagamentoConfirmado(statusPix) ? 'concluido' : 'processando';
 
       const saque = await prisma.saque.create({
         data: {
@@ -117,7 +253,9 @@ const SaqueService = {
           valorBruto: resumo.valorBruto,
           taxa: resumo.taxa,
           valorLiquido: resumo.valorLiquido,
-          status: statusDb
+          status: statusDb,
+          correlationId: tx?.correlationID || null,
+          endToEndId: tx?.endToEndId || null
         }
       });
 

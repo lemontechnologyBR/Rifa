@@ -46,16 +46,20 @@ model Tenant {
 }
 
 model Saque {
-  id           Int      @id @default(autoincrement())
-  tenantId     Int      @map("tenant_id")
-  valorBruto   Float    @map("valor_bruto")
-  taxa         Float    @default(0)
-  valorLiquido Float    @map("valor_liquido")
-  status       String   @default("solicitado")
-  createdAt    DateTime @default(now()) @map("created_at")
+  id            Int      @id @default(autoincrement())
+  tenantId      Int      @map("tenant_id")
+  valorBruto    Float    @map("valor_bruto")
+  taxa          Float    @default(0)
+  valorLiquido  Float    @map("valor_liquido")
+  status        String   @default("solicitado")
+  correlationId String?  @map("correlation_id")
+  endToEndId    String?  @map("end_to_end_id")
+  erroMsg       String?  @map("erro_msg")
+  createdAt     DateTime @default(now()) @map("created_at")
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
+  @@index([correlationId])
   @@map("saques")
 }
 

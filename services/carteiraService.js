@@ -16,7 +16,7 @@ const CarteiraService = {
     const agg = await prisma.saque.aggregate({
       where: {
         tenantId: Number(tenantId),
-        status: { in: ['solicitado', 'concluido'] }
+        status: { in: ['solicitado', 'processando', 'concluido'] }
       },
       _sum: { valorBruto: true }
     });

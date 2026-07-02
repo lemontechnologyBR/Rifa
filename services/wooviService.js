@@ -184,6 +184,36 @@ const WooviService = {
     return charge?.correlationID || payload?.correlationID || null;
   },
 
+  /** Consulta status de um Pix Out (saque) pelo correlationID. */
+  async consultarPagamento(correlationID) {
+    if (!this.isPlatformConfigured() || !correlationID) return null;
+    try {
+      return await this._request(`/payment/${encodeURIComponent(correlationID)}`);
+    } catch (err) {
+      console.error(`[Woovi] consultarPagamento(${correlationID}):`, err.message);
+      return null;
+    }
+  },
+
+  /** Lista pagamentos recentes (Pix Out) para reconciliação. */
+  async listarPagamentos(limit = 30) {
+    if (!this.isPlatformConfigured()) return [];
+    try {
+      const data = await this._request(`/payment?limit=${Math.min(limit, 100)}`);
+      const rows = data?.payments || data?.payment || [];
+      return Array.isArray(rows) ? rows : [rows].filter(Boolean);
+    } catch (err) {
+      console.error('[Woovi] listarPagamentos:', err.message);
+      return [];
+    }
+  },
+
+  extrairCorrelationMovimento(payload) {
+    return payload?.payment?.correlationID
+      || payload?.transaction?.correlationID
+      || null;
+  },
+
   /** Consulta status de uma cobrança na API Woovi. Retorna 'COMPLETED', 'ACTIVE', 'EXPIRED', etc. */
   async consultarStatus(correlationID) {
     if (!this.isPlatformConfigured()) return null;

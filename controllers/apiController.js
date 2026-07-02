@@ -228,16 +228,26 @@ const apiController = {
     res.json({ ok: true });
     try {
       const WooviService = require('../services/wooviService');
-      const event = req.body?.event || req.body?.type || '';
-      const correlationID = WooviService.extrairCorrelationId(req.body);
-      console.log(`[Webhook Woovi] evento="${event}" correlationID="${correlationID}" body=${JSON.stringify(req.body).slice(0, 300)}`);
+      const SaqueService = require('../services/saqueService');
+      const event = String(req.body?.event || req.body?.type || '');
+      console.log(`[Webhook Woovi] evento="${event}" body=${JSON.stringify(req.body).slice(0, 300)}`);
 
-      const eventosConfirmacao = ['OPENPIX:CHARGE_COMPLETED', 'OPENPIX:CHARGE_COMPLETED_NOT_SAME_CUSTOMER_PAYER', 'charge.completed'];
-      if (event && !eventosConfirmacao.some(e => event.toUpperCase().includes(e.split(':').pop()))) {
+      if (event.toUpperCase().includes('MOVEMENT_')) {
+        await SaqueService.processarEventoWoovi(req.body);
+        return;
+      }
+
+      const eventosConfirmacao = [
+        'OPENPIX:CHARGE_COMPLETED',
+        'OPENPIX:CHARGE_COMPLETED_NOT_SAME_CUSTOMER_PAYER',
+        'charge.completed'
+      ];
+      if (event && !eventosConfirmacao.some((e) => event.toUpperCase().includes(e.split(':').pop()))) {
         console.log(`[Webhook Woovi] evento ignorado: ${event}`);
         return;
       }
 
+      const correlationID = WooviService.extrairCorrelationId(req.body);
       if (!correlationID) {
         console.warn('[Webhook Woovi] Payload sem correlationID:', JSON.stringify(req.body).slice(0, 200));
         return;
@@ -246,7 +256,7 @@ const apiController = {
       console.log(`[Webhook Woovi] Reserva #${reserva.id} confirmada via correlationID=${correlationID}`);
     } catch (err) {
       if (!err.message.includes('não encontrada') && !err.message.includes('confirmado')) {
-        console.error('[Webhook Woovi] Erro ao confirmar:', err.message);
+        console.error('[Webhook Woovi] Erro:', err.message);
       }
     }
   },

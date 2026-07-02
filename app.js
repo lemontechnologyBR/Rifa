@@ -223,6 +223,7 @@ async function bootstrap() {
   }, 60 * 1000);
 
   require('./jobs/syncPagamentos').iniciar();
+  require('./jobs/syncSaques').iniciar();
 
   AnalyticsService.limparAntigos().catch((err) => console.error('[Analytics] Limpeza:', err.message));
   setInterval(() => {

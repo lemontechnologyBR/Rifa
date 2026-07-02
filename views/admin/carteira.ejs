@@ -337,7 +337,12 @@
               <td class="py-3 pr-4 font-medium">R$ <%= s.valorBruto.toFixed(2).replace('.', ',') %></td>
               <td class="py-3 pr-4 text-gray-500"><%= s.taxa > 0 ? 'R$ ' + s.taxa.toFixed(2).replace('.', ',') : '—' %></td>
               <td class="py-3 pr-4 font-semibold text-emerald-600">R$ <%= s.valorLiquido.toFixed(2).replace('.', ',') %></td>
-              <td class="py-3"><span class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold <%= stClass %>"><%= stLabel %></span></td>
+              <td class="py-3">
+                <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold <%= stClass %>"><%= stLabel %></span>
+                <% if (st === 'falhou' && s.erroMsg) { %>
+                <p class="text-xs text-red-500 mt-1 max-w-[180px]" title="<%= s.erroMsg %>"><%= s.erroMsg %></p>
+                <% } %>
+              </td>
             </tr>
             <% }); %>
           </tbody>
