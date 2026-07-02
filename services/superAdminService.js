@@ -168,7 +168,7 @@ const SuperAdminService = {
         by: ['tenantId'],
         where: {
           tenantId: { in: tenantIds },
-          status: { in: ['solicitado', 'concluido'] }
+          status: { in: ['solicitado', 'processando', 'concluido'] }
         },
         _sum: { valorBruto: true }
       });
