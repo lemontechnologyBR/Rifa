@@ -1,68 +1,77 @@
 <%- include('partials/page-start') %>
 <%- include('partials/alerts') %>
 
-<div class="super-grid super-grid--single">
-  <section class="super-panel">
+<div class="super-grid super-grid--marketing">
+  <section class="super-panel super-panel--stack">
     <div class="super-panel-head">
       <div>
         <h2 class="super-panel-title">Google Ads — Tag de conversão</h2>
-        <p class="super-panel-sub">Configure o ID da tag para medir tráfego pago nas páginas públicas (landing, cadastro e lojas dos organizadores). Não é inserida no painel admin.</p>
+        <p class="super-panel-sub">Configure o ID da tag para medir tráfego pago nas páginas públicas. Não é inserida no painel admin.</p>
       </div>
     </div>
 
-    <form method="POST" action="/super/marketing" class="super-form-stack" style="max-width:640px;">
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="super-panel-body">
+      <form method="POST" action="/super/marketing" class="super-form-stack">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
-      <label class="super-field">
-        <span class="super-field-label">Tag ativa</span>
-        <label class="super-check" style="display:flex;align-items:center;gap:10px;margin-top:6px;">
-          <input type="checkbox" name="google_ads_enabled" value="on" <%= googleAdsEnabled ? 'checked' : '' %>>
-          <span>Injetar tag nas páginas públicas</span>
-        </label>
-      </label>
+        <div class="super-field">
+          <span class="super-field-label">Tag ativa</span>
+          <label class="super-check-row">
+            <input type="checkbox" name="google_ads_enabled" value="on" <%= googleAdsEnabled ? 'checked' : '' %>>
+            <span>Injetar tag nas páginas públicas</span>
+          </label>
+        </div>
 
-      <label class="super-field">
-        <span class="super-field-label">ID da tag Google Ads</span>
-        <input
-          type="text"
-          name="google_ads_tag"
-          class="super-input"
-          value="<%= googleAdsTagId %>"
-          placeholder="AW-18290467577"
-          autocomplete="off"
-          spellcheck="false"
-        >
-        <span class="super-field-hint">Cole o snippet completo ou apenas o ID (ex.: <code>AW-18290467577</code>). Você pode trocar quando criar uma nova campanha.</span>
-      </label>
+        <div class="super-field">
+          <label class="super-field-label" for="google_ads_tag">ID da tag Google Ads</label>
+          <input
+            type="text"
+            id="google_ads_tag"
+            name="google_ads_tag"
+            class="super-input"
+            value="<%= googleAdsTagId %>"
+            placeholder="AW-18290467577"
+            autocomplete="off"
+            spellcheck="false"
+          >
+          <p class="super-field-hint">Cole o snippet completo ou apenas o ID (ex.: <code>AW-18290467577</code>). Você pode trocar quando criar uma nova campanha.</p>
+        </div>
 
-      <div class="super-form-actions">
-        <button type="submit" class="super-btn super-btn--primary">Salvar tag</button>
-      </div>
-    </form>
+        <div class="super-form-actions">
+          <button type="submit" class="super-btn super-btn--primary">Salvar tag</button>
+        </div>
+      </form>
+    </div>
   </section>
 
-  <section class="super-panel">
+  <section class="super-panel super-panel--stack">
     <div class="super-panel-head">
       <div>
         <h2 class="super-panel-title">Onde a tag aparece</h2>
         <p class="super-panel-sub">Páginas indexáveis e públicas</p>
       </div>
     </div>
-    <ul class="super-list-plain" style="margin:0;padding-left:1.1rem;color:var(--super-muted,#94a3b8);font-size:14px;line-height:1.8;">
-      <li>Landing <code>/</code> e cadastro <code>/cadastro</code></li>
-      <li>Lojas dos organizadores <code>/{slug}/</code></li>
-      <li>Páginas de rifas, encerradas e como funciona</li>
-      <li><strong>Não</strong> aparece em <code>/super</code>, <code>/{slug}/admin</code> nem comprovantes</li>
-    </ul>
-    <% if (googleAdsEnabled && googleAdsTagId) { %>
-    <p class="super-alert super-alert--ok" style="margin-top:16px;">
-      Tag ativa: <strong><%= googleAdsTagId %></strong>
-    </p>
-    <% } else if (googleAdsTagId) { %>
-    <p class="super-alert" style="margin-top:16px;background:rgba(245,158,11,.12);color:#fbbf24;">
-      Tag salva mas <strong>desativada</strong> — marque “Tag ativa” para publicar.
-    </p>
-    <% } %>
+
+    <div class="super-panel-body super-panel-body--grow">
+      <ul class="super-info-list">
+        <li>Landing <code>/</code> e cadastro <code>/cadastro</code></li>
+        <li>Lojas dos organizadores <code>/{slug}/</code></li>
+        <li>Páginas de rifas, encerradas e como funciona</li>
+        <li class="super-info-list__muted"><strong>Não</strong> aparece em <code>/super</code>, <code>/{slug}/admin</code> nem comprovantes</li>
+      </ul>
+
+      <% if (googleAdsEnabled && googleAdsTagId) { %>
+      <div class="super-marketing-status super-alert super-alert--ok">
+        <i data-lucide="check-circle" class="w-4 h-4"></i>
+        <span>Tag ativa: <strong><%= googleAdsTagId %></strong></span>
+      </div>
+      <% } else if (googleAdsTagId) { %>
+      <div class="super-marketing-status super-alert super-alert--warn">
+        <i data-lucide="alert-circle" class="w-4 h-4"></i>
+        <span>Tag salva mas <strong>desativada</strong> — marque “Tag ativa” para publicar.</span>
+      </div>
+      <% } %>
+    </div>
   </section>
 </div>
 
