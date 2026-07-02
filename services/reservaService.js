@@ -13,8 +13,10 @@ const {
   templateReservaCriada,
   templatePagamentoConfirmado,
   templateReservaExpirada,
-  templateVendaOrganizador
+  templateVendaOrganizador,
+  templateNovaCompraOrganizador
 } = require('../lib/emailTemplates');
+const { notificarOrganizadores } = require('../lib/organizadorEmail');
 
 const ReservaService = {
   async expirarSeNecessario(reservaId) {
@@ -232,19 +234,35 @@ const ReservaService = {
           qrCodeUrl = `https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=${encodeURIComponent(copiaCola)}`;
         }
 
+        const numeros = reserva.numeros || [];
+        const tenantSlug = reserva.rifa.tenant.slug;
+
         await enviarEmail({
           para: reserva.usuario.email,
           assunto: `Pague sua reserva na rifa "${reserva.rifa.titulo}" 🎟️`,
           html: templateReservaCriada({
             usuario: reserva.usuario,
             rifa: reserva.rifa,
-            reserva: { ...reserva, numeros: reserva.numeros || [] },
+            reserva: { ...reserva, numeros },
             copiaCola,
             qrCodeUrl,
             expiraEm: reserva.expiraEm,
-            tenantSlug: reserva.rifa.tenant.slug
+            tenantSlug
           }),
-          texto: `Olá ${reserva.usuario.nome}!\n\nReserva #${reserva.id} criada.\nRifa: ${reserva.rifa.titulo}\nValor: R$ ${reserva.valorTotal.toFixed(2)}\n\nPIX Copia e Cola:\n${copiaCola || 'Disponível no comprovante'}\n\nAcesse: ${process.env.APP_URL}/${reserva.rifa.tenant.slug}/comprovante/${reserva.id}`
+          texto: `Olá ${reserva.usuario.nome}!\n\nReserva #${reserva.id} criada.\nRifa: ${reserva.rifa.titulo}\nValor: R$ ${reserva.valorTotal.toFixed(2)}\n\nPIX Copia e Cola:\n${copiaCola || 'Disponível no comprovante'}\n\nAcesse: ${process.env.APP_URL}/${tenantSlug}/comprovante/${reserva.id}`
+        });
+
+        await notificarOrganizadores(reserva.rifa.tenantId, {
+          assunto: `Nova compra — ${reserva.rifa.titulo} (aguardando PIX)`,
+          html: templateNovaCompraOrganizador({
+            rifa: reserva.rifa,
+            reserva,
+            usuario: reserva.usuario,
+            numeros,
+            tenantSlug,
+            expiraEm: reserva.expiraEm
+          }),
+          texto: `Nova compra na rifa "${reserva.rifa.titulo}" — Comprador: ${reserva.usuario.nome} — ${numeros.length} cota(s) — R$ ${reserva.valorTotal.toFixed(2).replace('.', ',')} — Aguardando pagamento PIX`
         });
       } catch (e) {
         console.error('[Email] Falha ao enviar email de pagamento:', e.message);

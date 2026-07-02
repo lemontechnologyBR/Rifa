@@ -127,6 +127,21 @@ const platformController = {
       req.session.tenantSlug = tenant.slug;
       req.session.organizadorNome = organizador.nome;
 
+      setImmediate(async () => {
+        try {
+          const { enviarEmail } = require('../lib/emailService');
+          const { templateBoasVindas } = require('../lib/emailTemplates');
+          await enviarEmail({
+            para: organizador.email,
+            assunto: 'Bem-vindo à VouRifar! 🎉',
+            html: templateBoasVindas({ organizador, tenantSlug: tenant.slug }),
+            texto: `Olá ${organizador.nome}! Sua conta na VouRifar foi criada. Acesse seu painel em ${process.env.APP_URL || 'https://vourifar.com.br'}/${tenant.slug}/admin`
+          });
+        } catch (e) {
+          console.error('[Email] Falha ao enviar boas-vindas:', e.message);
+        }
+      });
+
       res.redirect(`/${tenant.slug}/admin/carteira?onboarding=1`);
     } catch (err) {
       const appUrl = res.locals.baseUrl || process.env.APP_URL || '';

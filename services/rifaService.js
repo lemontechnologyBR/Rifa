@@ -159,6 +159,30 @@ const RifaService = {
 
     const LogService = require('./logService');
     await LogService.registrar(adminUsuario, 'criar_rifa', `Rifa #${rifa.id}: ${titulo}`, tenantId);
+
+    setImmediate(async () => {
+      try {
+        const { notificarOrganizadores } = require('../lib/organizadorEmail');
+        const { templateRifaCriada } = require('../lib/emailTemplates');
+        const orgs = await prisma.organizador.findMany({
+          where: { tenantId: Number(tenantId) },
+          select: { email: true, nome: true }
+        });
+        for (const org of orgs) {
+          if (!org.email) continue;
+          const { enviarEmail } = require('../lib/emailService');
+          await enviarEmail({
+            para: org.email,
+            assunto: `Rifa criada: ${titulo} 🎟️`,
+            html: templateRifaCriada({ organizador: org, rifa, tenantSlug: tenant.slug }),
+            texto: `Olá ${org.nome}! Sua rifa "${titulo}" foi criada. Acesse: ${process.env.APP_URL || 'https://vourifar.com.br'}/${tenant.slug}/rifas/${rifa.id}`
+          });
+        }
+      } catch (e) {
+        console.error('[Email] Falha ao enviar email de rifa criada:', e.message);
+      }
+    });
+
     return rifa;
   },
 
