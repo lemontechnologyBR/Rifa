@@ -26,7 +26,7 @@ function req(method, path, headers, body) {
   }, body);
   const c = [cookie, ...(post.headers['set-cookie'] || []).map((x) => x.split(';')[0])].join('; ');
 
-  for (const path of ['/super', '/super/sistemas', '/super/rifas', '/super/vendas', '/super/organizadores', '/super/plataforma', '/super/marketing']) {
+  for (const path of ['/super', '/super/sistemas', '/super/rifas', '/super/vendas', '/super/organizadores', '/super/plataforma', '/super/marketing', '/super/analytics']) {
     const r = await req('GET', path, { Cookie: c }, null);
     console.log(path, r.status, r.body.length);
   }

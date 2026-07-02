@@ -1,0 +1,170 @@
+<%- include('partials/page-start') %>
+<%- include('partials/alerts') %>
+
+<div class="super-analytics-toolbar">
+  <p class="super-analytics-toolbar-label">Período</p>
+  <div class="super-analytics-filters">
+    <% [7, 30, 90].forEach(function(d) { %>
+    <a href="/super/analytics?dias=<%= d %>" class="super-analytics-filter <%= dias === d ? 'is-active' : '' %>"><%= d %> dias</a>
+    <% }) %>
+  </div>
+</div>
+
+<section class="super-metrics">
+  <article class="super-metric">
+    <p class="super-metric-label">Pageviews (<%= dias %>d)</p>
+    <p class="super-metric-value"><%= resumo.viewsPeriodo.toLocaleString('pt-BR') %></p>
+    <p class="super-metric-hint">Média <%= resumo.mediaDia.toLocaleString('pt-BR') %>/dia</p>
+  </article>
+  <article class="super-metric">
+    <p class="super-metric-label">Visitantes únicos</p>
+    <p class="super-metric-value"><%= resumo.unicosPeriodo.toLocaleString('pt-BR') %></p>
+    <p class="super-metric-hint">Cookie 30 dias</p>
+  </article>
+  <article class="super-metric">
+    <p class="super-metric-label">Hoje</p>
+    <p class="super-metric-value"><%= resumo.viewsHoje.toLocaleString('pt-BR') %></p>
+    <p class="super-metric-hint">
+      <%= resumo.unicosHoje %> únicos
+      <% if (resumo.variacaoViews !== 0) { %>
+        · <span class="<%= resumo.variacaoViews >= 0 ? 'super-trend-up' : 'super-trend-down' %>">
+          <%= resumo.variacaoViews > 0 ? '+' : '' %><%= resumo.variacaoViews %>% vs ontem
+        </span>
+      <% } %>
+    </p>
+  </article>
+  <article class="super-metric">
+    <p class="super-metric-label">Ontem</p>
+    <p class="super-metric-value"><%= resumo.viewsOntem.toLocaleString('pt-BR') %></p>
+    <p class="super-metric-hint">Comparativo diário</p>
+  </article>
+</section>
+
+<div class="super-grid super-grid--single">
+  <section class="super-panel super-panel--wide">
+    <div class="super-panel-head">
+      <div>
+        <h2 class="super-panel-title">Visitas por dia</h2>
+        <p class="super-panel-sub">Pageviews nos últimos <%= dias %> dias</p>
+      </div>
+    </div>
+    <div class="super-panel-body">
+      <% if (serie.every(function(s) { return s.views === 0; })) { %>
+      <p class="super-analytics-empty">Nenhum acesso registrado ainda. Os dados aparecem quando visitantes acessam páginas públicas.</p>
+      <% } else { %>
+      <div class="super-chart" role="img" aria-label="Gráfico de visitas por dia">
+        <% serie.forEach(function(s) { %>
+        <div class="super-chart-col" title="<%= s.label %>: <%= s.views %> views, <%= s.unicos %> únicos">
+          <div class="super-chart-bar-wrap">
+            <div class="super-chart-bar" style="height:<%= Math.max(s.pct, s.views > 0 ? 4 : 0) %>%"></div>
+          </div>
+          <span class="super-chart-label"><%= s.label %></span>
+          <span class="super-chart-value"><%= s.views %></span>
+        </div>
+        <% }) %>
+      </div>
+      <% } %>
+    </div>
+  </section>
+</div>
+
+<div class="super-grid super-grid--analytics">
+  <section class="super-panel">
+    <div class="super-panel-head">
+      <div><h2 class="super-panel-title">Páginas mais acessadas</h2></div>
+    </div>
+    <div class="super-panel-body super-panel-body--flush">
+      <% if (!topPaginas.length) { %>
+      <p class="super-analytics-empty">Sem dados no período.</p>
+      <% } else { %>
+      <table class="super-table super-table--compact">
+        <thead><tr><th>Página</th><th>Views</th></tr></thead>
+        <tbody>
+          <% topPaginas.forEach(function(p) { %>
+          <tr>
+            <td><code class="super-path"><%= p.path %></code></td>
+            <td><strong><%= p.views.toLocaleString('pt-BR') %></strong></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <% } %>
+    </div>
+  </section>
+
+  <section class="super-panel">
+    <div class="super-panel-head">
+      <div><h2 class="super-panel-title">Origem do tráfego</h2></div>
+    </div>
+    <div class="super-panel-body">
+      <% if (!topFontes.length) { %>
+      <p class="super-analytics-empty">Sem dados no período.</p>
+      <% } else { %>
+      <ul class="super-analytics-bars">
+        <% const maxFonte = topFontes[0].views || 1; %>
+        <% topFontes.forEach(function(f) { %>
+        <li>
+          <div class="super-analytics-bar-head">
+            <span><%= f.source === 'google' ? 'Google (orgânico/pago)' : (f.source === 'social' ? 'Redes sociais' : (f.source === 'direct' ? 'Direto' : f.source)) %></span>
+            <strong><%= f.views.toLocaleString('pt-BR') %></strong>
+          </div>
+          <div class="super-analytics-bar-track"><div class="super-analytics-bar-fill" style="width:<%= Math.round((f.views / maxFonte) * 100) %>%"></div></div>
+        </li>
+        <% }) %>
+      </ul>
+      <% } %>
+    </div>
+  </section>
+</div>
+
+<div class="super-grid super-grid--analytics">
+  <section class="super-panel">
+    <div class="super-panel-head">
+      <div><h2 class="super-panel-title">Lojas mais visitadas</h2></div>
+    </div>
+    <div class="super-panel-body super-panel-body--flush">
+      <% if (!topTenants.length) { %>
+      <p class="super-analytics-empty">Sem tráfego em lojas de organizadores.</p>
+      <% } else { %>
+      <table class="super-table super-table--compact">
+        <thead><tr><th>Sistema</th><th>Views</th></tr></thead>
+        <tbody>
+          <% topTenants.forEach(function(t) { %>
+          <tr>
+            <td><a href="/<%= t.slug %>/" target="_blank" rel="noopener" class="super-action-link">/<%= t.slug %>/</a></td>
+            <td><strong><%= t.views.toLocaleString('pt-BR') %></strong></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <% } %>
+    </div>
+  </section>
+
+  <section class="super-panel">
+    <div class="super-panel-head">
+      <div><h2 class="super-panel-title">Dispositivos</h2></div>
+    </div>
+    <div class="super-panel-body">
+      <% if (!dispositivos.length) { %>
+      <p class="super-analytics-empty">Sem dados no período.</p>
+      <% } else { %>
+      <ul class="super-analytics-bars">
+        <% dispositivos.forEach(function(d) { %>
+        <li>
+          <div class="super-analytics-bar-head">
+            <span><%= d.label %></span>
+            <strong><%= d.pct %>%</strong>
+          </div>
+          <div class="super-analytics-bar-track"><div class="super-analytics-bar-fill super-analytics-bar-fill--muted" style="width:<%= d.pct %>%"></div></div>
+        </li>
+        <% }) %>
+      </ul>
+      <% } %>
+    </div>
+  </section>
+</div>
+
+<p class="super-analytics-foot">Dados internos VouRifar · retenção <%= typeof RETENTION_DAYS !== 'undefined' ? RETENTION_DAYS : 90 %> dias · não inclui painéis admin nem bots</p>
+
+<%- include('partials/page-end') %>

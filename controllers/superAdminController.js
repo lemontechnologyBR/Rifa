@@ -6,6 +6,7 @@ const SuperAdminService = require('../services/superAdminService');
 const AuthService = require('../services/authService');
 const PaymentService = require('../services/paymentService');
 const PlatformSettingsService = require('../services/platformSettingsService');
+const AnalyticsService = require('../services/analyticsService');
 
 function fmtMoney(v) {
   return Number(v || 0).toFixed(2).replace('.', ',');
@@ -216,6 +217,18 @@ const superAdminController = {
     } catch (err) {
       res.redirect(`/super/marketing?erro=${encodeURIComponent(err.message)}`);
     }
+  },
+
+  async analytics(req, res) {
+    const dias = parseInt(req.query.dias, 10) || 7;
+    const data = await AnalyticsService.obterDashboard(dias);
+    res.render('super/analytics', renderLocals(req, res, {
+      titulo: 'Analytics',
+      active: 'analytics',
+      RETENTION_DAYS: AnalyticsService.RETENTION_DAYS,
+      dias: data.periodo,
+      ...data
+    }));
   },
 
   async alterarStatus(req, res) {

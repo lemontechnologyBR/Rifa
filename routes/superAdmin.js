@@ -16,6 +16,7 @@ router.get('/organizadores', requireAdmin, superAdminController.organizadores);
 router.get('/plataforma', requireAdmin, superAdminController.plataforma);
 router.get('/marketing', requireAdmin, superAdminController.marketing);
 router.post('/marketing', requireAdmin, superAdminController.salvarMarketing);
+router.get('/analytics', requireAdmin, superAdminController.analytics);
 router.post('/tenants/:id/status', requireAdmin, superAdminController.alterarStatus);
 
 module.exports = router;

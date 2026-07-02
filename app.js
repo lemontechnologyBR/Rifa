@@ -188,6 +188,7 @@ app.use(async (req, res, next) => {
 app.use(csrfToken);
 app.use(carregarUsuario);
 app.use(validarCSRF);
+app.use(require('./middleware/trackPageView'));
 
 // Páginas de admin/super são noindex
 app.use(['/super', '/:slug/admin'], (req, res, next) => {
@@ -215,12 +216,18 @@ async function bootstrap() {
   await AuthService.garantirAdminPadrao();
 
   const ReservaService = require('./services/reservaService');
+  const AnalyticsService = require('./services/analyticsService');
   const { TEMPO_RESERVA_MIN } = require('./lib/reservaConfig');
   setInterval(() => {
     ReservaService.limparExpiradas().catch((err) => console.error('Limpeza reservas expiradas:', err.message));
   }, 60 * 1000);
 
   require('./jobs/syncPagamentos').iniciar();
+
+  AnalyticsService.limparAntigos().catch((err) => console.error('[Analytics] Limpeza:', err.message));
+  setInterval(() => {
+    AnalyticsService.limparAntigos().catch((err) => console.error('[Analytics] Limpeza:', err.message));
+  }, 24 * 60 * 60 * 1000);
 
   app.listen(PORT, () => {
     console.log('');

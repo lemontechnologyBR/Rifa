@@ -257,3 +257,24 @@ model PlatformSetting {
 
   @@map("platform_settings")
 }
+
+model PageView {
+  id          Int      @id @default(autoincrement())
+  path        String
+  tenantSlug  String?  @map("tenant_slug")
+  visitorId   String   @map("visitor_id")
+  referrer    String?
+  source      String?
+  device      String   @default("desktop")
+  utmSource   String?  @map("utm_source")
+  utmMedium   String?  @map("utm_medium")
+  utmCampaign String?  @map("utm_campaign")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@index([path])
+  @@index([tenantSlug])
+  @@index([visitorId])
+  @@index([source])
+  @@map("page_views")
+}
