@@ -10,6 +10,7 @@ const {
   SAQUE_MINIMO
 } = require('../lib/config');
 
+const SaqueService = {
   calcularResumo(saldoDisponivel) {
     const saldo = Math.max(0, Number(saldoDisponivel) || 0);
     const saqueGratis = saldo >= SAQUE_GRATIS_MIN;
