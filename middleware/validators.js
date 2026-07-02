@@ -73,6 +73,16 @@ const validarWebhook = [
   body('codigo_pagamento').notEmpty().withMessage('codigo_pagamento obrigatório.')
 ];
 
+const validarSaque = [
+  body('valor')
+    .notEmpty().withMessage('Informe o valor do saque.')
+    .custom((val) => {
+      const n = Number(String(val).replace(',', '.'));
+      if (!Number.isFinite(n) || n <= 0) throw new Error('Valor de saque inválido.');
+      return true;
+    })
+];
+
 const validarBuscaRifas = [
   query('status').optional().isIn(['ativa', 'finalizada', 'cancelada']),
   query('page').optional().isInt({ min: 1 }),
@@ -90,5 +100,6 @@ module.exports = {
   validarReservar,
   validarComentario,
   validarWebhook,
+  validarSaque,
   validarBuscaRifas
 };

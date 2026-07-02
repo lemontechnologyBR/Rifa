@@ -230,26 +230,36 @@ const WooviService = {
   },
 
   /**
-   * Solicita saque integral da subconta do organizador para a chave PIX cadastrada.
+   * Solicita saque da subconta do organizador para a chave PIX cadastrada.
+   * Com valorReais informado, saca parcialmente (centavos na API Woovi).
    * Endpoint: POST /subaccount/{pixKey}/withdraw
-   * Retorna os dados da transação ou lança erro com mensagem amigável.
    */
-  async sacarSubconta(tenant) {
+  async sacarSubconta(tenant, valorReais = null) {
     if (!this.isConfigured(tenant)) {
       throw new Error('Configure sua chave PIX antes de solicitar o saque.');
     }
 
     const pixKey = encodeURIComponent(tenant.pixChave);
+    const body = {};
+    if (valorReais != null && valorReais !== '') {
+      const valueCents = Math.round(Number(valorReais) * 100);
+      if (valueCents < 1) {
+        throw new Error('Valor de saque inválido.');
+      }
+      body.value = valueCents;
+    }
+
     try {
       const data = await this._request(`/subaccount/${pixKey}/withdraw`, {
         method: 'POST',
-        body: JSON.stringify({})
+        body: JSON.stringify(body)
       });
       const tx = data?.transaction || data;
-      console.log(`[Woovi] Saque subconta ${tenant.pixChave}: status=${tx?.status}, valor=${tx?.value}`);
+      const valorCentavos = tx?.value || body.value || 0;
+      console.log(`[Woovi] Saque subconta ${tenant.pixChave}: status=${tx?.status}, valor=${valorCentavos}`);
       return {
         status: tx?.status || 'CREATED',
-        value: tx?.value || 0,
+        value: valorCentavos,
         correlationID: tx?.correlationID || null
       };
     } catch (err) {

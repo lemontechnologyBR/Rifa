@@ -24,18 +24,70 @@ const SaqueService = {
       taxa,
       podeSacar,
       saldoLiquido,
+      valorBruto: podeSacar ? saldo : 0,
+      valorLiquido: podeSacar ? saldoLiquido : 0,
       saqueGratisMin: SAQUE_GRATIS_MIN,
       saqueMinimo: SAQUE_MINIMO
     };
   },
 
-  async processarSaque(tenant, saldoDisponivel, adminUsuario) {
+  calcularResumoValor(saldoDisponivel, valorBruto) {
+    const saldo = Math.max(0, Number(saldoDisponivel) || 0);
+    const valor = Math.round(Number(valorBruto) * 100) / 100;
+    const saqueGratis = saldo >= SAQUE_GRATIS_MIN;
+    const taxa = saqueGratis ? 0 : TAXA_SAQUE;
+    const podeSacar = saldo >= SAQUE_MINIMO;
+
+    if (!podeSacar) {
+      throw new Error(
+        `Saldo insuficiente. Mínimo para saque: R$ ${SAQUE_MINIMO.toFixed(2).replace('.', ',')}. ` +
+        `Disponível: R$ ${saldo.toFixed(2).replace('.', ',')}.`
+      );
+    }
+    if (valor < SAQUE_MINIMO) {
+      throw new Error(`Valor mínimo por saque: R$ ${SAQUE_MINIMO.toFixed(2).replace('.', ',')}.`);
+    }
+    if (valor > saldo + 0.009) {
+      throw new Error(
+        `Valor acima do saldo disponível (R$ ${saldo.toFixed(2).replace('.', ',')}).`
+      );
+    }
+    if (taxa > 0 && valor <= taxa) {
+      throw new Error('Valor insuficiente para cobrir a taxa de saque.');
+    }
+
+    const valorLiquido = Math.round((valor - taxa) * 100) / 100;
+
+    return {
+      saldoDisponivel: saldo,
+      valorBruto: valor,
+      saqueGratis,
+      taxa,
+      podeSacar,
+      valorLiquido,
+      saldoLiquido: valorLiquido,
+      saqueGratisMin: SAQUE_GRATIS_MIN,
+      saqueMinimo: SAQUE_MINIMO
+    };
+  },
+
+  async listarPorTenant(tenantId, limit = 20) {
+    return prisma.saque.findMany({
+      where: { tenantId: Number(tenantId) },
+      orderBy: { createdAt: 'desc' },
+      take: Math.min(Math.max(Number(limit) || 20, 1), 100)
+    });
+  },
+
+  async processarSaque(tenant, saldoDisponivel, adminUsuario, valorBruto = null) {
     const MercadoPagoOAuthService = require('./mercadoPagoOAuthService');
     if (MercadoPagoOAuthService.isSplitConfigured() && MercadoPagoOAuthService.isTenantConnected(tenant)) {
       throw new Error('Com Mercado Pago conectado, os pagamentos caem direto na sua conta — não é necessário sacar.');
     }
 
-    const resumo = this.calcularResumo(saldoDisponivel);
+    const resumo = valorBruto != null && valorBruto !== ''
+      ? this.calcularResumoValor(saldoDisponivel, valorBruto)
+      : this.calcularResumo(saldoDisponivel);
 
     if (!resumo.podeSacar) {
       throw new Error(
@@ -44,7 +96,7 @@ const SaqueService = {
       );
     }
 
-    if (resumo.taxa > 0 && resumo.saldoDisponivel <= resumo.taxa) {
+    if (resumo.taxa > 0 && resumo.valorBruto <= resumo.taxa) {
       throw new Error('Saldo insuficiente para cobrir a taxa de saque.');
     }
 
@@ -55,35 +107,48 @@ const SaqueService = {
       if (resumo.taxa > 0) {
         await WooviService.debitarSubconta(tenant, resumo.taxa, 'Taxa de saque VouRifar');
       }
-      const tx = await WooviService.sacarSubconta(tenant);
+      const tx = await WooviService.sacarSubconta(tenant, resumo.valorLiquido);
+      const statusPix = String(tx?.status || 'CREATED').toUpperCase();
+      const statusDb = ['COMPLETED', 'CONFIRMED', 'SUCCESS'].includes(statusPix) ? 'concluido' : 'processando';
+
+      const saque = await prisma.saque.create({
+        data: {
+          tenantId: tenant.id,
+          valorBruto: resumo.valorBruto,
+          taxa: resumo.taxa,
+          valorLiquido: resumo.valorLiquido,
+          status: statusDb
+        }
+      });
+
       await LogService.registrar(
         adminUsuario,
         'saque_carteira',
-        `Saque PIX Woovi — taxa R$ ${resumo.taxa.toFixed(2)}, líquido ~R$ ${resumo.saldoLiquido.toFixed(2)}`,
+        `Saque PIX Woovi #${saque.id} — R$ ${resumo.valorLiquido.toFixed(2)} (taxa R$ ${resumo.taxa.toFixed(2)})`,
         tenant.id
       );
-      return { ...tx, resumo };
+      return { ...tx, saqueId: saque.id, resumo };
     }
 
     const saque = await prisma.saque.create({
       data: {
         tenantId: tenant.id,
-        valorBruto: resumo.saldoDisponivel,
+        valorBruto: resumo.valorBruto,
         taxa: resumo.taxa,
-        valorLiquido: resumo.saldoLiquido,
+        valorLiquido: resumo.valorLiquido,
         status: 'solicitado'
       }
     });
 
     console.log(
-      `[Saque] Tenant #${tenant.id} (${tenant.slug}) — R$ ${resumo.saldoLiquido.toFixed(2)} ` +
+      `[Saque] Tenant #${tenant.id} (${tenant.slug}) — R$ ${resumo.valorLiquido.toFixed(2)} ` +
       `→ PIX ${tenant.pixChave} (saque #${saque.id})`
     );
 
     await LogService.registrar(
       adminUsuario,
       'saque_carteira',
-      `Saque solicitado #${saque.id} — taxa R$ ${resumo.taxa.toFixed(2)}, líquido R$ ${resumo.saldoLiquido.toFixed(2)}`,
+      `Saque solicitado #${saque.id} — taxa R$ ${resumo.taxa.toFixed(2)}, líquido R$ ${resumo.valorLiquido.toFixed(2)}`,
       tenant.id
     );
 

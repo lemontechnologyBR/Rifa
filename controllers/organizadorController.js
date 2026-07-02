@@ -182,6 +182,7 @@ const organizadorController = {
       const resumo = await CarteiraService.obterResumo(req.tenant.id, req.tenant);
       const saldoDisp = resumo.saldoDisponivel;
       const saque = SaqueService.calcularResumo(saldoDisp);
+      const extratoSaques = await SaqueService.listarPorTenant(req.tenant.id);
       const pixTipoDetectado = detectarTipoChavePix(req.tenant.pixChave);
       const pixTipo = req.query.tipo || pixTipoDetectado || 'cpf';
       const mpSplitConfigured = MercadoPagoOAuthService.isSplitConfigured();
@@ -203,6 +204,7 @@ const organizadorController = {
         tenant: req.tenant,
         resumo,
         saque,
+        extratoSaques,
         carteiraOk: PaymentService.isConfigured(req.tenant),
         mpSplitConfigured,
         mpConnected,
@@ -261,22 +263,25 @@ const organizadorController = {
         return res.redirect(`/${req.tenant.slug}/admin/carteira?erro=${encodeURIComponent('Pagamentos caem direto na sua conta Mercado Pago — saque manual não se aplica.')}`);
       }
 
-      const resumoCarteira = await CarteiraService.obterResumo(req.tenant.id);
+      const resumoCarteira = await CarteiraService.obterResumo(req.tenant.id, req.tenant);
       const saldoDisp = resumoCarteira.saldoDisponivel;
+      const valorBruto = Number(String(req.body.valor || '').replace(',', '.'));
 
       const { resumo: saqueResumo } = await SaqueService.processarSaque(
         req.tenant,
         saldoDisp,
-        req.session.organizadorNome || req.session.adminUsuario
+        req.session.organizadorNome || req.session.adminUsuario,
+        valorBruto
       );
 
-      const valorFmt = `R$ ${saqueResumo.saldoLiquido.toFixed(2).replace('.', ',')}`;
+      const valorFmt = `R$ ${saqueResumo.valorLiquido.toFixed(2).replace('.', ',')}`;
       const taxaMsg = saqueResumo.taxa > 0
         ? ` Taxa de saque: R$ ${saqueResumo.taxa.toFixed(2).replace('.', ',')}.`
         : '';
-      const msg = PaymentService.getProvider() === 'mercadopago'
+      const provider = PaymentService.getProvider(req.tenant);
+      const msg = provider === 'mercadopago'
         ? `Saque registrado! Você receberá ${valorFmt} na sua chave PIX em até 1 dia útil.${taxaMsg}`
-        : `Saque solicitado com sucesso! Você receberá ${valorFmt} na sua chave PIX.${taxaMsg}`;
+        : `Saque solicitado com sucesso! Você receberá ${valorFmt} na sua chave PIX em instantes.${taxaMsg}`;
 
       res.redirect(`/${req.tenant.slug}/admin/carteira?msg=${encodeURIComponent(msg)}`);
     } catch (err) {

@@ -9,7 +9,7 @@ const pwaController = require('../controllers/pwaController');
 const { resolveTenant, requireOrganizador, carregarOrganizador } = require('../middleware/tenant');
 const { authLimiter } = require('../middleware/rateLimit');
 const { handleUploadRifaImagem } = require('../middleware/uploadRifaImagem');
-const { validarRifa, validarReservar, validarCompra, validarWebhook, validarComentario } = require('../middleware/validators');
+const { validarRifa, validarReservar, validarCompra, validarWebhook, validarComentario, validarSaque } = require('../middleware/validators');
 const { handleValidation } = require('../middleware/validate');
 
 router.use(resolveTenant);
@@ -72,7 +72,7 @@ admin.get('/carteira/mp/conectar', requireOrganizador, mercadoPagoOAuthControlle
 admin.post('/carteira/mp/desconectar', requireOrganizador, mercadoPagoOAuthController.desconectar);
 admin.get('/carteira', requireOrganizador, organizadorController.carteiraForm);
 admin.post('/carteira', requireOrganizador, organizadorController.salvarCarteira);
-admin.post('/carteira/saque', requireOrganizador, organizadorController.solicitarSaque);
+admin.post('/carteira/saque', requireOrganizador, validarSaque, handleValidation, organizadorController.solicitarSaque);
 admin.get('/config', requireOrganizador, organizadorController.configForm);
 admin.post('/config', requireOrganizador, organizadorController.salvarConfig);
 admin.get('/logs', requireOrganizador, organizadorController.logs);

@@ -157,9 +157,56 @@
       const saldoDisp = saque ? saque.saldoDisponivel : (resumo.saldoDisponivel != null ? resumo.saldoDisponivel : resumo.saldoConfirmado * 0.95);
       const saqueGratis = saque ? saque.saqueGratis : saldoDisp >= 500;
       const podeSacar = saque ? saque.podeSacar : saldoDisp >= 50;
-      const taxaSaque = saque ? saque.taxa : (saqueGratis ? 0 : 3.50);
+      const taxaSaque = saque ? saque.taxa : (saqueGratis ? 0 : (taxaSaqueValor || 5.50));
       const saldoLiquido = saque ? saque.saldoLiquido : (podeSacar ? (saqueGratis ? saldoDisp : saldoDisp - taxaSaque) : 0);
+      const saqueMinimo = saque ? saque.saqueMinimo : 50;
     %>
+    <div
+      x-data="{
+        modalSaque: false,
+        step: 1,
+        enviando: false,
+        saldoDisp: <%= saldoDisp %>,
+        taxaFixa: <%= taxaSaqueValor || 5.50 %>,
+        saqueGratis: <%= saqueGratis ? 'true' : 'false' %>,
+        saqueMinimo: <%= saqueMinimo %>,
+        valor: '<%= saldoDisp.toFixed(2) %>',
+        pixChave: <%- JSON.stringify(tenant.pixChave || '') %>,
+        abrirModal() {
+          this.valor = this.saldoDisp.toFixed(2);
+          this.step = 1;
+          this.enviando = false;
+          this.modalSaque = true;
+          this.$nextTick(() => lucide.createIcons());
+        },
+        fecharModal() {
+          if (this.enviando) return;
+          this.modalSaque = false;
+          this.step = 1;
+        },
+        parseValor() {
+          const n = parseFloat(String(this.valor).replace(',', '.'));
+          return Number.isFinite(n) ? n : 0;
+        },
+        taxaAtual() { return this.saqueGratis ? 0 : this.taxaFixa; },
+        liquido() {
+          return Math.max(0, Math.round((this.parseValor() - this.taxaAtual()) * 100) / 100);
+        },
+        valorValido() {
+          const v = this.parseValor();
+          return v >= this.saqueMinimo
+            && v <= this.saldoDisp + 0.009
+            && (this.taxaAtual() === 0 || v > this.taxaAtual());
+        },
+        fmt(n) { return Number(n).toFixed(2).replace('.', ','); },
+        usarSaldoTotal() { this.valor = this.saldoDisp.toFixed(2); },
+        avancar() {
+          if (!this.valorValido()) return;
+          this.step = 2;
+          this.$nextTick(() => lucide.createIcons());
+        }
+      }"
+      @keydown.escape.window="fecharModal()">
     <div class="admin-panel-card p-5 mb-6 border-l-4 <%= saqueGratis ? 'border-emerald-500' : podeSacar ? 'border-violet-400' : 'border-gray-300 dark:border-gray-700' %>">
       <div class="flex flex-col sm:flex-row sm:items-center gap-4">
         <div class="flex items-start gap-3 flex-1">
@@ -172,7 +219,7 @@
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Saldo acima de R$ 500,00 — <strong>saque sem taxa</strong>. Você receberá R$ <strong><%= saldoDisp.toFixed(2).replace('.', ',') %></strong> na sua chave PIX.</p>
             <% } else if (podeSacar) { %>
               <p class="font-bold text-sm text-violet-800 dark:text-violet-300">💰 Saque disponível — R$ <%= saldoDisp.toFixed(2).replace('.', ',') %></p>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Taxa de saque: <strong>R$ <%= (taxaSaqueValor||5.50).toFixed(2).replace('.', ',') %></strong>. Você receberá <strong>R$ <%= saldoLiquido.toFixed(2).replace('.', ',') %></strong> na sua chave PIX. Saques acima de R$ 500,00 são gratuitos.</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Taxa de saque: <strong>R$ <%= (taxaSaqueValor||5.50).toFixed(2).replace('.', ',') %></strong>. Você receberá <strong>R$ <%= saldoLiquido.toFixed(2).replace('.', ',') %></strong> na chave PIX (saque total). Saques acima de R$ 500,00 são gratuitos.</p>
             <% } else { %>
               <p class="font-bold text-sm text-gray-600 dark:text-gray-400">⏳ Saldo insuficiente para saque</p>
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Mínimo para saque: <strong>R$ 50,00</strong>. Disponível: R$ <%= saldoDisp.toFixed(2).replace('.', ',') %>. Faltam R$ <%= Math.max(0, 50 - saldoDisp).toFixed(2).replace('.', ',') %>.</p>
@@ -180,18 +227,176 @@
           </div>
         </div>
         <% if (podeSacar && tenant.pixChave) { %>
-        <form method="POST" action="<%= adminBase %>/carteira/saque" onsubmit="return confirm('Confirmar saque de R$ <%= saldoLiquido.toFixed(2).replace('.', ',') %> para sua chave PIX?')">
-          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-          <button type="submit"
-            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl <%= saqueGratis ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-violet-600 hover:bg-violet-700' %> text-white text-sm font-bold transition shrink-0 shadow">
-            <i data-lucide="arrow-down-to-line" class="w-4 h-4"></i>
-            Sacar agora
-          </button>
-        </form>
+        <button type="button" @click="abrirModal()"
+          class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl <%= saqueGratis ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-violet-600 hover:bg-violet-700' %> text-white text-sm font-bold transition shrink-0 shadow">
+          <i data-lucide="arrow-down-to-line" class="w-4 h-4"></i>
+          Sacar agora
+        </button>
         <% } else if (!tenant.pixChave && !mpOk) { %>
         <span class="text-xs text-gray-400 shrink-0">Configure a chave PIX para sacar</span>
         <% } %>
       </div>
+    </div>
+
+    <!-- Modal saque: valor → confirmação -->
+    <div x-show="modalSaque" x-cloak class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      <div class="admin-modal-backdrop absolute inset-0" @click="fecharModal()"></div>
+      <div class="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden"
+        x-transition @click.outside="">
+
+        <div class="shrink-0 border-b border-gray-100 dark:border-gray-800 px-6 py-4 flex items-center justify-between">
+          <h3 class="font-bold text-lg flex items-center gap-2">
+            <i data-lucide="arrow-down-to-line" class="w-5 h-5 text-violet-600"></i>
+            <span x-text="step === 1 ? 'Quanto sacar?' : 'Confirmar saque'"></span>
+          </h3>
+          <button type="button" @click="fecharModal()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <!-- Passo 1: valor -->
+        <div x-show="step === 1" class="p-6 space-y-4">
+          <div class="rounded-xl bg-gray-50 dark:bg-slate-800/50 p-3 text-sm">
+            <span class="text-gray-500">Saldo disponível:</span>
+            <strong class="text-violet-600 dark:text-violet-400"> R$ <span x-text="fmt(saldoDisp)"></span></strong>
+          </div>
+
+          <div>
+            <label class="admin-label" for="saque_valor">Valor do saque (R$)</label>
+            <div class="flex gap-2">
+              <input type="text" id="saque_valor" x-model="valor" inputmode="decimal"
+                class="admin-input flex-1" placeholder="0,00" autocomplete="off">
+              <button type="button" @click="usarSaldoTotal()"
+                class="shrink-0 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 text-xs font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
+                Tudo
+              </button>
+            </div>
+            <p class="admin-hint">Mínimo R$ <%= saqueMinimo.toFixed(2).replace('.', ',') %>. Máximo R$ <%= saldoDisp.toFixed(2).replace('.', ',') %>.</p>
+          </div>
+
+          <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-2 text-sm">
+            <div class="flex justify-between">
+              <span class="text-gray-500">Taxa de saque</span>
+              <span class="font-medium" x-text="taxaAtual() > 0 ? 'R$ ' + fmt(taxaAtual()) : 'Grátis'"></span>
+            </div>
+            <div class="flex justify-between border-t border-gray-100 dark:border-gray-800 pt-2">
+              <span class="font-semibold">Você recebe</span>
+              <span class="font-bold text-emerald-600" x-text="'R$ ' + fmt(liquido())"></span>
+            </div>
+          </div>
+
+          <p x-show="!valorValido() && parseValor() > 0" x-cloak class="text-xs text-red-600">
+            Informe um valor entre R$ <%= saqueMinimo.toFixed(2).replace('.', ',') %> e R$ <%= saldoDisp.toFixed(2).replace('.', ',') %><% if (!saqueGratis) { %>, acima da taxa<% } %>.
+          </p>
+
+          <div class="flex gap-3 pt-1">
+            <button type="button" @click="fecharModal()" class="flex-1 py-3 rounded-xl border border-gray-200 dark:border-gray-600 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800">
+              Cancelar
+            </button>
+            <button type="button" @click="avancar()" :disabled="!valorValido()"
+              class="flex-1 py-3 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-bold">
+              Continuar
+            </button>
+          </div>
+        </div>
+
+        <!-- Passo 2: confirmação -->
+        <form x-show="step === 2" method="POST" action="<%= adminBase %>/carteira/saque" class="p-6 space-y-4"
+          @submit="enviando = true">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <input type="hidden" name="valor" :value="parseValor().toFixed(2)">
+
+          <div class="rounded-xl border-2 border-violet-200 dark:border-violet-800/50 bg-violet-50 dark:bg-violet-950/20 p-4 space-y-3 text-sm">
+            <div class="flex justify-between">
+              <span class="text-gray-600 dark:text-gray-400">Valor solicitado</span>
+              <span class="font-semibold" x-text="'R$ ' + fmt(parseValor())"></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600 dark:text-gray-400">Taxa</span>
+              <span class="font-medium" x-text="taxaAtual() > 0 ? 'R$ ' + fmt(taxaAtual()) : 'Grátis'"></span>
+            </div>
+            <div class="flex justify-between border-t border-violet-200 dark:border-violet-800/50 pt-3">
+              <span class="font-bold">Receberá na chave PIX</span>
+              <span class="font-bold text-emerald-600 text-base" x-text="'R$ ' + fmt(liquido())"></span>
+            </div>
+            <div class="pt-2 border-t border-violet-200 dark:border-violet-800/50">
+              <p class="text-xs text-gray-500 mb-1">Chave de destino</p>
+              <p class="text-xs font-mono break-all text-gray-700 dark:text-gray-300"><%= tenant.pixChave %></p>
+            </div>
+          </div>
+
+          <p class="text-xs text-gray-500 flex items-start gap-2">
+            <i data-lucide="info" class="w-4 h-4 shrink-0 mt-0.5"></i>
+            O PIX será enviado pela plataforma VouRifar. Confira se a chave está correta antes de confirmar.
+          </p>
+
+          <div class="flex gap-3 pt-1">
+            <button type="button" @click="step = 1" :disabled="enviando"
+              class="flex-1 py-3 rounded-xl border border-gray-200 dark:border-gray-600 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50">
+              Voltar
+            </button>
+            <button type="submit" :disabled="enviando"
+              class="flex-1 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-bold inline-flex items-center justify-center gap-2">
+              <span x-show="!enviando" class="inline-flex items-center gap-2"><i data-lucide="check" class="w-4 h-4"></i> Confirmar saque</span>
+              <span x-show="enviando" x-cloak>Processando…</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+    </div>
+    <% } %>
+
+    <% if (!mpOk && typeof extratoSaques !== 'undefined' && extratoSaques.length) { %>
+    <div class="admin-panel-card p-5 mb-6">
+      <div class="flex items-center justify-between gap-3 mb-4">
+        <div class="flex items-center gap-2">
+          <i data-lucide="receipt" class="w-5 h-5 text-gray-400"></i>
+          <h2 class="font-bold text-base">Extrato de saques</h2>
+        </div>
+        <% if (resumo.totalSacado > 0) { %>
+        <span class="text-xs text-gray-500">Total sacado: <strong>R$ <%= resumo.totalSacado.toFixed(2).replace('.', ',') %></strong></span>
+        <% } %>
+      </div>
+      <div class="overflow-x-auto -mx-1">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-left text-xs uppercase tracking-wider text-gray-400 border-b border-gray-100 dark:border-gray-800">
+              <th class="pb-2 pr-4 font-semibold">Data</th>
+              <th class="pb-2 pr-4 font-semibold">Valor</th>
+              <th class="pb-2 pr-4 font-semibold">Taxa</th>
+              <th class="pb-2 pr-4 font-semibold">Recebido</th>
+              <th class="pb-2 font-semibold">Status</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+            <% extratoSaques.forEach(function(s) {
+              const st = s.status || 'solicitado';
+              const stLabel = st === 'concluido' ? 'Concluído' : st === 'processando' ? 'Processando' : st === 'falhou' ? 'Falhou' : 'Solicitado';
+              const stClass = st === 'concluido' ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30' : st === 'processando' ? 'text-amber-600 bg-amber-50 dark:bg-amber-950/30' : st === 'falhou' ? 'text-red-600 bg-red-50 dark:bg-red-950/30' : 'text-gray-600 bg-gray-50 dark:bg-gray-800/50';
+            %>
+            <tr>
+              <td class="py-3 pr-4 text-gray-600 dark:text-gray-400 whitespace-nowrap"><%= new Date(s.createdAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %></td>
+              <td class="py-3 pr-4 font-medium">R$ <%= s.valorBruto.toFixed(2).replace('.', ',') %></td>
+              <td class="py-3 pr-4 text-gray-500"><%= s.taxa > 0 ? 'R$ ' + s.taxa.toFixed(2).replace('.', ',') : '—' %></td>
+              <td class="py-3 pr-4 font-semibold text-emerald-600">R$ <%= s.valorLiquido.toFixed(2).replace('.', ',') %></td>
+              <td class="py-3"><span class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold <%= stClass %>"><%= stLabel %></span></td>
+            </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <% } else if (!mpOk && saque && saque.podeSacar) { %>
+    <div class="admin-panel-card p-5 mb-6">
+      <div class="flex items-center gap-2 text-sm text-gray-500">
+        <i data-lucide="receipt" class="w-4 h-4"></i>
+        <span>Nenhum saque realizado ainda. O histórico aparecerá aqui após o primeiro saque.</span>
+      </div>
+    </div>
+    <% } else if (!mpOk && resumo.totalSacado > 0) { %>
+    <div class="admin-panel-card p-5 mb-6">
+      <p class="text-sm text-gray-500">Total já sacado: <strong>R$ <%= resumo.totalSacado.toFixed(2).replace('.', ',') %></strong></p>
     </div>
     <% } %>
 
