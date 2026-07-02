@@ -162,50 +162,7 @@
       const saqueMinimo = saque ? saque.saqueMinimo : 50;
     %>
     <div
-      x-data="{
-        modalSaque: false,
-        step: 1,
-        enviando: false,
-        saldoDisp: <%= saldoDisp %>,
-        taxaFixa: <%= taxaSaqueValor || 5.50 %>,
-        saqueGratis: <%= saqueGratis ? 'true' : 'false' %>,
-        saqueMinimo: <%= saqueMinimo %>,
-        valor: '<%= saldoDisp.toFixed(2) %>',
-        pixChave: <%- JSON.stringify(tenant.pixChave || '') %>,
-        abrirModal() {
-          this.valor = this.saldoDisp.toFixed(2);
-          this.step = 1;
-          this.enviando = false;
-          this.modalSaque = true;
-          this.$nextTick(() => lucide.createIcons());
-        },
-        fecharModal() {
-          if (this.enviando) return;
-          this.modalSaque = false;
-          this.step = 1;
-        },
-        parseValor() {
-          const n = parseFloat(String(this.valor).replace(',', '.'));
-          return Number.isFinite(n) ? n : 0;
-        },
-        taxaAtual() { return this.saqueGratis ? 0 : this.taxaFixa; },
-        liquido() {
-          return Math.max(0, Math.round((this.parseValor() - this.taxaAtual()) * 100) / 100);
-        },
-        valorValido() {
-          const v = this.parseValor();
-          return v >= this.saqueMinimo
-            && v <= this.saldoDisp + 0.009
-            && (this.taxaAtual() === 0 || v > this.taxaAtual());
-        },
-        fmt(n) { return Number(n).toFixed(2).replace('.', ','); },
-        usarSaldoTotal() { this.valor = this.saldoDisp.toFixed(2); },
-        avancar() {
-          if (!this.valorValido()) return;
-          this.step = 2;
-          this.$nextTick(() => lucide.createIcons());
-        }
-      }"
+      x-data="carteiraSaqueData(<%= saldoDisp %>, <%= taxaSaqueValor || 5.50 %>, <%= saqueGratis ? 'true' : 'false' %>, <%= saqueMinimo %>, '<%= saldoDisp.toFixed(2) %>')"
       @keydown.escape.window="fecharModal()">
     <div class="admin-panel-card p-5 mb-6 border-l-4 <%= saqueGratis ? 'border-emerald-500' : podeSacar ? 'border-violet-400' : 'border-gray-300 dark:border-gray-700' %>">
       <div class="flex flex-col sm:flex-row sm:items-center gap-4">
@@ -597,6 +554,59 @@
     </div>
 
   <%- include('partials/layout-end') %>
+  <script>
+    function carteiraSaqueData(saldoDisp, taxaFixa, saqueGratis, saqueMinimo, valorInicial) {
+      return {
+        modalSaque: false,
+        step: 1,
+        enviando: false,
+        saldoDisp: Number(saldoDisp),
+        taxaFixa: Number(taxaFixa),
+        saqueGratis: !!saqueGratis,
+        saqueMinimo: Number(saqueMinimo),
+        valor: String(valorInicial || ''),
+        abrirModal() {
+          this.valor = this.saldoDisp.toFixed(2);
+          this.step = 1;
+          this.enviando = false;
+          this.modalSaque = true;
+          this.$nextTick(function () { lucide.createIcons(); });
+        },
+        fecharModal() {
+          if (this.enviando) return;
+          this.modalSaque = false;
+          this.step = 1;
+        },
+        parseValor() {
+          var n = parseFloat(String(this.valor).replace(',', '.'));
+          return Number.isFinite(n) ? n : 0;
+        },
+        taxaAtual() {
+          return this.saqueGratis ? 0 : this.taxaFixa;
+        },
+        liquido() {
+          return Math.max(0, Math.round((this.parseValor() - this.taxaAtual()) * 100) / 100);
+        },
+        valorValido() {
+          var v = this.parseValor();
+          return v >= this.saqueMinimo
+            && v <= this.saldoDisp + 0.009
+            && (this.taxaAtual() === 0 || v > this.taxaAtual());
+        },
+        fmt(n) {
+          return Number(n).toFixed(2).replace('.', ',');
+        },
+        usarSaldoTotal() {
+          this.valor = this.saldoDisp.toFixed(2);
+        },
+        avancar() {
+          if (!this.valorValido()) return;
+          this.step = 2;
+          this.$nextTick(function () { lucide.createIcons(); });
+        }
+      };
+    }
+  </script>
   <script>lucide.createIcons();</script>
 </body>
 </html>
