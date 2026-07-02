@@ -3,6 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <% if (typeof googleAdsTagId !== 'undefined' && googleAdsTagId && !(typeof seoNoIndex !== 'undefined' && seoNoIndex)) { %>
+  <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
+  <link rel="dns-prefetch" href="https://www.googletagmanager.com">
+  <%- include('google-ads-tag') %>
+  <% } %>
   <meta name="csrf-token" content="<%= csrfToken %>">
   <% const tb = (typeof tenant !== 'undefined' && tenant) ? '/' + tenant.slug : ''; %>
   <% const brandName = (typeof tenant !== 'undefined' && tenant) ? tenant.nome : (platformName || 'VouRifar'); %>
@@ -12,9 +17,6 @@
   <% const brandVars = (typeof tenantCssVars !== 'undefined' && tenantCssVars) ? tenantCssVars : `--brand-from:${platformColor || '#10b981'};--brand-to:${platformColor || '#10b981'};--brand-accent:${platformColor || '#10b981'}`; %>
   <title><%= (typeof seoTitle !== 'undefined' && seoTitle) ? seoTitle : (titulo + ' | ' + ((typeof tenant !== 'undefined' && tenant) ? tenant.nome : (platformName || 'VouRifar'))) %></title>
   <link rel="icon" href="<%= brandLogo || ((typeof platformFavicon !== 'undefined' && platformFavicon) ? platformFavicon : '/img/vourifar-icon.png') %>" type="image/png" sizes="32x32">
-  <% if (typeof googleAdsTagId !== 'undefined' && googleAdsTagId && !(typeof seoNoIndex !== 'undefined' && seoNoIndex)) { %>
-  <%- include('google-ads-tag') %>
-  <% } %>
   <%- include('seo') %>
   <% if (typeof pwaEnabled !== 'undefined' && pwaEnabled) { %>
   <link rel="manifest" href="<%= pwaManifestUrl || '/manifest.webmanifest' %>">

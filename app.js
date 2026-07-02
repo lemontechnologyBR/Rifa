@@ -23,15 +23,42 @@ const PORT = process.env.PORT || 3000;
 
 app.set('trust proxy', 1);
 
+const GOOGLE_ADS_CSP = {
+  script: [
+    'https://www.googletagmanager.com',
+    'https://www.google-analytics.com',
+    'https://googleads.g.doubleclick.net'
+  ],
+  connect: [
+    'https://www.googletagmanager.com',
+    'https://www.google-analytics.com',
+    'https://analytics.google.com',
+    'https://region1.google-analytics.com',
+    'https://googleads.g.doubleclick.net',
+    'https://stats.g.doubleclick.net',
+    'https://www.google.com'
+  ],
+  img: [
+    'https://googleads.g.doubleclick.net',
+    'https://www.google.com',
+    'https://www.googletagmanager.com'
+  ],
+  frame: [
+    'https://www.googletagmanager.com',
+    'https://td.doubleclick.net'
+  ]
+};
+
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https://cdn.tailwindcss.com', 'https://unpkg.com', 'https://cdn.jsdelivr.net', 'https://www.googletagmanager.com'],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https://cdn.tailwindcss.com', 'https://unpkg.com', 'https://cdn.jsdelivr.net', ...GOOGLE_ADS_CSP.script],
       styleSrc: ["'self'", "'unsafe-inline'", 'https://cdn.tailwindcss.com', 'https://cdn.jsdelivr.net', 'https://fonts.googleapis.com'],
-      imgSrc: ["'self'", 'data:', 'https:', 'http:', 'https://chart.googleapis.com'],
+      imgSrc: ["'self'", 'data:', 'https:', 'http:', 'https://chart.googleapis.com', ...GOOGLE_ADS_CSP.img],
       fontSrc: ["'self'", 'https://fonts.gstatic.com', 'https://cdn.jsdelivr.net'],
-      connectSrc: ["'self'", 'https://cdn.tailwindcss.com', 'https://unpkg.com', 'https://cdn.jsdelivr.net', 'https://www.googletagmanager.com', 'https://www.google-analytics.com', 'https://region1.google-analytics.com'],
+      connectSrc: ["'self'", 'https://cdn.tailwindcss.com', 'https://unpkg.com', 'https://cdn.jsdelivr.net', ...GOOGLE_ADS_CSP.connect],
+      frameSrc: ["'self'", ...GOOGLE_ADS_CSP.frame],
       workerSrc: ["'self'"]
     }
   },

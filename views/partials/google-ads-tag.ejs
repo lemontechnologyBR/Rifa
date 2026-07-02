@@ -1,10 +1,10 @@
 <% if (typeof googleAdsTagId !== 'undefined' && googleAdsTagId) { %>
-<!-- Google tag (gtag.js) — tráfego pago -->
+<!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=<%= googleAdsTagId %>"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-  gtag('config', '<%= googleAdsTagId %>');
+  gtag('config', '<%= googleAdsTagId %>', { send_page_view: true });
 </script>
 <% } %>
