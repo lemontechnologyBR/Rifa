@@ -27,7 +27,8 @@ const GOOGLE_ADS_CSP = {
   script: [
     'https://www.googletagmanager.com',
     'https://www.google-analytics.com',
-    'https://googleads.g.doubleclick.net'
+    'https://googleads.g.doubleclick.net',
+    'https://www.googleadservices.com'
   ],
   connect: [
     'https://www.googletagmanager.com',
@@ -35,17 +36,22 @@ const GOOGLE_ADS_CSP = {
     'https://analytics.google.com',
     'https://region1.google-analytics.com',
     'https://googleads.g.doubleclick.net',
+    'https://ad.doubleclick.net',
     'https://stats.g.doubleclick.net',
+    'https://www.googleadservices.com',
     'https://www.google.com'
   ],
   img: [
     'https://googleads.g.doubleclick.net',
+    'https://ad.doubleclick.net',
     'https://www.google.com',
-    'https://www.googletagmanager.com'
+    'https://www.googletagmanager.com',
+    'https://www.googleadservices.com'
   ],
   frame: [
     'https://www.googletagmanager.com',
-    'https://td.doubleclick.net'
+    'https://td.doubleclick.net',
+    'https://ad.doubleclick.net'
   ],
   style: [
     'https://www.googletagmanager.com'
