@@ -195,15 +195,19 @@ const WooviService = {
     }
   },
 
-  /** Lista pagamentos recentes (Pix Out) para reconciliação. */
-  async listarPagamentos(limit = 30) {
-    if (!this.isPlatformConfigured()) return [];
+  /** Extrato da subconta (ledger) — alternativa quando /payment retorna 403. */
+  async consultarExtratoSubconta(tenant, { limit = 30, start, end } = {}) {
+    if (!this.isConfigured(tenant)) return [];
+    const pixKey = encodeURIComponent(tenant.pixChave);
+    const params = new URLSearchParams({ limit: String(Math.min(limit, 100)) });
+    if (start) params.set('start', start);
+    if (end) params.set('end', end);
     try {
-      const data = await this._request(`/payment?limit=${Math.min(limit, 100)}`);
-      const rows = data?.payments || data?.payment || [];
-      return Array.isArray(rows) ? rows : [rows].filter(Boolean);
+      const data = await this._request(`/subaccount/${pixKey}/statement?${params}`);
+      if (Array.isArray(data)) return data;
+      return data?.entries || data?.statement || [];
     } catch (err) {
-      console.error('[Woovi] listarPagamentos:', err.message);
+      console.error(`[Woovi] consultarExtratoSubconta(${tenant.pixChave}):`, err.message);
       return [];
     }
   },
@@ -284,13 +288,14 @@ const WooviService = {
         method: 'POST',
         body: JSON.stringify(body)
       });
-      const tx = data?.transaction || data;
+      const tx = data?.transaction || data?.withdraw || data;
       const valorCentavos = tx?.value || body.value || 0;
-      console.log(`[Woovi] Saque subconta ${tenant.pixChave}: status=${tx?.status}, valor=${valorCentavos}`);
+      console.log(`[Woovi] Saque subconta ${tenant.pixChave}: status=${tx?.status}, valor=${valorCentavos}, correlation=${tx?.correlationID || data?.correlationID || '—'}`);
       return {
         status: tx?.status || 'CREATED',
         value: valorCentavos,
-        correlationID: tx?.correlationID || null
+        correlationID: tx?.correlationID || data?.correlationID || null,
+        endToEndId: tx?.endToEndId || data?.transaction?.endToEndId || null
       };
     } catch (err) {
       const msg = String(err.message || '').toLowerCase();

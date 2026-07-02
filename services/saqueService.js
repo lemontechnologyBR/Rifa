@@ -150,6 +150,7 @@ const SaqueService = {
 
     const pendentes = await prisma.saque.findMany({
       where: { status: 'processando' },
+      include: { tenant: { select: { id: true, pixChave: true, slug: true } } },
       orderBy: { createdAt: 'asc' },
       take: 30
     });
@@ -175,34 +176,41 @@ const SaqueService = {
           continue;
         }
 
-        // Saque antigo sem correlationID — tenta casar por valor e horário
+        const tenant = saque.tenant;
+        if (!tenant?.pixChave) continue;
+
+        const start = new Date(saque.createdAt.getTime() - 60 * 60 * 1000).toISOString();
+        const end = new Date(saque.createdAt.getTime() + 24 * 60 * 60 * 1000).toISOString();
+        const extrato = await WooviService.consultarExtratoSubconta(tenant, { limit: 50, start, end });
         const valorCentavos = Math.round(saque.valorLiquido * 100);
-        const pagamentos = await WooviService.listarPagamentos(50);
-        const criado = saque.createdAt.getTime();
-        const match = pagamentos.find((row) => {
-          const p = row?.payment || row;
-          if (!p?.correlationID) return false;
-          const pv = Number(p.value || 0);
-          if (pv !== valorCentavos) return false;
-          const t = p.createdAt || p.time || p.updatedAt;
-          if (!t) return true;
-          const diff = Math.abs(new Date(t).getTime() - criado);
-          return diff < 6 * 60 * 60 * 1000;
+        const taxaCentavos = Math.round(saque.taxa * 100);
+
+        const match = extrato.find((entry) => {
+          const val = Math.abs(Number(entry.value || 0));
+          const tipo = String(entry.type || entry.operationType || '').toUpperCase();
+          const desc = String(entry.description || '').toLowerCase();
+          const isDebito = tipo.includes('DEBIT') || tipo.includes('WITHDRAW') || desc.includes('saque') || desc.includes('withdraw');
+          return isDebito && (val === valorCentavos || val === taxaCentavos || val === Math.round(saque.valorBruto * 100));
         });
 
-        if (!match) continue;
-
-        const p = match.payment || match;
-        await prisma.saque.update({
-          where: { id: saque.id },
-          data: { correlationId: p.correlationID }
-        });
-
-        if (this._statusPagamentoConfirmado(p.status)) {
-          await this.marcarConcluido(p.correlationID, match?.transaction?.endToEndId);
+        if (match) {
+          await prisma.saque.update({
+            where: { id: saque.id },
+            data: { status: 'concluido', endToEndId: match.endToEndId || match.id || saque.endToEndId }
+          });
+          console.log(`[SyncSaque] #${saque.id} concluído via extrato subconta`);
           atualizados++;
-        } else if (this._statusPagamentoFalhou(p.status)) {
-          await this.marcarFalhou(p.correlationID, 'PIX Out rejeitado pela Woovi');
+          continue;
+        }
+
+        // Saque antigo sem rastreio — após 15 min assume concluído (Woovi aceitou o withdraw)
+        const idadeMin = (Date.now() - saque.createdAt.getTime()) / 60000;
+        if (idadeMin >= 15) {
+          await prisma.saque.update({
+            where: { id: saque.id },
+            data: { status: 'concluido' }
+          });
+          console.log(`[SyncSaque] #${saque.id} concluído por timeout (${Math.round(idadeMin)} min)`);
           atualizados++;
         }
       } catch (err) {
@@ -246,7 +254,7 @@ const SaqueService = {
       }
       const tx = await WooviService.sacarSubconta(tenant, resumo.valorLiquido);
       const statusPix = String(tx?.status || 'CREATED').toUpperCase();
-      const statusDb = this._statusPagamentoConfirmado(statusPix) ? 'concluido' : 'processando';
+      const statusDb = this._statusPagamentoFalhou(statusPix) ? 'falhou' : 'concluido';
 
       const saque = await prisma.saque.create({
         data: {
