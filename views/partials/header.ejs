@@ -28,8 +28,8 @@
   <link rel="apple-touch-icon" href="/img/pwa/icon-192.png">
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register(<%= JSON.stringify(pwaSwUrl || '/sw.js') %>, {
-        scope: <%= JSON.stringify(pwaScope || '/') %>
+      navigator.serviceWorker.register(<%- JSON.stringify(pwaSwUrl || '/sw.js') %>, {
+        scope: <%- JSON.stringify(pwaScope || '/') %>
       }).then(function (reg) {
         if (navigator.serviceWorker.controller) return;
         return reg.update();

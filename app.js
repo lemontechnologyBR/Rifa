@@ -46,6 +46,9 @@ const GOOGLE_ADS_CSP = {
   frame: [
     'https://www.googletagmanager.com',
     'https://td.doubleclick.net'
+  ],
+  style: [
+    'https://www.googletagmanager.com'
   ]
 };
 
@@ -54,7 +57,7 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https://cdn.tailwindcss.com', 'https://unpkg.com', 'https://cdn.jsdelivr.net', ...GOOGLE_ADS_CSP.script],
-      styleSrc: ["'self'", "'unsafe-inline'", 'https://cdn.tailwindcss.com', 'https://cdn.jsdelivr.net', 'https://fonts.googleapis.com'],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://cdn.tailwindcss.com', 'https://cdn.jsdelivr.net', 'https://fonts.googleapis.com', ...GOOGLE_ADS_CSP.style],
       imgSrc: ["'self'", 'data:', 'https:', 'http:', 'https://chart.googleapis.com', ...GOOGLE_ADS_CSP.img],
       fontSrc: ["'self'", 'https://fonts.gstatic.com', 'https://cdn.jsdelivr.net'],
       connectSrc: ["'self'", 'https://cdn.tailwindcss.com', 'https://unpkg.com', 'https://cdn.jsdelivr.net', ...GOOGLE_ADS_CSP.connect],
