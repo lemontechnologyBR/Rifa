@@ -106,7 +106,7 @@ const RifaService = {
     const rifa = await prisma.$transaction(async (tx) => {
       const nova = await tx.rifa.create({
         data: {
-          tenantId: Number(tenantId),
+          tenant: { connect: { id: Number(tenantId) } },
           titulo,
           descricao: descricao || '',
           imagemUrl: imagem_url || '',
