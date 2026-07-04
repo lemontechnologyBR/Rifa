@@ -3,6 +3,10 @@
   <% const tb = (typeof tenant !== 'undefined' && tenant) ? '/' + tenant.slug : ''; %>
   <% const brandName = (typeof tenant !== 'undefined' && tenant) ? tenant.nome : (platformName || 'VouRifar'); %>
   <% const isPlatformLanding = typeof platformLanding !== 'undefined' && platformLanding; %>
+  <% const legalCompany = 'LEMON TECHNOLOGY - SERVICOS DE TECNOLOGIA LTDA'; %>
+  <% const legalCnpj = '67.816.117/0001-19'; %>
+  <% const legalAddress = 'AV BRIG FARIA LIMA, 1811, SALA ESC 1119, JARDIM PAULISTANO - SAO PAULO/SP'; %>
+  <% const platformDisclaimer = 'A VouRifar é uma plataforma de tecnologia para organizadores criarem e gerenciarem suas próprias rifas e sorteios online. A plataforma não cria, organiza, promove, administra ou realiza rifas próprias; cada sorteio é de responsabilidade exclusiva do respectivo organizador.'; %>
 
   <footer class="mt-auto <%= isPlatformLanding ? 'landing-footer' : 'border-t border-gray-200/60 dark:border-gray-800/60 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm' %>">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 <%= isPlatformLanding ? 'py-12' : 'py-10' %>">
@@ -45,6 +49,11 @@
             </div>
           </div>
 
+          <div class="landing-footer-disclaimer" style="margin-top:28px;color:#9ca3af;font-size:12px;line-height:1.7;">
+            <p style="margin:0 0 8px;"><strong style="color:#22c55e;">Como funciona a VouRifar:</strong> <%= platformDisclaimer %></p>
+            <p style="margin:0;"><strong style="color:#22c55e;">Pertence a:</strong> <%= legalCompany %> — CNPJ <%= legalCnpj %> — <%= legalAddress %>.</p>
+          </div>
+
           <div class="landing-footer-divider" aria-hidden="true"></div>
 
           <div class="landing-footer-bottom">
@@ -80,6 +89,11 @@
             <% } %>
           </nav>
         <% } %>
+
+        <div class="public-footer-disclaimer" style="margin:18px auto 0;max-width:760px;color:#9ca3af;font-size:11px;line-height:1.6;text-align:center;">
+          <p style="margin:0 0 6px;"><strong style="color:#16a34a;">Como funciona a VouRifar:</strong> <%= platformDisclaimer %></p>
+          <p style="margin:0;"><strong style="color:#16a34a;">Pertence a:</strong> <%= legalCompany %> — CNPJ <%= legalCnpj %> — <%= legalAddress %>.</p>
+        </div>
 
         <div class="public-footer-divider" aria-hidden="true"></div>
 
@@ -121,7 +135,9 @@
         </div>
       </div>
       <div class="border-t border-gray-200 dark:border-gray-800 pt-6 text-center text-xs text-gray-400">
-        <p>&copy; <%= new Date().getFullYear() %> <%= platformName %></p>
+        <p class="mb-2">&copy; <%= new Date().getFullYear() %> <%= platformName %></p>
+        <p class="max-w-3xl mx-auto leading-relaxed"><strong class="text-emerald-600 dark:text-emerald-400">Como funciona a VouRifar:</strong> <%= platformDisclaimer %></p>
+        <p class="max-w-3xl mx-auto mt-1 leading-relaxed"><strong class="text-emerald-600 dark:text-emerald-400">Pertence a:</strong> <%= legalCompany %> — CNPJ <%= legalCnpj %> — <%= legalAddress %>.</p>
       </div>
       <% } %>
     </div>

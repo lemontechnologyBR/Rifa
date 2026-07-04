@@ -1,4 +1,5 @@
 <% const pgTitle = typeof pageTitle !== 'undefined' ? pageTitle : 'Painel'; %>
+<% const supportWhatsappUrl = 'https://wa.me/5515981879187?text=Preciso%20de%20suporte'; %>
 <div class="admin-app" x-data="{ sidebarOpen: false }">
   <div x-show="sidebarOpen" x-cloak @click="sidebarOpen = false" class="admin-sidebar-backdrop lg:hidden"></div>
 
@@ -36,6 +37,10 @@
       <a href="<%= adminBase %>/logs" class="admin-sidebar-link <%= typeof active !== 'undefined' && active === 'logs' ? 'is-active' : '' %>">
         <i data-lucide="scroll-text" class="w-[18px] h-[18px]"></i>
         Atividades
+      </a>
+      <a href="<%= supportWhatsappUrl %>" target="_blank" rel="noopener noreferrer" class="admin-sidebar-link">
+        <i data-lucide="message-circle" class="w-[18px] h-[18px]"></i>
+        Suporte
       </a>
     </nav>
 
@@ -75,6 +80,10 @@
         </div>
       </div>
       <div class="admin-topbar-actions">
+        <a href="<%= supportWhatsappUrl %>" target="_blank" rel="noopener noreferrer" class="admin-btn-secondary hidden md:inline-flex">
+          <i data-lucide="message-circle" class="w-4 h-4"></i>
+          Suporte
+        </a>
         <a href="<%= tenantBase %>" target="_blank" class="admin-btn-secondary hidden sm:inline-flex">
           <i data-lucide="external-link" class="w-4 h-4"></i>
           Ver sorteios
