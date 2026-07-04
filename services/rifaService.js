@@ -98,7 +98,7 @@ const RifaService = {
       throw new Error(msg);
     }
 
-    const pixFinal = chave_pix || tenant?.pixChave;
+    const pixFinal = chave_pix || tenant?.pixChave || (splitAtivo ? 'mercadopago' : null);
     if (!splitAtivo && !pixFinal) {
       throw new Error('Configure sua chave PIX na Carteira antes de criar rifas.');
     }
