@@ -290,6 +290,51 @@ const RifaService = {
       tenantId
     );
 
+    // Envio de emails em background
+    setImmediate(async () => {
+      try {
+        const { enviarEmail } = require('../lib/emailService');
+        const { templateVencedor } = require('../lib/emailTemplates');
+        const { notificarOrganizadores } = require('../lib/organizadorEmail');
+        const tenant = await prisma.tenant.findUnique({ where: { id: Number(tenantId) } });
+        const tenantSlug = tenant?.slug || '';
+
+        // Email para cada vencedor
+        for (const resultado of resultados) {
+          const numeroGanhador = await prisma.numero.findFirst({
+            where: { rifaId: Number(id), numero: resultado.numero },
+            include: { usuario: true }
+          });
+          if (numeroGanhador?.usuario?.email) {
+            const html = templateVencedor({
+              usuario: numeroGanhador.usuario,
+              rifa,
+              numeroSorteado: resultado.numero,
+              premio: resultado.premio,
+              tenantSlug
+            });
+            await enviarEmail({
+              para: numeroGanhador.usuario.email,
+              assunto: `🏆 Você ganhou! – ${rifa.titulo}`,
+              html
+            });
+          }
+        }
+
+        // Notifica organizadores do resultado
+        const linhaResultados = resultados
+          .map((r) => `<li><strong>${r.premio}</strong>: nº ${String(r.numero).padStart(2,'0')} – ${r.ganhador || 'Desconhecido'}</li>`)
+          .join('');
+        await notificarOrganizadores(tenantId, {
+          assunto: `Sorteio realizado: ${rifa.titulo}`,
+          html: `<h2>Sorteio realizado!</h2><p>Os vencedores da rifa <strong>${rifa.titulo}</strong> foram:</p><ul>${linhaResultados}</ul>`,
+          texto: `Sorteio realizado. Vencedores: ${resultados.map((r) => `${r.premio}: nº${r.numero} (${r.ganhador})`).join('; ')}`
+        });
+      } catch (err) {
+        console.error('[rifaService] Erro ao enviar email de sorteio:', err);
+      }
+    });
+
     return resultados;
   },
 
