@@ -5,6 +5,7 @@ require('dotenv').config();
 
 const express = require('express');
 const session = require('express-session');
+const FileStore = require('session-file-store')(session);
 const helmet = require('helmet');
 const path = require('path');
 
@@ -143,9 +144,15 @@ app.get('/sitemap.xml', async (req, res) => {
 });
 
 app.use(session({
+  store: new FileStore({
+    path: process.env.SESSION_DIR || '/tmp/sessions',
+    ttl: 86400,
+    retries: 1,
+    logFn: () => {}
+  }),
   secret: process.env.SESSION_SECRET || 'rifas-dev-secret-change-me',
   resave: false,
-  saveUninitialized: true,
+  saveUninitialized: false,
   proxy: true,
   cookie: {
     maxAge: 24 * 60 * 60 * 1000,

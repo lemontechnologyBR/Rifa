@@ -12,7 +12,8 @@ RUN npm ci
 COPY . .
 
 RUN npx prisma generate \
-  && chmod +x scripts/docker-entrypoint.sh
+  && chmod +x scripts/docker-entrypoint.sh \
+  && mkdir -p /tmp/sessions
 
 EXPOSE 3000
 
