@@ -10,6 +10,7 @@ services:
       DATABASE_URL: file:/app/database/rifas.db
       APP_URL: https://vourifar.com.br
       RUN_SEED: ${RUN_SEED:-false}
+      TZ: America/Sao_Paulo
     volumes:
       - rifas-data:/app/database
       - rifas-uploads:/app/public/uploads
