@@ -183,17 +183,32 @@ const superAdminController = {
       SuperAdminService.obterInfoPlataforma()
     ]);
 
+    const gmvTotal = metricas.gmvTotal || 0;
+    const reservasConf = metricas.reservasConfirmadas || 0;
+    const ticketMedio = reservasConf > 0 ? gmvTotal / reservasConf : 0;
+    const totalReservas = reservasConf + (info.reservasPendentes || 0) + (info.reservasExpiradas || 0);
+    const taxaConversao = totalReservas > 0 ? ((reservasConf / totalReservas) * 100).toFixed(1) : '0.0';
+
     res.render('super/plataforma', renderLocals(req, res, {
       titulo: 'Plataforma',
       active: 'plataforma',
       metricas: {
         ...metricas,
+        gmvTotalFmt: fmtMoney(gmvTotal),
+        gmvMpFmt: fmtMoney(metricas.gmvMp),
+        gmvWooviFmt: fmtMoney(metricas.gmvWoovi),
         receitaPlataformaFmt: fmtMoney(metricas.receitaPlataforma),
         receitaMpFmt: fmtMoney(metricas.receitaMp),
         receitaWooviFmt: fmtMoney(metricas.receitaWoovi),
-        gmvTotalFmt: fmtMoney(metricas.gmvTotal)
+        ticketMedioFmt: fmtMoney(ticketMedio),
+        taxaConversao
       },
-      info
+      info: {
+        ...info,
+        totalSacadoFmt: fmtMoney(info.totalSacadoLiquido),
+        saquesPendentesFmt: fmtMoney(info.totalSaquesPendenteValor),
+        gmvMesFmt: fmtMoney(info.gmvMes)
+      }
     }));
   },
 

@@ -1,37 +1,173 @@
 <%- include('partials/page-start') %>
 <%- include('partials/alerts') %>
 
-<div class="super-grid super-grid--single">
-  <section class="super-panel">
-    <div class="super-panel-head">
-      <div><h2 class="super-panel-title">Links da plataforma</h2><p class="super-panel-sub">Acesso rápido ao front e cadastro</p></div>
-    </div>
-    <div class="super-links-grid">
-      <a href="/" target="_blank" rel="noopener" class="super-link-card"><i data-lucide="home" class="w-5 h-5"></i><strong>Landing</strong><span>Página inicial VouRifar</span></a>
-      <a href="/cadastro" target="_blank" rel="noopener" class="super-link-card"><i data-lucide="rocket" class="w-5 h-5"></i><strong>Cadastro</strong><span>Novo sistema / onboarding</span></a>
-      <a href="/acessar" target="_blank" rel="noopener" class="super-link-card"><i data-lucide="log-in" class="w-5 h-5"></i><strong>Acessar</strong><span>Login organizador</span></a>
-      <a href="/demo/" target="_blank" rel="noopener" class="super-link-card"><i data-lucide="flask-conical" class="w-5 h-5"></i><strong>Demo</strong><span>Loja demonstração</span></a>
-      <a href="/pwa-check" target="_blank" rel="noopener" class="super-link-card"><i data-lucide="smartphone" class="w-5 h-5"></i><strong>PWA Check</strong><span>Diagnóstico instalação app</span></a>
-    </div>
-  </section>
+<style>
+  .plat-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #94a3b8;
+    margin: 28px 0 12px;
+  }
+  .plat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px;
+  }
+  .plat-card {
+    background: var(--super-panel-bg, #fff);
+    border: 1px solid var(--super-border, #e2e8f0);
+    border-radius: 10px;
+    padding: 18px 20px;
+  }
+  .plat-card-label {
+    font-size: 12px;
+    color: #64748b;
+    margin: 0 0 6px;
+    font-weight: 500;
+  }
+  .plat-card-value {
+    font-size: 26px;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+    line-height: 1.1;
+  }
+  .plat-card-value--green { color: #047857; }
+  .plat-card-value--blue  { color: #1d4ed8; }
+  .plat-card-value--amber { color: #92400e; }
+  .plat-card-hint {
+    font-size: 11px;
+    color: #94a3b8;
+    margin: 4px 0 0;
+  }
+  @media (prefers-color-scheme: dark) {
+    .plat-card { background: #1e293b; border-color: #334155; }
+    .plat-card-value { color: #f1f5f9; }
+    .plat-card-label { color: #94a3b8; }
+  }
+</style>
 
-  <section class="super-panel">
-    <div class="super-panel-head">
-      <div><h2 class="super-panel-title">Números gerais</h2><p class="super-panel-sub">Resumo da operação</p></div>
-    </div>
-    <dl class="super-dl">
-      <div><dt>Sistemas ativos</dt><dd><%= metricas.totalTenants %></div>
-      <div><dt>Organizadores</dt><dd><%= metricas.totalOrganizadores %></div>
-      <div><dt>Compradores cadastrados</dt><dd><%= info.totalUsuarios %></div>
-      <div><dt>Sorteios ativos</dt><dd><%= metricas.rifasAtivas %> / <%= metricas.totalRifas %></div>
-      <div><dt>Vendas confirmadas</dt><dd><%= info.reservasConfirmadas %></div>
-      <div><dt>Reservas pendentes</dt><dd><%= info.reservasPendentes %></div>
-      <div><dt>GMV total</dt><dd>R$ <%= metricas.gmvTotalFmt %></div>
-      <div><dt>Receita plataforma</dt><dd class="super-dl-green">R$ <%= metricas.receitaPlataformaFmt %></div>
-      <div><dt>Receita MP (<%= Math.round((metricas.taxaMp || 0.05) * 100) %>%)</dt><dd>R$ <%= metricas.receitaMpFmt %></div>
-      <div><dt>Receita Plataforma (<%= Math.round((metricas.taxaWoovi || 0.07) * 100) %>%)</dt><dd>R$ <%= metricas.receitaWooviFmt %></div>
-    </dl>
-  </section>
+<%# ── SISTEMAS ────────────────────────────────── %>
+<p class="plat-section-title">Sistemas</p>
+<div class="plat-grid">
+  <div class="plat-card">
+    <p class="plat-card-label">Sistemas ativos</p>
+    <p class="plat-card-value"><%= metricas.totalTenants %></p>
+    <% if (metricas.tenantsSuspensos > 0) { %>
+      <p class="plat-card-hint"><%= metricas.tenantsSuspensos %> suspenso<%= metricas.tenantsSuspensos > 1 ? 's' : '' %></p>
+    <% } %>
+  </div>
+  <div class="plat-card">
+    <p class="plat-card-label">Novos este mês</p>
+    <p class="plat-card-value plat-card-value--blue"><%= metricas.novosTenantsMes %></p>
+  </div>
+  <div class="plat-card">
+    <p class="plat-card-label">Organizadores</p>
+    <p class="plat-card-value"><%= metricas.totalOrganizadores %></p>
+  </div>
+  <div class="plat-card">
+    <p class="plat-card-label">Compradores</p>
+    <p class="plat-card-value"><%= info.totalUsuarios %></p>
+  </div>
+  <div class="plat-card">
+    <p class="plat-card-label">Sistemas com MP</p>
+    <p class="plat-card-value"><%= info.tenantsMP %></p>
+    <p class="plat-card-hint">Mercado Pago split</p>
+  </div>
+  <div class="plat-card">
+    <p class="plat-card-label">Sistemas com PIX</p>
+    <p class="plat-card-value"><%= info.tenantsWoovi %></p>
+    <p class="plat-card-hint">Plataforma / Woovi</p>
+  </div>
+</div>
+
+<%# ── RIFAS ───────────────────────────────────── %>
+<p class="plat-section-title">Rifas</p>
+<div class="plat-grid">
+  <div class="plat-card">
+    <p class="plat-card-label">Ativas agora</p>
+    <p class="plat-card-value plat-card-value--green"><%= metricas.rifasAtivas %></p>
+  </div>
+  <div class="plat-card">
+    <p class="plat-card-label">Finalizadas</p>
+    <p class="plat-card-value"><%= info.rifasFinalizadas %></p>
+  </div>
+  <div class="plat-card">
+    <p class="plat-card-label">Canceladas</p>
+    <p class="plat-card-value plat-card-value--amber"><%= info.rifasCanceladas %></p>
+  </div>
+  <div class="plat-card">
+    <p class="plat-card-label">Total criadas</p>
+    <p class="plat-card-value"><%= metricas.totalRifas %></p>
+  </div>
+</div>
+
+<%# ── VENDAS ──────────────────────────────────── %>
+<p class="plat-section-title">Vendas</p>
+<div class="plat-grid">
+  <div class="plat-card">
+    <p class="plat-card-label">GMV total</p>
+    <p class="plat-card-value">R$ <%= metricas.gmvTotalFmt %></p>
+    <p class="plat-card-hint">MP R$ <%= metricas.gmvMpFmt %> · PIX R$ <%= metricas.gmvWooviFmt %></p>
+  </div>
+  <div class="plat-card">
+    <p class="plat-card-label">GMV este mês</p>
+    <p class="plat-card-value plat-card-value--blue">R$ <%= info.gmvMesFmt %></p>
+    <p class="plat-card-hint"><%= info.vendasMes %> venda<%= info.vendasMes !== 1 ? 's' : '' %> confirmada<%= info.vendasMes !== 1 ? 's' : '' %></p>
+  </div>
+  <div class="plat-card">
+    <p class="plat-card-label">Vendas confirmadas</p>
+    <p class="plat-card-value plat-card-value--green"><%= metricas.reservasConfirmadas %></p>
+  </div>
+  <div class="plat-card">
+    <p class="plat-card-label">Reservas pendentes</p>
+    <p class="plat-card-value plat-card-value--amber"><%= info.reservasPendentes %></p>
+  </div>
+  <div class="plat-card">
+    <p class="plat-card-label">Ticket médio</p>
+    <p class="plat-card-value">R$ <%= metricas.ticketMedioFmt %></p>
+  </div>
+  <div class="plat-card">
+    <p class="plat-card-label">Taxa de conversão</p>
+    <p class="plat-card-value <%= parseFloat(metricas.taxaConversao) >= 50 ? 'plat-card-value--green' : 'plat-card-value--amber' %>"><%= metricas.taxaConversao %>%</p>
+    <p class="plat-card-hint">confirmadas / total reservas</p>
+  </div>
+</div>
+
+<%# ── RECEITA ─────────────────────────────────── %>
+<p class="plat-section-title">Receita da plataforma</p>
+<div class="plat-grid">
+  <div class="plat-card">
+    <p class="plat-card-label">Receita total</p>
+    <p class="plat-card-value plat-card-value--green">R$ <%= metricas.receitaPlataformaFmt %></p>
+  </div>
+  <div class="plat-card">
+    <p class="plat-card-label">Via MP (<%= Math.round((metricas.taxaMp || 0.05) * 100) %>%)</p>
+    <p class="plat-card-value">R$ <%= metricas.receitaMpFmt %></p>
+    <p class="plat-card-hint">GMV MP R$ <%= metricas.gmvMpFmt %></p>
+  </div>
+  <div class="plat-card">
+    <p class="plat-card-label">Via Plataforma (<%= Math.round((metricas.taxaWoovi || 0.07) * 100) %>%)</p>
+    <p class="plat-card-value">R$ <%= metricas.receitaWooviFmt %></p>
+    <p class="plat-card-hint">GMV PIX R$ <%= metricas.gmvWooviFmt %></p>
+  </div>
+</div>
+
+<%# ── SAQUES ──────────────────────────────────── %>
+<p class="plat-section-title">Saques</p>
+<div class="plat-grid">
+  <div class="plat-card">
+    <p class="plat-card-label">Total sacado</p>
+    <p class="plat-card-value">R$ <%= info.totalSacadoFmt %></p>
+    <p class="plat-card-hint"><%= info.countSaquesConcluidos %> saque<%= info.countSaquesConcluidos !== 1 ? 's' : '' %> concluído<%= info.countSaquesConcluidos !== 1 ? 's' : '' %></p>
+  </div>
+  <div class="plat-card">
+    <p class="plat-card-label">Saques pendentes</p>
+    <p class="plat-card-value plat-card-value--amber"><%= info.countSaquesPendentes %></p>
+    <p class="plat-card-hint">R$ <%= info.saquesPendentesFmt %> em fila</p>
+  </div>
 </div>
 
 <%- include('partials/page-end') %>

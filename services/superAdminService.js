@@ -199,12 +199,63 @@ const SuperAdminService = {
   },
 
   async obterInfoPlataforma() {
-    const [totalUsuarios, reservasPendentes, reservasConfirmadas] = await Promise.all([
+    const [
+      totalUsuarios,
+      reservasPendentes,
+      reservasConfirmadas,
+      reservasExpiradas,
+      rifasFinalizadas,
+      rifasCanceladas,
+      tenantsMP,
+      tenantsWoovi,
+      saquesResumo,
+      gmvMes
+    ] = await Promise.all([
       prisma.usuario.count(),
       prisma.reserva.count({ where: { statusPagamento: 'pendente' } }),
-      prisma.reserva.count({ where: { statusPagamento: 'confirmado' } })
+      prisma.reserva.count({ where: { statusPagamento: 'confirmado' } }),
+      prisma.reserva.count({ where: { statusPagamento: 'expirado' } }),
+      prisma.rifa.count({ where: { status: 'finalizada' } }),
+      prisma.rifa.count({ where: { status: 'cancelada' } }),
+      prisma.tenant.count({ where: { mpAccessToken: { not: null }, status: 'ativo' } }),
+      prisma.tenant.count({ where: { pixChave: { not: null }, mpAccessToken: null, status: 'ativo' } }),
+      prisma.saque.aggregate({
+        _sum: { valorLiquido: true, valorBruto: true },
+        _count: { id: true },
+        where: { status: 'concluido' }
+      }),
+      prisma.reserva.aggregate({
+        where: {
+          statusPagamento: 'confirmado',
+          createdAt: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) }
+        },
+        _sum: { valorTotal: true },
+        _count: { id: true }
+      })
     ]);
-    return { totalUsuarios, reservasPendentes, reservasConfirmadas };
+
+    const saquesPendentes = await prisma.saque.aggregate({
+      _sum: { valorLiquido: true },
+      _count: { id: true },
+      where: { status: { in: ['solicitado', 'processando'] } }
+    });
+
+    return {
+      totalUsuarios,
+      reservasPendentes,
+      reservasConfirmadas,
+      reservasExpiradas,
+      rifasFinalizadas,
+      rifasCanceladas,
+      tenantsMP,
+      tenantsWoovi,
+      totalSacadoLiquido: saquesResumo._sum.valorLiquido || 0,
+      countSaquesConcluidos: saquesResumo._count.id || 0,
+      totalSaquesPendenteValor: saquesPendentes._sum.valorLiquido || 0,
+      countSaquesPendentes: saquesPendentes._count.id || 0,
+      gmvMes: gmvMes._sum.valorTotal || 0,
+      vendasMes: gmvMes._count.id || 0
+    };
   },
 
   async listarSaques({ page = 1, limite = 25, status = 'todos', busca = '' } = {}) {
