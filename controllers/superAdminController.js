@@ -219,6 +219,44 @@ const superAdminController = {
     }
   },
 
+  async saques(req, res) {
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const status = ['todos', 'solicitado', 'processando', 'concluido', 'erro'].includes(req.query.status)
+      ? req.query.status : 'todos';
+    const busca = String(req.query.q || '').trim();
+
+    const [listagem, resumo] = await Promise.all([
+      SuperAdminService.listarSaques({ page, status, busca }),
+      SuperAdminService.resumoSaques()
+    ]);
+
+    res.render('super/saques', renderLocals(req, res, {
+      titulo: 'Saques',
+      active: 'saques',
+      saques: listagem.saques.map((s) => ({
+        ...s,
+        createdAtFmt: fmtDateTime(s.createdAt),
+        valorBrutoFmt: fmtMoney(s.valorBruto),
+        valorLiquidoFmt: fmtMoney(s.valorLiquido),
+        taxaFmt: fmtMoney(s.taxa),
+        tenantNome: s.tenant?.nome || '—',
+        tenantSlug: s.tenant?.slug || '',
+        orgEmail: s.tenant?.organizadores?.[0]?.email || null
+      })),
+      paginas: listagem.paginas,
+      page: listagem.page,
+      total: listagem.total,
+      statusFiltro: status,
+      busca,
+      resumo: {
+        totalConcluidoFmt: fmtMoney(resumo.totalConcluido),
+        countConcluido: resumo.countConcluido,
+        totalPendenteFmt: fmtMoney(resumo.totalPendente),
+        countPendente: resumo.countPendente
+      }
+    }));
+  },
+
   async analytics(req, res) {
     const dias = parseInt(req.query.dias, 10) || 7;
     const data = await AnalyticsService.obterDashboard(dias);

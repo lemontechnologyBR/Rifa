@@ -205,6 +205,68 @@ const SuperAdminService = {
       prisma.reserva.count({ where: { statusPagamento: 'confirmado' } })
     ]);
     return { totalUsuarios, reservasPendentes, reservasConfirmadas };
+  },
+
+  async listarSaques({ page = 1, limite = 25, status = 'todos', busca = '' } = {}) {
+    const where = {};
+    if (status !== 'todos') where.status = status;
+    if (busca) {
+      where.tenant = {
+        OR: [
+          { nome: { contains: busca } },
+          { slug: { contains: busca } }
+        ]
+      };
+    }
+
+    const [saques, total] = await Promise.all([
+      prisma.saque.findMany({
+        where,
+        include: {
+          tenant: {
+            select: {
+              id: true,
+              nome: true,
+              slug: true,
+              organizadores: { select: { email: true }, take: 1 }
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limite,
+        take: limite
+      }),
+      prisma.saque.count({ where })
+    ]);
+
+    return {
+      saques,
+      total,
+      page,
+      paginas: Math.max(1, Math.ceil(total / limite))
+    };
+  },
+
+  async resumoSaques() {
+    const [totais, pendentes] = await Promise.all([
+      prisma.saque.aggregate({
+        _sum: { valorLiquido: true, valorBruto: true },
+        _count: { id: true },
+        where: { status: 'concluido' }
+      }),
+      prisma.saque.aggregate({
+        _sum: { valorLiquido: true },
+        _count: { id: true },
+        where: { status: { in: ['solicitado', 'processando'] } }
+      })
+    ]);
+
+    return {
+      totalConcluido: totais._sum.valorLiquido || 0,
+      countConcluido: totais._count.id || 0,
+      totalPendente: pendentes._sum.valorLiquido || 0,
+      countPendente: pendentes._count.id || 0
+    };
   }
 };
 

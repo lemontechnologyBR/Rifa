@@ -1,0 +1,118 @@
+<%- include('partials/page-start') %>
+<%- include('partials/alerts') %>
+
+<%# Métricas resumo %>
+<section class="super-metrics" style="margin-bottom:24px;">
+  <article class="super-metric">
+    <p class="super-metric-label">Saques concluídos</p>
+    <p class="super-metric-value super-metric-value--green">R$ <%= resumo.totalConcluidoFmt %></p>
+    <p class="super-metric-hint"><%= resumo.countConcluido %> saque<%= resumo.countConcluido !== 1 ? 's' : '' %></p>
+  </article>
+  <article class="super-metric">
+    <p class="super-metric-label">Em processamento</p>
+    <p class="super-metric-value"><%= resumo.countPendente %></p>
+    <p class="super-metric-hint">R$ <%= resumo.totalPendenteFmt %> pendente</p>
+  </article>
+</section>
+
+<section class="super-panel">
+  <div class="super-panel-head">
+    <div>
+      <h2 class="super-panel-title">Histórico de Saques</h2>
+      <p class="super-panel-sub"><%= total %> registro<%= total !== 1 ? 's' : '' %> · página <%= page %> de <%= paginas %></p>
+    </div>
+    <form method="GET" action="/super/saques" class="super-filters">
+      <input
+        type="text"
+        name="q"
+        value="<%= busca %>"
+        placeholder="Buscar sistema..."
+        class="super-input"
+        style="width:180px;"
+      >
+      <select name="status" class="super-select">
+        <option value="todos"       <%= statusFiltro === 'todos'       ? 'selected' : '' %>>Todos</option>
+        <option value="solicitado"  <%= statusFiltro === 'solicitado'  ? 'selected' : '' %>>Solicitado</option>
+        <option value="processando" <%= statusFiltro === 'processando' ? 'selected' : '' %>>Processando</option>
+        <option value="concluido"   <%= statusFiltro === 'concluido'   ? 'selected' : '' %>>Concluído</option>
+        <option value="erro"        <%= statusFiltro === 'erro'        ? 'selected' : '' %>>Erro</option>
+      </select>
+      <button type="submit" class="super-btn super-btn--primary">Filtrar</button>
+    </form>
+  </div>
+
+  <div class="super-table-wrap">
+    <table class="super-table">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Sistema</th>
+          <th>Organizador</th>
+          <th>Valor bruto</th>
+          <th>Taxa</th>
+          <th>Valor líquido</th>
+          <th>Status</th>
+          <th>Correlation ID</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (!saques.length) { %>
+          <tr><td colspan="8" class="super-empty">Nenhum saque encontrado.</td></tr>
+        <% } %>
+        <% saques.forEach(function(s) { %>
+          <%
+            const badgeClass =
+              s.status === 'concluido'   ? 'ativo'    :
+              s.status === 'processando' ? 'warning'  :
+              s.status === 'erro'        ? 'suspenso' : 'default';
+          %>
+          <tr>
+            <td style="white-space:nowrap;"><%= s.createdAtFmt %></td>
+            <td>
+              <% if (s.tenantSlug) { %>
+                <a href="/<%= s.tenantSlug %>/" target="_blank" rel="noopener" class="super-action-link"><%= s.tenantNome %></a>
+              <% } else { %>
+                <%= s.tenantNome %>
+              <% } %>
+            </td>
+            <td>
+              <% if (s.orgEmail) { %>
+                <span class="super-tenant-email"><%= s.orgEmail %></span>
+              <% } else { %>
+                <span class="super-tenant-email">—</span>
+              <% } %>
+            </td>
+            <td>R$ <%= s.valorBrutoFmt %></td>
+            <td style="color:#94a3b8;">R$ <%= s.taxaFmt %></td>
+            <td><strong>R$ <%= s.valorLiquidoFmt %></strong></td>
+            <td>
+              <span class="super-badge super-badge--<%= badgeClass %>"><%= s.status %></span>
+              <% if (s.status === 'erro' && s.erroMsg) { %>
+                <span class="super-tenant-email" style="display:block;color:#ef4444;" title="<%= s.erroMsg %>">⚠ <%= s.erroMsg.slice(0, 40) %><%= s.erroMsg.length > 40 ? '…' : '' %></span>
+              <% } %>
+            </td>
+            <td style="font-size:11px;color:#94a3b8;word-break:break-all;">
+              <%= s.correlationId || s.endToEndId || '—' %>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+
+  <% if (paginas > 1) { %>
+    <div class="super-pagination">
+      <span><%= total %> saques</span>
+      <div class="super-pagination-links">
+        <% const qs = (p) => `/super/saques?page=${p}${statusFiltro !== 'todos' ? '&status=' + statusFiltro : ''}${busca ? '&q=' + encodeURIComponent(busca) : ''}`; %>
+        <% if (page > 1) { %><a class="super-page-link" href="<%= qs(page - 1) %>">←</a><% } %>
+        <% for (var p = Math.max(1, page - 2); p <= Math.min(paginas, page + 2); p++) { %>
+          <a class="super-page-link <%= p === page ? 'is-active' : '' %>" href="<%= qs(p) %>"><%= p %></a>
+        <% } %>
+        <% if (page < paginas) { %><a class="super-page-link" href="<%= qs(page + 1) %>">→</a><% } %>
+      </div>
+    </div>
+  <% } %>
+</section>
+
+<%- include('partials/page-end') %>
