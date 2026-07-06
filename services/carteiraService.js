@@ -161,6 +161,28 @@ const CarteiraService = {
     }
   },
 
+  async _wooviCorrelationIds(tenantId) {
+    const rifas = await prisma.rifa.findMany({
+      where: { tenantId: Number(tenantId) },
+      select: { id: true }
+    });
+    const rifaIds = rifas.map((r) => r.id);
+    if (!rifaIds.length) return [];
+
+    const reservas = await prisma.reserva.findMany({
+      where: {
+        rifaId: { in: rifaIds },
+        statusPagamento: 'confirmado',
+        wooviCorrelationId: { not: null }
+      },
+      select: { wooviCorrelationId: true }
+    });
+
+    return reservas
+      .map((r) => r.wooviCorrelationId)
+      .filter((id) => id && !/^\d+$/.test(String(id)));
+  },
+
   async salvarConfig(tenantId, { pix_chave, pix_tipo }) {
     const pix = validarChavePixPorTipo(pix_tipo, pix_chave);
 
@@ -173,16 +195,30 @@ const CarteiraService = {
       throw new Error('Pagamentos temporariamente indisponíveis. Tente novamente mais tarde.');
     }
 
-    const atualizado = { ...tenant, pixChave: pix };
-    await PaymentService.ensureTenantReady(atualizado);
+    const chaveAntiga = tenant.pixChave;
+    const chaveMudou = !!chaveAntiga && !chavesPixEquivalentes(chaveAntiga, pix);
+    let saldoMigrado = 0;
 
-    return prisma.tenant.update({
+    if (chaveMudou) {
+      const WooviService = require('./wooviService');
+      if (WooviService.isPlatformConfigured()) {
+        const refs = await this._wooviCorrelationIds(tenantId);
+        const { migrado } = await WooviService.migrarSaldoParaChave(tenant, pix, refs);
+        saldoMigrado = migrado;
+      }
+    }
+
+    await PaymentService.ensureTenantReady({ ...tenant, pixChave: pix });
+
+    const atualizado = await prisma.tenant.update({
       where: { id: Number(tenantId) },
       data: {
         pixChave: pix,
         wooviAtivo: true
       }
     });
+
+    return { tenant: atualizado, saldoMigrado, chaveMudou };
   }
 };
 

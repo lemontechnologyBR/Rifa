@@ -245,8 +245,12 @@ const organizadorController = {
   async salvarCarteira(req, res) {
     try {
       const CarteiraService = require('../services/carteiraService');
-      await CarteiraService.salvarConfig(req.tenant.id, req.body);
-      res.redirect(`/${req.tenant.slug}/admin/carteira?msg=Carteira atualizada!`);
+      const { saldoMigrado } = await CarteiraService.salvarConfig(req.tenant.id, req.body);
+      let msg = 'Carteira atualizada!';
+      if (saldoMigrado > 0) {
+        msg += ` Saldo de R$ ${saldoMigrado.toFixed(2).replace('.', ',')} migrado para a nova chave PIX.`;
+      }
+      res.redirect(`/${req.tenant.slug}/admin/carteira?msg=${encodeURIComponent(msg)}`);
     } catch (err) {
       const tipo = req.body.pix_tipo ? `&tipo=${encodeURIComponent(req.body.pix_tipo)}` : '';
       res.redirect(`/${req.tenant.slug}/admin/carteira?erro=${encodeURIComponent(err.message)}${tipo}`);

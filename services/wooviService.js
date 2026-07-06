@@ -267,19 +267,26 @@ const WooviService = {
     return Math.round(totalCents) / 100;
   },
 
-  /** Move saldo de subcontas antigas para a chave PIX atual do tenant. */
-  async consolidarSubcontasParaTenant(tenant, correlationIds = []) {
-    if (!tenant?.pixChave) return;
+  /** Move saldo de subcontas antigas para uma chave PIX de destino. */
+  async migrarSaldoParaChave(tenant, novaChavePix, correlationIds = []) {
+    if (!this.isPlatformConfigured() || !novaChavePix) {
+      return { migrado: 0, transferencias: [] };
+    }
 
-    const dest = normalizarChaveParaSubconta(tenant.pixChave);
+    const dest = normalizarChaveParaSubconta(novaChavePix);
+    await this.ensureSubconta({ ...tenant, pixChave: novaChavePix });
+
     const keys = await this._coletarChavesSubconta(tenant, correlationIds);
+    let migrado = 0;
+    const transferencias = [];
 
     for (const key of keys) {
-      if (key === dest) continue;
+      if (normalizarChaveParaSubconta(key) === dest) continue;
+
       let balanceCents = 0;
       try {
         const data = await this._request(`/subaccount/${encodeURIComponent(key)}`);
-        balanceCents = Number(data?.subAccount?.balance ?? 0);
+        balanceCents = Number(data?.subAccount?.balance ?? data?.balance ?? 0);
       } catch (_) {
         continue;
       }
@@ -292,11 +299,21 @@ const WooviService = {
         valorReais,
         fromPixKeyType: wooviPixKeyType(key),
         toPixKeyType: wooviPixKeyType(dest),
-        correlationID: `consolidate-t${tenant.id}-${Date.now()}`,
-        description: `Consolidação saldo ${tenant.slug || tenant.id}`
+        correlationID: `migrate-t${tenant.id}-${Date.now()}-${transferencias.length}`,
+        description: `Migração chave PIX ${tenant.slug || tenant.id}`
       });
-      console.log(`[Woovi] Consolidado R$ ${valorReais} (${key} → ${dest})`);
+      migrado += valorReais;
+      transferencias.push({ de: key, para: dest, valor: valorReais });
+      console.log(`[Woovi] Migrado R$ ${valorReais} (${key} → ${dest})`);
     }
+
+    return { migrado: Math.round(migrado * 100) / 100, transferencias };
+  },
+
+  /** Move saldo de subcontas antigas para a chave PIX atual do tenant. */
+  async consolidarSubcontasParaTenant(tenant, correlationIds = []) {
+    if (!tenant?.pixChave) return { migrado: 0, transferencias: [] };
+    return this.migrarSaldoParaChave(tenant, tenant.pixChave, correlationIds);
   },
 
   /** Transfere saldo entre subcontas Woovi (centavos na API). */
