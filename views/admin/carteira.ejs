@@ -81,6 +81,9 @@
         <p class="admin-metric-value text-emerald-600">R$ <%= saldoPlat.toFixed(2).replace('.', ',') %></p>
         <p class="text-xs text-gray-400 mt-1">
           <%= w.cotas %> cota(s) · <%= Math.round((wooviPercentual||0.93)*100) %>% de R$ <%= w.bruto.toFixed(2).replace('.', ',') %>
+          <% if (w.saldoSubconta != null && w.saldoSubconta < w.parteOrganizador - 0.01) { %>
+            · subconta real R$ <%= w.saldoSubconta.toFixed(2).replace('.', ',') %> (após taxas Woovi)
+          <% } %>
           <% if (resumo.totalSacado > 0) { %> · R$ <%= resumo.totalSacado.toFixed(2).replace('.', ',') %> sacado<% } %>
         </p>
       </article>

@@ -224,18 +224,34 @@ const SaqueService = {
     return atualizados;
   },
 
+  /** Limita saldo contábil ao que existe de fato na subconta Woovi. */
+  async saldoEfetivoWoovi(tenant, saldoContabil) {
+    const saldo = Math.max(0, Number(saldoContabil) || 0);
+    if (!tenant?.pixChave || saldo <= 0) return saldo;
+    const WooviService = require('./wooviService');
+    if (!WooviService.isPlatformConfigured()) return saldo;
+    const subconta = await WooviService.consultarSaldoSubconta(tenant);
+    if (subconta == null) return saldo;
+    return Math.min(saldo, subconta);
+  },
+
   async processarSaque(tenant, saldoDisponivel, adminUsuario, valorBruto = null) {
     const MercadoPagoOAuthService = require('./mercadoPagoOAuthService');
     const mpConectado = MercadoPagoOAuthService.isSplitConfigured() && MercadoPagoOAuthService.isTenantConnected(tenant);
 
-    // Bloqueia saque via MP somente se não há saldo Woovi histórico retido
     if (mpConectado && !(saldoDisponivel > 0)) {
       throw new Error('Com Mercado Pago conectado, os pagamentos caem direto na sua conta — não é necessário sacar.');
     }
 
+    const provider = mpConectado && saldoDisponivel > 0 ? 'woovi' : PaymentService.getProvider(tenant);
+    let saldoEfetivo = Math.max(0, Number(saldoDisponivel) || 0);
+    if (provider === 'woovi') {
+      saldoEfetivo = await this.saldoEfetivoWoovi(tenant, saldoEfetivo);
+    }
+
     const resumo = valorBruto != null && valorBruto !== ''
-      ? this.calcularResumoValor(saldoDisponivel, valorBruto)
-      : this.calcularResumo(saldoDisponivel);
+      ? this.calcularResumoValor(saldoEfetivo, valorBruto)
+      : this.calcularResumo(saldoEfetivo);
 
     if (!resumo.podeSacar) {
       throw new Error(
@@ -248,18 +264,18 @@ const SaqueService = {
       throw new Error('Saldo insuficiente para cobrir a taxa de saque.');
     }
 
-    // Se MP está conectado mas há saldo Woovi histórico, o saque deve ir via Woovi
-    // (o dinheiro está retido na subconta Woovi, não no MP)
-    const provider = mpConectado && saldoDisponivel > 0 ? 'woovi' : PaymentService.getProvider(tenant);
-
     if (provider === 'woovi') {
       const WooviService = require('./wooviService');
-      let tx;
-      try {
-        tx = await WooviService.sacarSubconta(tenant, resumo.valorLiquido);
-      } catch (err) {
-        throw err;
+      const subconta = await WooviService.consultarSaldoSubconta(tenant);
+      if (subconta != null && resumo.valorBruto > subconta + 0.009) {
+        throw new Error(
+          `Saldo na subconta (R$ ${subconta.toFixed(2).replace('.', ',')}) é menor que o valor solicitado. ` +
+          'A Woovi retém taxas por transação — tente um valor menor ou sacar o total disponível.'
+        );
       }
+
+      // Envia valorLiquido (taxa já descontada); depois debita a taxa da subconta
+      const tx = await WooviService.sacarSubconta(tenant, resumo.valorLiquido);
       if (resumo.taxa > 0) {
         try {
           await WooviService.debitarSubconta(tenant, resumo.taxa, 'Taxa de saque VouRifar');

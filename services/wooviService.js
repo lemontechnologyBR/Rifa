@@ -205,6 +205,21 @@ const WooviService = {
     return charge?.correlationID || payload?.correlationID || null;
   },
 
+  /** Saldo atual da subconta em reais (centavos da API / 100). */
+  async consultarSaldoSubconta(tenant) {
+    if (!this.isConfigured(tenant)) return null;
+    const pixKey = encodeURIComponent(normalizarChaveParaSubconta(tenant.pixChave));
+    try {
+      const data = await this._request(`/subaccount/${pixKey}`);
+      const sub = data?.subAccount || data;
+      const cents = Number(sub?.balance ?? 0);
+      return Math.round(cents) / 100;
+    } catch (err) {
+      console.error(`[Woovi] consultarSaldoSubconta(${tenant.pixChave}):`, err.message);
+      return null;
+    }
+  },
+
   /** Consulta status de um Pix Out (saque) pelo correlationID. */
   async consultarPagamento(correlationID) {
     if (!this.isPlatformConfigured() || !correlationID) return null;
@@ -219,7 +234,7 @@ const WooviService = {
   /** Extrato da subconta (ledger) — alternativa quando /payment retorna 403. */
   async consultarExtratoSubconta(tenant, { limit = 30, start, end } = {}) {
     if (!this.isConfigured(tenant)) return [];
-    const pixKey = encodeURIComponent(tenant.pixChave);
+    const pixKey = encodeURIComponent(normalizarChaveParaSubconta(tenant.pixChave));
     const params = new URLSearchParams({ limit: String(Math.min(limit, 100)) });
     if (start) params.set('start', start);
     if (end) params.set('end', end);

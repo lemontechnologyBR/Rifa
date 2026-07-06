@@ -46,6 +46,7 @@ const CarteiraService = {
         bruto: 0,
         cotas: 0,
         parteOrganizador: 0,
+        saldoSubconta: null,
         pendente: 0,
         reservasPendentes: 0
       },
@@ -115,7 +116,19 @@ const CarteiraService = {
     const pendente = woovi.pendente + mercadopago.pendente;
     const reservasPendentes = woovi.reservasPendentes + mercadopago.reservasPendentes;
     const cotasConfirmadas = woovi.cotas + mercadopago.cotas;
-    const saldoDisponivel = Math.max(0, woovi.parteOrganizador - totalSacado);
+    let saldoDisponivel = Math.max(0, woovi.parteOrganizador - totalSacado);
+
+    // Saldo real na subconta Woovi (já desconta taxas do gateway por transação)
+    if (tenant?.pixChave && saldoDisponivel > 0) {
+      const WooviService = require('./wooviService');
+      if (WooviService.isPlatformConfigured()) {
+        const saldoSubconta = await WooviService.consultarSaldoSubconta(tenant);
+        if (saldoSubconta != null) {
+          woovi.saldoSubconta = saldoSubconta;
+          saldoDisponivel = Math.min(saldoDisponivel, saldoSubconta);
+        }
+      }
+    }
 
     return {
       saldoConfirmado,
