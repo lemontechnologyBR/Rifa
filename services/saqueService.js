@@ -226,7 +226,10 @@ const SaqueService = {
 
   async processarSaque(tenant, saldoDisponivel, adminUsuario, valorBruto = null) {
     const MercadoPagoOAuthService = require('./mercadoPagoOAuthService');
-    if (MercadoPagoOAuthService.isSplitConfigured() && MercadoPagoOAuthService.isTenantConnected(tenant)) {
+    const mpConectado = MercadoPagoOAuthService.isSplitConfigured() && MercadoPagoOAuthService.isTenantConnected(tenant);
+
+    // Bloqueia saque via MP somente se não há saldo Woovi histórico retido
+    if (mpConectado && !(saldoDisponivel > 0)) {
       throw new Error('Com Mercado Pago conectado, os pagamentos caem direto na sua conta — não é necessário sacar.');
     }
 
@@ -245,7 +248,9 @@ const SaqueService = {
       throw new Error('Saldo insuficiente para cobrir a taxa de saque.');
     }
 
-    const provider = PaymentService.getProvider(tenant);
+    // Se MP está conectado mas há saldo Woovi histórico, o saque deve ir via Woovi
+    // (o dinheiro está retido na subconta Woovi, não no MP)
+    const provider = mpConectado && saldoDisponivel > 0 ? 'woovi' : PaymentService.getProvider(tenant);
 
     if (provider === 'woovi') {
       const WooviService = require('./wooviService');
