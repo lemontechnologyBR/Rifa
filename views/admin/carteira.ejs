@@ -63,19 +63,19 @@
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      <article class="admin-metric-card">
+      <article class="admin-metric-card border-l-4 border-violet-400">
         <p class="admin-metric-label mb-1">Total confirmado</p>
-        <p class="admin-metric-value text-emerald-600">R$ <%= resumo.saldoConfirmado.toFixed(2).replace('.', ',') %></p>
+        <p class="admin-metric-value text-violet-600">R$ <%= resumo.saldoConfirmado.toFixed(2).replace('.', ',') %></p>
         <p class="text-xs text-gray-400 mt-1"><%= resumo.cotasConfirmadas %> cota(s) pagas</p>
       </article>
 
       <% if (temWoovi) { %>
-      <article class="admin-metric-card border-l-4 border-sky-400">
+      <article class="admin-metric-card border-l-4 border-emerald-400">
         <p class="admin-metric-label mb-1 flex items-center gap-1.5">
-          <i data-lucide="building-2" class="w-3.5 h-3.5 text-sky-500"></i> Saldo na plataforma
+          <i data-lucide="building-2" class="w-3.5 h-3.5 text-emerald-500"></i> Saldo na plataforma
         </p>
         <% const saldoPlat = resumo.saldoDisponivel != null ? resumo.saldoDisponivel : w.parteOrganizador; %>
-        <p class="admin-metric-value text-sky-600">R$ <%= saldoPlat.toFixed(2).replace('.', ',') %></p>
+        <p class="admin-metric-value text-emerald-600">R$ <%= saldoPlat.toFixed(2).replace('.', ',') %></p>
         <p class="text-xs text-gray-400 mt-1">
           <%= w.cotas %> cota(s) · <%= Math.round((wooviPercentual||0.93)*100) %>% de R$ <%= w.bruto.toFixed(2).replace('.', ',') %>
           <% if (resumo.totalSacado > 0) { %> · R$ <%= resumo.totalSacado.toFixed(2).replace('.', ',') %> sacado<% } %>
@@ -84,11 +84,11 @@
       <% } %>
 
       <% if (temMp || mpOk) { %>
-      <article class="admin-metric-card border-l-4 border-emerald-400">
+      <article class="admin-metric-card border-l-4 border-sky-400">
         <p class="admin-metric-label mb-1 flex items-center gap-1.5">
-          <i data-lucide="zap" class="w-3.5 h-3.5 text-emerald-500"></i> Recebido no Mercado Pago
+          <i data-lucide="zap" class="w-3.5 h-3.5 text-sky-500"></i> Recebido no Mercado Pago
         </p>
-        <p class="admin-metric-value text-emerald-600">R$ <%= mp.parteOrganizador.toFixed(2).replace('.', ',') %></p>
+        <p class="admin-metric-value text-sky-600">R$ <%= mp.parteOrganizador.toFixed(2).replace('.', ',') %></p>
         <p class="text-xs text-gray-400 mt-1">
           <% if (mp.cotas > 0) { %>
             <%= mp.cotas %> cota(s) · <%= Math.round((mpPercentual||0.95)*100) %>% de R$ <%= mp.bruto.toFixed(2).replace('.', ',') %> · creditado direto
