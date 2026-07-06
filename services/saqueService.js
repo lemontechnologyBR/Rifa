@@ -224,15 +224,35 @@ const SaqueService = {
     return atualizados;
   },
 
-  /** Limita saldo contábil ao que existe de fato na subconta Woovi. */
-  async saldoEfetivoWoovi(tenant, saldoContabil) {
+  /** Limita saldo contábil ao que existe de fato nas subcontas Woovi (inclui chaves históricas). */
+  async saldoEfetivoWoovi(tenant, saldoContabil, correlationIds = []) {
     const saldo = Math.max(0, Number(saldoContabil) || 0);
     if (!tenant?.pixChave || saldo <= 0) return saldo;
     const WooviService = require('./wooviService');
     if (!WooviService.isPlatformConfigured()) return saldo;
-    const subconta = await WooviService.consultarSaldoSubconta(tenant);
+    const subconta = await WooviService.consultarSaldoAgregado(tenant, correlationIds);
     if (subconta == null) return saldo;
     return Math.min(saldo, subconta);
+  },
+
+  async _wooviRefsTenant(tenantId) {
+    const rifas = await prisma.rifa.findMany({
+      where: { tenantId: Number(tenantId) },
+      select: { id: true }
+    });
+    const rifaIds = rifas.map((r) => r.id);
+    if (!rifaIds.length) return [];
+    const reservas = await prisma.reserva.findMany({
+      where: {
+        rifaId: { in: rifaIds },
+        statusPagamento: 'confirmado',
+        wooviCorrelationId: { not: null }
+      },
+      select: { wooviCorrelationId: true }
+    });
+    return reservas
+      .map((r) => r.wooviCorrelationId)
+      .filter((id) => id && !/^\d+$/.test(String(id)));
   },
 
   async processarSaque(tenant, saldoDisponivel, adminUsuario, valorBruto = null) {
@@ -245,8 +265,10 @@ const SaqueService = {
 
     const provider = mpConectado && saldoDisponivel > 0 ? 'woovi' : PaymentService.getProvider(tenant);
     let saldoEfetivo = Math.max(0, Number(saldoDisponivel) || 0);
+    let wooviRefs = [];
     if (provider === 'woovi') {
-      saldoEfetivo = await this.saldoEfetivoWoovi(tenant, saldoEfetivo);
+      wooviRefs = await this._wooviRefsTenant(tenant.id);
+      saldoEfetivo = await this.saldoEfetivoWoovi(tenant, saldoEfetivo, wooviRefs);
     }
 
     const resumo = valorBruto != null && valorBruto !== ''
@@ -266,6 +288,8 @@ const SaqueService = {
 
     if (provider === 'woovi') {
       const WooviService = require('./wooviService');
+      await WooviService.consolidarSubcontasParaTenant(tenant, wooviRefs);
+
       const subconta = await WooviService.consultarSaldoSubconta(tenant);
       if (subconta != null && resumo.valorBruto > subconta + 0.009) {
         throw new Error(

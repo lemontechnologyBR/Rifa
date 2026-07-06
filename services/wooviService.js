@@ -33,6 +33,13 @@ function normalizarChaveParaSubconta(chave) {
   return raw;
 }
 
+function wooviPixKeyType(chave) {
+  const { detectarTipoChavePix } = require('../lib/pixKey');
+  const t = detectarTipoChavePix(chave);
+  const map = { email: 'EMAIL', telefone: 'PHONE', cpf: 'CPF', cnpj: 'CNPJ', aleatoria: 'RANDOM' };
+  return map[t] || 'EMAIL';
+}
+
 function parseWooviError(raw) {
   try {
     const data = typeof raw === 'string' ? JSON.parse(raw) : raw;
@@ -218,6 +225,97 @@ const WooviService = {
       console.error(`[Woovi] consultarSaldoSubconta(${tenant.pixChave}):`, err.message);
       return null;
     }
+  },
+
+  /**
+   * Chaves PIX de subcontas ligadas ao tenant (atual + splits históricos nas cobranças).
+   */
+  async _coletarChavesSubconta(tenant, correlationIds = []) {
+    const keys = new Set();
+    if (tenant?.pixChave) {
+      keys.add(normalizarChaveParaSubconta(tenant.pixChave));
+    }
+    const ids = [...new Set((correlationIds || []).map(String).filter(Boolean))].slice(0, 40);
+    for (const id of ids) {
+      try {
+        const data = await this._request(`/charge/${encodeURIComponent(id)}`);
+        const charge = data?.charge || data;
+        for (const sp of charge?.splits || []) {
+          if (sp?.pixKey) keys.add(String(sp.pixKey));
+        }
+      } catch (_) { /* cobrança antiga ou removida */ }
+    }
+    return keys;
+  },
+
+  /**
+   * Soma saldo de todas as subcontas ligadas ao tenant — chave atual + splits históricos.
+   * Necessário quando o organizador troca a chave PIX após vendas.
+   */
+  async consultarSaldoAgregado(tenant, correlationIds = []) {
+    if (!this.isPlatformConfigured()) return null;
+
+    const keys = await this._coletarChavesSubconta(tenant, correlationIds);
+    let totalCents = 0;
+    for (const key of keys) {
+      try {
+        const data = await this._request(`/subaccount/${encodeURIComponent(key)}`);
+        totalCents += Number(data?.subAccount?.balance ?? data?.balance ?? 0);
+      } catch (_) { /* subconta inexistente */ }
+    }
+
+    return Math.round(totalCents) / 100;
+  },
+
+  /** Move saldo de subcontas antigas para a chave PIX atual do tenant. */
+  async consolidarSubcontasParaTenant(tenant, correlationIds = []) {
+    if (!tenant?.pixChave) return;
+
+    const dest = normalizarChaveParaSubconta(tenant.pixChave);
+    const keys = await this._coletarChavesSubconta(tenant, correlationIds);
+
+    for (const key of keys) {
+      if (key === dest) continue;
+      let balanceCents = 0;
+      try {
+        const data = await this._request(`/subaccount/${encodeURIComponent(key)}`);
+        balanceCents = Number(data?.subAccount?.balance ?? 0);
+      } catch (_) {
+        continue;
+      }
+      if (balanceCents < 1) continue;
+
+      const valorReais = Math.round(balanceCents) / 100;
+      await this.transferirSubconta({
+        fromPixKey: key,
+        toPixKey: dest,
+        valorReais,
+        fromPixKeyType: wooviPixKeyType(key),
+        toPixKeyType: wooviPixKeyType(dest),
+        correlationID: `consolidate-t${tenant.id}-${Date.now()}`,
+        description: `Consolidação saldo ${tenant.slug || tenant.id}`
+      });
+      console.log(`[Woovi] Consolidado R$ ${valorReais} (${key} → ${dest})`);
+    }
+  },
+
+  /** Transfere saldo entre subcontas Woovi (centavos na API). */
+  async transferirSubconta({ fromPixKey, toPixKey, valorReais, fromPixKeyType = 'EMAIL', toPixKeyType = 'EMAIL', correlationID, description }) {
+    const valueCents = Math.round(Number(valorReais) * 100);
+    if (valueCents < 1) throw new Error('Valor de transferência inválido.');
+
+    return this._request('/subaccount/transfer', {
+      method: 'POST',
+      body: JSON.stringify({
+        value: valueCents,
+        fromPixKey: String(fromPixKey),
+        fromPixKeyType,
+        toPixKey: String(toPixKey),
+        toPixKeyType,
+        correlationID: correlationID || `transfer-${Date.now()}`,
+        description: String(description || 'Transferência entre subcontas').slice(0, 120)
+      })
+    });
   },
 
   /** Consulta status de um Pix Out (saque) pelo correlationID. */

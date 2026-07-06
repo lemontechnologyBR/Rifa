@@ -118,11 +118,13 @@ const CarteiraService = {
     const cotasConfirmadas = woovi.cotas + mercadopago.cotas;
     let saldoDisponivel = Math.max(0, woovi.parteOrganizador - totalSacado);
 
-    // Saldo real na subconta Woovi (já desconta taxas do gateway por transação)
     if (tenant?.pixChave && saldoDisponivel > 0) {
       const WooviService = require('./wooviService');
       if (WooviService.isPlatformConfigured()) {
-        const saldoSubconta = await WooviService.consultarSaldoSubconta(tenant);
+        const wooviRefs = confirmadasList
+          .filter((r) => gatewayReserva(r, tenant) !== 'mercadopago' && r.wooviCorrelationId)
+          .map((r) => r.wooviCorrelationId);
+        const saldoSubconta = await WooviService.consultarSaldoAgregado(tenant, wooviRefs);
         if (saldoSubconta != null) {
           woovi.saldoSubconta = saldoSubconta;
           saldoDisponivel = Math.min(saldoDisponivel, saldoSubconta);
