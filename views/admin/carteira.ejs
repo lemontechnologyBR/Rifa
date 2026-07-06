@@ -7,9 +7,7 @@
   <%- include('partials/nav', {
     active: 'carteira',
     pageTitle: 'Carteira',
-    pageSubtitle: typeof usesSplit !== 'undefined' && usesSplit
-      ? 'Pagamentos repassados automaticamente via Mercado Pago'
-      : 'Onde você recebe os pagamentos dos sorteios',
+    pageSubtitle: typeof pageSubtitle !== 'undefined' ? pageSubtitle : 'Onde você recebe os pagamentos dos sorteios',
     tenant,
     adminBase,
     tenantBase,
@@ -38,14 +36,24 @@
     <% const splitAtivo = typeof usesSplit !== 'undefined' && usesSplit; %>
     <% const mpSplit = typeof mpSplitConfigured !== 'undefined' && mpSplitConfigured; %>
     <% const mpOk = typeof mpConnected !== 'undefined' && mpConnected; %>
+    <% const w = resumo.woovi || { bruto: 0, cotas: 0, parteOrganizador: 0, pendente: 0, reservasPendentes: 0 }; %>
+    <% const mp = resumo.mercadopago || { bruto: 0, cotas: 0, parteOrganizador: 0, pendente: 0, reservasPendentes: 0 }; %>
+    <% const temWoovi = w.bruto > 0 || w.pendente > 0 || (resumo.saldoDisponivel != null && resumo.saldoDisponivel > 0); %>
+    <% const temMp = mp.bruto > 0 || mp.pendente > 0; %>
+    <% const modoMisto = temWoovi && (temMp || mpOk); %>
 
-    <%# Modalidade badge %>
-    <div class="flex items-center gap-3 mb-5">
-      <% if (mpOk) { %>
+    <%# Badges de modalidade %>
+    <div class="flex flex-wrap items-center gap-2 mb-5">
+      <% if (modoMisto) { %>
+        <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-700">
+          <i data-lucide="layers" class="w-3.5 h-3.5"></i> Duas modalidades ativas
+        </span>
+        <span class="text-xs text-gray-500">Vendas antigas via plataforma + novas vendas via Mercado Pago</span>
+      <% } else if (mpOk) { %>
         <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700">
           <i data-lucide="zap" class="w-3.5 h-3.5"></i> Modalidade: Mercado Pago Direto
         </span>
-        <span class="text-xs text-gray-500"><%= Math.round((organizadorPercentual||0.95)*100) %>% cai na sua conta MP na hora do pagamento</span>
+        <span class="text-xs text-gray-500"><%= Math.round((mpPercentual||0.95)*100) %>% cai na sua conta MP na hora do pagamento</span>
       <% } else { %>
         <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300 border border-sky-200 dark:border-sky-700">
           <i data-lucide="building-2" class="w-3.5 h-3.5"></i> Modalidade: Plataforma VouRifar
@@ -54,44 +62,72 @@
       <% } %>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       <article class="admin-metric-card">
-        <p class="admin-metric-label mb-1">Saldo confirmado</p>
+        <p class="admin-metric-label mb-1">Total confirmado</p>
         <p class="admin-metric-value text-emerald-600">R$ <%= resumo.saldoConfirmado.toFixed(2).replace('.', ',') %></p>
         <p class="text-xs text-gray-400 mt-1"><%= resumo.cotasConfirmadas %> cota(s) pagas</p>
       </article>
-      <article class="admin-metric-card">
-        <% const saldoSaque = resumo.saldoDisponivel != null ? resumo.saldoDisponivel : resumo.saldoConfirmado * 0.95; %>
-        <% if (mpOk) { %>
-          <p class="admin-metric-label mb-1">Sua parte (<%= Math.round((organizadorPercentual||0.95)*100) %>%)</p>
-          <p class="admin-metric-value text-violet-600">R$ <%= (resumo.saldoConfirmado * (organizadorPercentual||0.95)).toFixed(2).replace('.', ',') %></p>
-          <p class="text-xs text-gray-400 mt-1">Creditado direto na sua conta MP</p>
-        <% } else { %>
-          <p class="admin-metric-label mb-1">Disponível para saque</p>
-          <p class="admin-metric-value text-violet-600">R$ <%= saldoSaque.toFixed(2).replace('.', ',') %></p>
-          <p class="text-xs text-gray-400 mt-1"><%= Math.round((organizadorPercentual||0.93)*100) %>% do saldo confirmado<% if (resumo.totalSacado > 0) { %> · R$ <%= resumo.totalSacado.toFixed(2).replace('.', ',') %> já sacado<% } %></p>
-        <% } %>
+
+      <% if (temWoovi) { %>
+      <article class="admin-metric-card border-l-4 border-sky-400">
+        <p class="admin-metric-label mb-1 flex items-center gap-1.5">
+          <i data-lucide="building-2" class="w-3.5 h-3.5 text-sky-500"></i> Saldo na plataforma
+        </p>
+        <% const saldoPlat = resumo.saldoDisponivel != null ? resumo.saldoDisponivel : w.parteOrganizador; %>
+        <p class="admin-metric-value text-sky-600">R$ <%= saldoPlat.toFixed(2).replace('.', ',') %></p>
+        <p class="text-xs text-gray-400 mt-1">
+          <%= w.cotas %> cota(s) · <%= Math.round((wooviPercentual||0.93)*100) %>% de R$ <%= w.bruto.toFixed(2).replace('.', ',') %>
+          <% if (resumo.totalSacado > 0) { %> · R$ <%= resumo.totalSacado.toFixed(2).replace('.', ',') %> sacado<% } %>
+        </p>
       </article>
+      <% } %>
+
+      <% if (temMp || mpOk) { %>
+      <article class="admin-metric-card border-l-4 border-emerald-400">
+        <p class="admin-metric-label mb-1 flex items-center gap-1.5">
+          <i data-lucide="zap" class="w-3.5 h-3.5 text-emerald-500"></i> Recebido no Mercado Pago
+        </p>
+        <p class="admin-metric-value text-emerald-600">R$ <%= mp.parteOrganizador.toFixed(2).replace('.', ',') %></p>
+        <p class="text-xs text-gray-400 mt-1">
+          <% if (mp.cotas > 0) { %>
+            <%= mp.cotas %> cota(s) · <%= Math.round((mpPercentual||0.95)*100) %>% de R$ <%= mp.bruto.toFixed(2).replace('.', ',') %> · creditado direto
+          <% } else if (mpOk) { %>
+            Novas vendas caem direto na sua conta MP
+          <% } else { %>
+            Sem vendas via Mercado Pago ainda
+          <% } %>
+        </p>
+      </article>
+      <% } %>
+
       <article class="admin-metric-card">
         <p class="admin-metric-label mb-1">Aguardando PIX</p>
         <p class="admin-metric-value">R$ <%= resumo.pendente.toFixed(2).replace('.', ',') %></p>
-        <p class="text-xs text-gray-400 mt-1"><%= resumo.reservasPendentes %> reserva(s)</p>
-      </article>
-      <article class="admin-metric-card">
-        <p class="admin-metric-label mb-1">Mercado Pago</p>
-        <% if (mpOk) { %>
-          <p class="text-sm font-bold mt-2 text-emerald-600 flex items-center gap-1.5">
-            <i data-lucide="check-circle-2" class="w-4 h-4"></i> Conectada
-          </p>
-          <p class="text-xs text-gray-500 mt-1 truncate" title="<%= tenant.mpNickname || tenant.mpUserId %>"><%= tenant.mpNickname || ('Conta #' + tenant.mpUserId) %></p>
-        <% } else { %>
-          <p class="text-sm font-bold mt-2 text-amber-600 flex items-center gap-1.5">
-            <i data-lucide="circle-dashed" class="w-4 h-4"></i> Não conectada
-          </p>
-          <p class="text-xs text-gray-400 mt-1"><%= tenant.pixChave ? 'Usando Plataforma' : 'Configure abaixo' %></p>
-        <% } %>
+        <p class="text-xs text-gray-400 mt-1">
+          <%= resumo.reservasPendentes %> reserva(s)
+          <% if (w.pendente > 0 && mp.pendente > 0) { %>
+            · Plataforma R$ <%= w.pendente.toFixed(2).replace('.', ',') %> · MP R$ <%= mp.pendente.toFixed(2).replace('.', ',') %>
+          <% } else if (w.pendente > 0) { %>
+            · via plataforma
+          <% } else if (mp.pendente > 0) { %>
+            · via Mercado Pago
+          <% } %>
+        </p>
       </article>
     </div>
+
+    <% if (mpOk) { %>
+    <div class="grid grid-cols-1 sm:grid-cols-1 gap-4 mb-6">
+      <article class="admin-metric-card !mb-0">
+        <p class="admin-metric-label mb-1">Mercado Pago</p>
+        <p class="text-sm font-bold mt-1 text-emerald-600 flex items-center gap-1.5">
+          <i data-lucide="check-circle-2" class="w-4 h-4"></i> Conectada
+        </p>
+        <p class="text-xs text-gray-500 mt-1 truncate" title="<%= tenant.mpNickname || tenant.mpUserId %>"><%= tenant.mpNickname || ('Conta #' + tenant.mpUserId) %></p>
+      </article>
+    </div>
+    <% } %>
 
     <% if (mpOk) { %>
     <div class="admin-alert mb-4" style="background:#fef9c3;border:1px solid #fde047;color:#713f12;border-radius:12px;padding:14px 16px;display:flex;gap:10px;align-items:flex-start;">
@@ -156,7 +192,7 @@
     <% if (!mpOk || (resumo.saldoDisponivel != null && resumo.saldoDisponivel > 0)) { %>
     <% if (mpOk && resumo.saldoDisponivel > 0) { %>
       <div class="mb-4 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 text-sm text-amber-800 dark:text-amber-300">
-        <strong>Saldo retido da plataforma:</strong> Você conectou o Mercado Pago, mas possui R$ <strong><%= resumo.saldoDisponivel.toFixed(2).replace('.', ',') %></strong> de vendas anteriores via PIX da plataforma aguardando saque.
+        <strong>Saldo na plataforma:</strong> Você conectou o Mercado Pago, mas ainda tem <strong>R$ <%= resumo.saldoDisponivel.toFixed(2).replace('.', ',') %></strong> de vendas anteriores via PIX da plataforma (<%= w.cotas %> cota(s), bruto R$ <%= w.bruto.toFixed(2).replace('.', ',') %>). Esse valor precisa ser sacado abaixo — novas vendas já caem direto no MP.
       </div>
     <% } %>
     <%
@@ -310,7 +346,7 @@
     </div>
     <% } %>
 
-    <% if (!mpOk && typeof extratoSaques !== 'undefined' && extratoSaques.length) { %>
+    <% if ((temWoovi || resumo.totalSacado > 0) && typeof extratoSaques !== 'undefined' && extratoSaques.length) { %>
     <div class="admin-panel-card p-5 mb-6">
       <div class="flex items-center justify-between gap-3 mb-4">
         <div class="flex items-center gap-2">
@@ -355,21 +391,21 @@
         </table>
       </div>
     </div>
-    <% } else if (!mpOk && saque && saque.podeSacar) { %>
+    <% } else if (temWoovi && saque && saque.podeSacar) { %>
     <div class="admin-panel-card p-5 mb-6">
       <div class="flex items-center gap-2 text-sm text-gray-500">
         <i data-lucide="receipt" class="w-4 h-4"></i>
         <span>Nenhum saque realizado ainda. O histórico aparecerá aqui após o primeiro saque.</span>
       </div>
     </div>
-    <% } else if (!mpOk && resumo.totalSacado > 0) { %>
+    <% } else if (temWoovi && resumo.totalSacado > 0) { %>
     <div class="admin-panel-card p-5 mb-6">
       <p class="text-sm text-gray-500">Total já sacado: <strong>R$ <%= resumo.totalSacado.toFixed(2).replace('.', ',') %></strong></p>
     </div>
     <% } %>
 
     <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
-      <% if (!mpOk) { %>
+      <% if (!mpOk || temWoovi) { %>
       <form method="POST" action="<%= adminBase %>/carteira" class="admin-panel-card p-6 space-y-5 lg:col-span-3"
         x-data="{
           tipo: '<%= pixTipo %>',
@@ -390,8 +426,8 @@
         <div class="admin-config-section-head">
           <div class="admin-config-section-icon pix"><img src="/img/pix.svg?v=2" alt="PIX" width="40" height="40"></div>
           <div>
-            <h2 class="font-bold text-base">Sua chave PIX para saque</h2>
-            <p class="text-sm text-gray-500 dark:text-gray-400">A plataforma processa os pagamentos. Informe sua chave PIX para sacar o saldo acumulado.</p>
+            <h2 class="font-bold text-base"><%= mpOk ? 'Chave PIX para saque da plataforma' : 'Sua chave PIX para saque' %></h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400"><% if (mpOk) { %>Vendas antigas via plataforma são sacadas nesta chave PIX.<% } else { %>A plataforma processa os pagamentos. Informe sua chave PIX para sacar o saldo acumulado.<% } %></p>
           </div>
         </div>
 
@@ -453,7 +489,7 @@
           <span x-text="pixAtiva ? 'Atualizar chave PIX' : 'Salvar chave PIX'"></span>
         </button>
       </form>
-      <% } else { %>
+      <% } else if (mpOk) { %>
       <div class="admin-panel-card p-6 lg:col-span-3">
         <h2 class="font-bold text-base mb-3">Como funciona o repasse automático</h2>
         <ol class="text-sm text-gray-500 dark:text-gray-400 space-y-3 list-none">
@@ -478,7 +514,7 @@
       <% } %>
 
       <aside class="lg:col-span-2 space-y-4">
-        <% if (!mpOk) { %>
+        <% if (!mpOk || temWoovi) { %>
         <div class="admin-panel-card p-5">
           <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Tipos de chave</p>
           <ul class="text-sm text-gray-500 dark:text-gray-400 space-y-2">
@@ -537,21 +573,22 @@
           <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600 shrink-0"></i>
           <span>Cada conta usa uma chave PIX exclusiva. A mesma chave não pode ser cadastrada em dois sistemas.</span>
         </div>
-        <% } else { %>
+        <% } %>
+        <% if (mpOk) { %>
         <div class="admin-panel-card p-5">
-          <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Segurança</p>
+          <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Mercado Pago</p>
           <ul class="text-sm text-gray-500 dark:text-gray-400 space-y-2">
             <li class="flex items-start gap-2">
+              <i data-lucide="zap" class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5"></i>
+              <span>Novas vendas: <strong class="text-gray-700 dark:text-gray-200"><%= Math.round((mpPercentual||0.95)*100) %>%</strong> cai direto na sua conta MP</span>
+            </li>
+            <li class="flex items-start gap-2">
               <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5"></i>
-              <span>O dinheiro nunca passa pela conta da plataforma — vai direto para você</span>
+              <span>O dinheiro não passa pela plataforma — repasse automático</span>
             </li>
             <li class="flex items-start gap-2">
               <i data-lucide="lock" class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5"></i>
-              <span>Autorização OAuth oficial do Mercado Pago — revogável a qualquer momento</span>
-            </li>
-            <li class="flex items-start gap-2">
-              <i data-lucide="user-check" class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5"></i>
-              <span>Cada conta MP só pode ser vinculada a uma loja VouRifar</span>
+              <span>Autorização OAuth oficial — revogável a qualquer momento</span>
             </li>
           </ul>
         </div>

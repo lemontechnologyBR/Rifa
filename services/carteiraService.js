@@ -7,6 +7,12 @@ const MercadoPagoOAuthService = require('./mercadoPagoOAuthService');
 const { chavesPixEquivalentes, validarChavePixPorTipo } = require('../lib/pixKey');
 const { ORGANIZADOR_PERCENTUAL, ORGANIZADOR_PERCENTUAL_WOOVI } = require('../lib/config');
 
+function gatewayReserva(reserva, tenant) {
+  return PaymentService.detectProviderFromRef(reserva?.wooviCorrelationId)
+    || PaymentService.getProvider(tenant)
+    || 'woovi';
+}
+
 const CarteiraService = {
   usesSplit(tenant) {
     return MercadoPagoOAuthService.isSplitConfigured() && MercadoPagoOAuthService.isTenantConnected(tenant);
@@ -29,63 +35,97 @@ const CarteiraService = {
       select: { id: true }
     });
     const rifaIds = rifas.map((r) => r.id);
-    if (!rifaIds.length) {
-      return {
-        saldoConfirmado: 0,
+    const vazio = {
+      saldoConfirmado: 0,
+      pendente: 0,
+      cotasConfirmadas: 0,
+      reservasPendentes: 0,
+      totalSacado: 0,
+      saldoDisponivel: 0,
+      woovi: {
+        bruto: 0,
+        cotas: 0,
+        parteOrganizador: 0,
         pendente: 0,
-        cotasConfirmadas: 0,
-        reservasPendentes: 0,
-        totalSacado: 0,
-        saldoDisponivel: 0
-      };
-    }
+        reservasPendentes: 0
+      },
+      mercadopago: {
+        bruto: 0,
+        cotas: 0,
+        parteOrganizador: 0,
+        pendente: 0,
+        reservasPendentes: 0
+      }
+    };
+    if (!rifaIds.length) return vazio;
 
     const whereBase = { rifaId: { in: rifaIds } };
 
-    const [confirmadasList, pendente, totalSacado] = await Promise.all([
-      // Busca todas confirmadas com info de gateway para calcular saldo correto por origem
+    const [confirmadasList, pendentesList, totalSacado] = await Promise.all([
       prisma.reserva.findMany({
         where: { ...whereBase, statusPagamento: 'confirmado' },
-        select: { valorTotal: true, wooviCorrelationId: true }
+        select: {
+          valorTotal: true,
+          wooviCorrelationId: true,
+          _count: { select: { reservaNumeros: true } }
+        }
       }),
-      prisma.reserva.aggregate({
+      prisma.reserva.findMany({
         where: { ...whereBase, statusPagamento: 'pendente' },
-        _sum: { valorTotal: true },
-        _count: { id: true }
+        select: {
+          valorTotal: true,
+          wooviCorrelationId: true,
+          _count: { select: { reservaNumeros: true } }
+        }
       }),
       this.totalSacado(tenantId)
     ]);
 
-    // Calcula saldo separado por gateway — cada venda usa a taxa do seu gateway original
-    let saldoOrganizadorWoovi = 0;
-    let saldoConfirmado = 0;
+    const woovi = { bruto: 0, cotas: 0, parteOrganizador: 0, pendente: 0, reservasPendentes: 0 };
+    const mercadopago = { bruto: 0, cotas: 0, parteOrganizador: 0, pendente: 0, reservasPendentes: 0 };
+
     for (const r of confirmadasList) {
       const valor = Number(r.valorTotal || 0);
-      saldoConfirmado += valor;
-      // wooviCorrelationId presente → venda foi via plataforma/Woovi → organizer recebe ORGANIZADOR_PERCENTUAL_WOOVI
-      // sem wooviCorrelationId → venda foi via MP split → dinheiro já foi direto para o tenant
-      if (r.wooviCorrelationId) {
-        saldoOrganizadorWoovi += valor * ORGANIZADOR_PERCENTUAL_WOOVI;
+      const cotas = r._count.reservaNumeros || 0;
+      const gw = gatewayReserva(r, tenant);
+      if (gw === 'mercadopago') {
+        mercadopago.bruto += valor;
+        mercadopago.cotas += cotas;
+        mercadopago.parteOrganizador += valor * ORGANIZADOR_PERCENTUAL;
+      } else {
+        woovi.bruto += valor;
+        woovi.cotas += cotas;
+        woovi.parteOrganizador += valor * ORGANIZADOR_PERCENTUAL_WOOVI;
       }
-      // vendas MP split: organizer já recebeu direto, não contabilizar no saldo da plataforma
     }
 
-    // saldoDisponivel = somente vendas Woovi (plataforma retém) menos saques já feitos
-    const saldoDisponivel = Math.max(0, saldoOrganizadorWoovi - totalSacado);
-
-    const cotasConfirmadas = await prisma.reservaNumero.count({
-      where: {
-        reserva: { rifaId: { in: rifaIds }, statusPagamento: 'confirmado' }
+    for (const r of pendentesList) {
+      const valor = Number(r.valorTotal || 0);
+      const gw = gatewayReserva(r, tenant);
+      if (gw === 'mercadopago') {
+        mercadopago.pendente += valor;
+        mercadopago.reservasPendentes++;
+      } else {
+        woovi.pendente += valor;
+        woovi.reservasPendentes++;
       }
-    });
+    }
+
+    const saldoConfirmado = woovi.bruto + mercadopago.bruto;
+    const pendente = woovi.pendente + mercadopago.pendente;
+    const reservasPendentes = woovi.reservasPendentes + mercadopago.reservasPendentes;
+    const cotasConfirmadas = woovi.cotas + mercadopago.cotas;
+    const saldoDisponivel = Math.max(0, woovi.parteOrganizador - totalSacado);
 
     return {
       saldoConfirmado,
-      pendente: pendente._sum.valorTotal || 0,
+      pendente,
       cotasConfirmadas,
-      reservasPendentes: pendente._count.id || 0,
+      reservasPendentes,
       totalSacado,
-      saldoDisponivel
+      saldoDisponivel,
+      woovi,
+      mercadopago
     };
   },
 
@@ -111,11 +151,6 @@ const CarteiraService = {
 
     const tenant = await prisma.tenant.findUnique({ where: { id: Number(tenantId) } });
     if (!tenant) throw new Error('Conta não encontrada.');
-
-    // Bloquear apenas se este tenant específico está usando MP direto
-    if (MercadoPagoOAuthService.isTenantConnected(tenant)) {
-      throw new Error('Sua conta já recebe via Mercado Pago. Para usar chave PIX, desconecte o MP primeiro.');
-    }
 
     await this.assertPixChaveDisponivel(tenantId, pix);
 

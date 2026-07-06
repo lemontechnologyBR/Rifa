@@ -93,6 +93,10 @@ const PaymentService = {
     return null;
   },
 
+  detectProviderFromRef(paymentRef) {
+    return detectProviderFromRef(paymentRef);
+  },
+
   /** Provider usado na cobrança (referência salva > config atual do tenant). */
   getProviderForReserva(reserva, tenant) {
     return detectProviderFromRef(reserva?.wooviCorrelationId) || getProviderForTenant(tenant);

@@ -187,6 +187,13 @@ const organizadorController = {
       const pixTipo = req.query.tipo || pixTipoDetectado || 'cpf';
       const mpSplitConfigured = MercadoPagoOAuthService.isSplitConfigured();
       const mpConnected = MercadoPagoOAuthService.isTenantConnected(req.tenant);
+      const temWooviResumo = (resumo.woovi?.bruto || 0) > 0 || (resumo.saldoDisponivel || 0) > 0;
+      let pageSubtitle = 'Onde você recebe os pagamentos dos sorteios';
+      if (mpConnected && temWooviResumo) {
+        pageSubtitle = 'Saldo da plataforma e repasses via Mercado Pago';
+      } else if (mpConnected) {
+        pageSubtitle = 'Pagamentos repassados automaticamente via Mercado Pago';
+      }
       const provider = PaymentService.getProvider(req.tenant);
       const {
         TAXA_PLATAFORMA,
@@ -201,6 +208,7 @@ const organizadorController = {
 
       res.render('admin/carteira', {
         titulo: 'Carteira',
+        pageSubtitle,
         tenant: req.tenant,
         resumo,
         saque,
