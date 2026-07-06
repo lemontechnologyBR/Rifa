@@ -254,10 +254,19 @@ const SaqueService = {
 
     if (provider === 'woovi') {
       const WooviService = require('./wooviService');
-      if (resumo.taxa > 0) {
-        await WooviService.debitarSubconta(tenant, resumo.taxa, 'Taxa de saque VouRifar');
+      let tx;
+      try {
+        tx = await WooviService.sacarSubconta(tenant, resumo.valorLiquido);
+      } catch (err) {
+        throw err;
       }
-      const tx = await WooviService.sacarSubconta(tenant, resumo.valorLiquido);
+      if (resumo.taxa > 0) {
+        try {
+          await WooviService.debitarSubconta(tenant, resumo.taxa, 'Taxa de saque VouRifar');
+        } catch (err) {
+          console.error(`[Saque] Taxa não debitada após withdraw OK — tenant #${tenant.id}:`, err.message);
+        }
+      }
       const statusPix = String(tx?.status || 'CREATED').toUpperCase();
       const statusDb = this._statusPagamentoFalhou(statusPix) ? 'falhou' : 'concluido';
 
