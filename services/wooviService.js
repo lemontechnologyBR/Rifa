@@ -13,6 +13,26 @@ function estimarTaxaWoovi(totalCents) {
   return Math.max(pct, min);
 }
 
+/**
+ * Normaliza chave PIX de telefone para o formato que a Woovi usa nas subcontas.
+ * A Woovi armazena números de telefone com prefixo +55.
+ * Chaves CPF/CNPJ/email não são alteradas.
+ * Ex: '19989067050' → '+5519989067050'
+ */
+function normalizarChaveParaSubconta(chave) {
+  if (!chave) return chave;
+  const raw = String(chave).trim();
+  // Já tem prefixo internacional — retorna como está
+  if (raw.startsWith('+')) return raw;
+  // E-mail e chaves aleatórias (UUID) — não alterar
+  if (raw.includes('@') || raw.includes('-')) return raw;
+  const digits = raw.replace(/\D/g, '');
+  // Telefone: 10 ou 11 dígitos → adiciona +55
+  if (digits.length === 10 || digits.length === 11) return `+55${digits}`;
+  // CPF (11 dígitos numéricos já tratados acima) / CNPJ (14) — não alterar
+  return raw;
+}
+
 function parseWooviError(raw) {
   try {
     const data = typeof raw === 'string' ? JSON.parse(raw) : raw;
@@ -68,15 +88,16 @@ const WooviService = {
   async ensureSubconta(tenant) {
     if (!tenant?.pixChave) return;
 
+    const pixKeyNorm = normalizarChaveParaSubconta(tenant.pixChave);
     try {
       await this._request('/subaccount', {
         method: 'POST',
         body: JSON.stringify({
           name: `${tenant.nome || tenant.slug}`.slice(0, 64),
-          pixKey: tenant.pixChave
+          pixKey: pixKeyNorm
         })
       });
-      console.log(`[Woovi] Subconta criada: ${tenant.pixChave}`);
+      console.log(`[Woovi] Subconta criada: ${pixKeyNorm}`);
     } catch (err) {
       const msg = String(err.message || '').toLowerCase();
       // Só ignora se for realmente "já existe" — NÃO inclui "found" (evita engolir "not found")
@@ -87,7 +108,7 @@ const WooviService = {
         || msg.includes('duplicate')
         || msg.includes('duplicad');
       if (jaExiste) {
-        console.log(`[Woovi] Subconta já registrada: ${tenant.pixChave}`);
+        console.log(`[Woovi] Subconta já registrada: ${pixKeyNorm}`);
         return;
       }
       // Qualquer outro erro é propagado — o organizador precisa ser informado
@@ -128,7 +149,7 @@ const WooviService = {
       value: totalCents,
       comment: String(comentario || 'Pagamento de rifa').replace(/[^\w\s\-.,@]/g, '').slice(0, 120),
       splits: [{
-        pixKey: tenant.pixChave,
+        pixKey: normalizarChaveParaSubconta(tenant.pixChave),
         value: organizerCents,
         splitType: 'SPLIT_SUB_ACCOUNT'   // igual ao TIP PAGE
       }]
@@ -156,7 +177,7 @@ const WooviService = {
           method: 'POST',
           body: JSON.stringify({
             name: `${tenant.nome || tenant.slug}`.slice(0, 64),
-            pixKey: tenant.pixChave
+            pixKey: normalizarChaveParaSubconta(tenant.pixChave)
           })
         }).catch((e) => { throw new Error(`Chave PIX não está registrada como conta virtual Woovi. Recadastre sua chave na Carteira. Detalhe: ${e.message}`); });
 
@@ -243,7 +264,7 @@ const WooviService = {
     const valueCents = Math.round(Number(valorReais) * 100);
     if (valueCents < 1) return null;
 
-    const pixKey = encodeURIComponent(tenant.pixChave);
+    const pixKey = encodeURIComponent(normalizarChaveParaSubconta(tenant.pixChave));
     try {
       const data = await this._request(`/subaccount/${pixKey}/debit`, {
         method: 'POST',
@@ -273,7 +294,7 @@ const WooviService = {
       throw new Error('Configure sua chave PIX antes de solicitar o saque.');
     }
 
-    const pixKey = encodeURIComponent(tenant.pixChave);
+    const pixKey = encodeURIComponent(normalizarChaveParaSubconta(tenant.pixChave));
     const body = {};
     if (valorReais != null && valorReais !== '') {
       const valueCents = Math.round(Number(valorReais) * 100);
