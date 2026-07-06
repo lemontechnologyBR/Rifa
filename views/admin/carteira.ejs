@@ -45,10 +45,13 @@
     <%# Badges de modalidade %>
     <div class="flex flex-wrap items-center gap-2 mb-5">
       <% if (modoMisto) { %>
-        <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-700">
-          <i data-lucide="layers" class="w-3.5 h-3.5"></i> Duas modalidades ativas
+        <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300 border border-sky-200 dark:border-sky-700">
+          <i data-lucide="zap" class="w-3.5 h-3.5"></i> Ativa: Mercado Pago
         </span>
-        <span class="text-xs text-gray-500">Vendas antigas via plataforma + novas vendas via Mercado Pago</span>
+        <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700">
+          <i data-lucide="building-2" class="w-3.5 h-3.5"></i> Saldo histórico na plataforma
+        </span>
+        <span class="text-xs text-gray-500">Novas vendas caem no MP · saldo antigo da plataforma pode ser sacado</span>
       <% } else if (mpOk) { %>
         <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700">
           <i data-lucide="zap" class="w-3.5 h-3.5"></i> Modalidade: Mercado Pago Direto
