@@ -152,7 +152,13 @@
     </div>
     <% } %>
 
-    <% if (!mpOk) { %>
+    <%# Mostra saque se: sem MP, ou com MP mas há saldo Woovi histórico retido %>
+    <% if (!mpOk || (resumo.saldoDisponivel != null && resumo.saldoDisponivel > 0)) { %>
+    <% if (mpOk && resumo.saldoDisponivel > 0) { %>
+      <div class="mb-4 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 text-sm text-amber-800 dark:text-amber-300">
+        <strong>Saldo retido da plataforma:</strong> Você conectou o Mercado Pago, mas possui R$ <strong><%= resumo.saldoDisponivel.toFixed(2).replace('.', ',') %></strong> de vendas anteriores via PIX da plataforma aguardando saque.
+      </div>
+    <% } %>
     <%
       const saldoDisp = saque ? saque.saldoDisponivel : (resumo.saldoDisponivel != null ? resumo.saldoDisponivel : resumo.saldoConfirmado * 0.95);
       const saqueGratis = saque ? saque.saqueGratis : saldoDisp >= 500;

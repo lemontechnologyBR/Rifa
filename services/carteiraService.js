@@ -42,11 +42,11 @@ const CarteiraService = {
 
     const whereBase = { rifaId: { in: rifaIds } };
 
-    const [confirmado, pendente, totalSacado] = await Promise.all([
-      prisma.reserva.aggregate({
+    const [confirmadasList, pendente, totalSacado] = await Promise.all([
+      // Busca todas confirmadas com info de gateway para calcular saldo correto por origem
+      prisma.reserva.findMany({
         where: { ...whereBase, statusPagamento: 'confirmado' },
-        _sum: { valorTotal: true },
-        _count: { id: true }
+        select: { valorTotal: true, wooviCorrelationId: true }
       }),
       prisma.reserva.aggregate({
         where: { ...whereBase, statusPagamento: 'pendente' },
@@ -56,10 +56,22 @@ const CarteiraService = {
       this.totalSacado(tenantId)
     ]);
 
-    const saldoConfirmado = confirmado._sum.valorTotal || 0;
-    const provider = tenant ? PaymentService.getProvider(tenant) : null;
-    const orgPct = provider === 'woovi' ? ORGANIZADOR_PERCENTUAL_WOOVI : ORGANIZADOR_PERCENTUAL;
-    const saldoDisponivel = Math.max(0, saldoConfirmado * orgPct - totalSacado);
+    // Calcula saldo separado por gateway — cada venda usa a taxa do seu gateway original
+    let saldoOrganizadorWoovi = 0;
+    let saldoConfirmado = 0;
+    for (const r of confirmadasList) {
+      const valor = Number(r.valorTotal || 0);
+      saldoConfirmado += valor;
+      // wooviCorrelationId presente → venda foi via plataforma/Woovi → organizer recebe ORGANIZADOR_PERCENTUAL_WOOVI
+      // sem wooviCorrelationId → venda foi via MP split → dinheiro já foi direto para o tenant
+      if (r.wooviCorrelationId) {
+        saldoOrganizadorWoovi += valor * ORGANIZADOR_PERCENTUAL_WOOVI;
+      }
+      // vendas MP split: organizer já recebeu direto, não contabilizar no saldo da plataforma
+    }
+
+    // saldoDisponivel = somente vendas Woovi (plataforma retém) menos saques já feitos
+    const saldoDisponivel = Math.max(0, saldoOrganizadorWoovi - totalSacado);
 
     const cotasConfirmadas = await prisma.reservaNumero.count({
       where: {

@@ -259,8 +259,13 @@ const organizadorController = {
         return res.redirect(`/${req.tenant.slug}/admin/carteira?erro=${encodeURIComponent(msg)}`);
       }
 
+      // Bloqueia saque somente se MP está conectado E não há saldo Woovi retido na plataforma
       if (MercadoPagoOAuthService.isSplitConfigured() && MercadoPagoOAuthService.isTenantConnected(req.tenant)) {
-        return res.redirect(`/${req.tenant.slug}/admin/carteira?erro=${encodeURIComponent('Pagamentos caem direto na sua conta Mercado Pago — saque manual não se aplica.')}`);
+        const resumoCheck = await CarteiraService.obterResumo(req.tenant.id, req.tenant);
+        if (resumoCheck.saldoDisponivel <= 0) {
+          return res.redirect(`/${req.tenant.slug}/admin/carteira?erro=${encodeURIComponent('Pagamentos caem direto na sua conta Mercado Pago — saque manual não se aplica.')}`);
+        }
+        // Há saldo Woovi histórico retido — permite prosseguir com o saque
       }
 
       const resumoCarteira = await CarteiraService.obterResumo(req.tenant.id, req.tenant);
