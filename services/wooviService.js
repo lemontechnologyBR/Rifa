@@ -22,14 +22,21 @@ function estimarTaxaWoovi(totalCents) {
 function normalizarChaveParaSubconta(chave) {
   if (!chave) return chave;
   const raw = String(chave).trim();
-  // Já tem prefixo internacional — retorna como está
   if (raw.startsWith('+')) return raw;
-  // E-mail e chaves aleatórias (UUID) — não alterar
-  if (raw.includes('@') || raw.includes('-')) return raw;
+  if (raw.includes('@')) return raw;
+
+  const { detectarTipoChavePix } = require('../lib/pixKey');
+  const tipo = detectarTipoChavePix(raw);
   const digits = raw.replace(/\D/g, '');
-  // Telefone: 10 ou 11 dígitos → adiciona +55
+
+  if (tipo === 'telefone') {
+    let d = digits;
+    if (!d.startsWith('55')) d = `55${d}`;
+    return `+${d}`;
+  }
+  if (tipo === 'cpf' || tipo === 'cnpj') return digits;
+  if (tipo === 'aleatoria') return raw.replace(/[\s-]/g, '').toLowerCase();
   if (digits.length === 10 || digits.length === 11) return `+55${digits}`;
-  // CPF (11 dígitos numéricos já tratados acima) / CNPJ (14) — não alterar
   return raw;
 }
 
