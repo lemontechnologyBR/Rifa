@@ -28,6 +28,13 @@
       </div>
     <% } %>
 
+    <%- include('partials/primeira-rifa-cta', {
+      totalRifas,
+      carteiraOk,
+      mpSplitConfigured,
+      adminBase
+    }) %>
+
     <div class="admin-metrics">
       <article class="admin-metric-card">
         <div class="admin-metric-head">

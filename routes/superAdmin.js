@@ -13,6 +13,8 @@ router.get('/sistemas', requireAdmin, superAdminController.sistemas);
 router.get('/rifas', requireAdmin, superAdminController.rifas);
 router.get('/vendas', requireAdmin, superAdminController.vendas);
 router.get('/organizadores', requireAdmin, superAdminController.organizadores);
+router.post('/organizadores/campanha-leads-quentes', requireAdmin, superAdminController.campanhaLeadsQuentes);
+router.post('/organizadores/:id/nurture-email', requireAdmin, superAdminController.enviarNurtureOrganizador);
 router.get('/plataforma', requireAdmin, superAdminController.plataforma);
 router.get('/marketing', requireAdmin, superAdminController.marketing);
 router.post('/marketing', requireAdmin, superAdminController.salvarMarketing);

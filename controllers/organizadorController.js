@@ -82,9 +82,14 @@ const organizadorController = {
 
   async dashboard(req, res) {
     const tid = req.tenant.id;
-    const metricas = await RifaService.obterMetricasDashboard(tid);
-    const logs = await LogService.listar(20, tid);
+    const prisma = require('../lib/prisma');
+    const [metricas, logs, totalRifas] = await Promise.all([
+      RifaService.obterMetricasDashboard(tid),
+      LogService.listar(20, tid),
+      prisma.rifa.count({ where: { tenantId: tid } })
+    ]);
     const ab = `/${req.tenant.slug}/admin`;
+    const paymentCtx = cartPaymentContext(req.tenant);
 
     res.render('admin/dashboard', {
       titulo: `Painel — ${req.tenant.nome}`,
@@ -92,6 +97,8 @@ const organizadorController = {
       adminBase: ab,
       tenantBase: `/${req.tenant.slug}`,
       metricas,
+      totalRifas,
+      ...paymentCtx,
       logs,
       adminUsuario: req.session.organizadorNome,
       active: 'dashboard',

@@ -72,6 +72,9 @@ model Organizador {
   googleId         String?   @unique @map("google_id")
   tokenRecuperacao String?   @map("token_recuperacao")
   tokenExpira      DateTime? @map("token_expira")
+  nurtureD1SentAt  DateTime? @map("nurture_d1_sent_at")
+  nurtureD3SentAt  DateTime? @map("nurture_d3_sent_at")
+  campanhaLeadsSentAt DateTime? @map("campanha_leads_sent_at")
   createdAt        DateTime  @default(now()) @map("created_at")
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)

@@ -1,0 +1,46 @@
+<% if (typeof totalRifas !== 'undefined' && totalRifas === 0) {
+  const carteiraPronta = typeof carteiraOk !== 'undefined' && carteiraOk;
+  const ctaHref = carteiraPronta ? (adminBase + '/rifas?nova=1') : (adminBase + '/carteira');
+  const ctaLabel = carteiraPronta ? 'Criar minha primeira rifa' : 'Configurar carteira';
+  const mpSplit = typeof mpSplitConfigured !== 'undefined' && mpSplitConfigured;
+%>
+  <div class="admin-onboard mb-6">
+    <div class="admin-onboard-icon">
+      <i data-lucide="rocket" class="w-7 h-7"></i>
+    </div>
+    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-1">Crie sua primeira rifa</h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+      <% if (carteiraPronta) { %>
+        Sua carteira está pronta. Em poucos minutos seu sorteio estará no ar para receber pagamentos.
+      <% } else { %>
+        Configure como você vai receber e depois publique seu primeiro sorteio.
+      <% } %>
+    </p>
+    <a href="<%= ctaHref %>" class="admin-btn-primary inline-flex items-center gap-2 px-6 py-3 text-sm mt-4">
+      <i data-lucide="plus" class="w-4 h-4"></i> <%= ctaLabel %>
+    </a>
+    <div class="admin-onboard-steps">
+      <div class="admin-onboard-step">
+        <span class="admin-onboard-step-num">1</span>
+        <div>
+          <p class="font-semibold text-sm">Configure a Carteira</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400"><%= mpSplit ? 'Conecte sua conta Mercado Pago' : 'Informe sua chave PIX' %></p>
+        </div>
+      </div>
+      <div class="admin-onboard-step">
+        <span class="admin-onboard-step-num">2</span>
+        <div>
+          <p class="font-semibold text-sm">Crie o sorteio</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">Nome, valor da cota e data do sorteio</p>
+        </div>
+      </div>
+      <div class="admin-onboard-step">
+        <span class="admin-onboard-step-num">3</span>
+        <div>
+          <p class="font-semibold text-sm">Compartilhe e venda</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">PIX confirmado automaticamente</p>
+        </div>
+      </div>
+    </div>
+  </div>
+<% } %>

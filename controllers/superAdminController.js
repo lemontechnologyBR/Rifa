@@ -160,7 +160,13 @@ const superAdminController = {
   async organizadores(req, res) {
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const busca = String(req.query.q || '').trim();
-    const listagem = await SuperAdminService.listarOrganizadores({ page, busca });
+    const filtro = ['sem_rifa', 'leads_quentes'].includes(req.query.filtro) ? req.query.filtro : '';
+    const OnboardingEmailService = require('../services/onboardingEmailService');
+
+    const [listagem, leadsQuentesPendentes] = await Promise.all([
+      SuperAdminService.listarOrganizadores({ page, busca, filtro }),
+      OnboardingEmailService.listarLeadsQuentes()
+    ]);
 
     res.render('super/organizadores', renderLocals(req, res, {
       titulo: 'Organizadores',
@@ -168,13 +174,44 @@ const superAdminController = {
       organizadores: listagem.organizadores.map((o) => ({
         ...o,
         createdAtFmt: fmtDate(o.createdAt),
-        viaGoogle: !!o.googleId
+        viaGoogle: !!o.googleId,
+        nurtureD1: !!o.nurtureD1SentAt,
+        nurtureD3: !!o.nurtureD3SentAt,
+        campanhaLeads: !!o.campanhaLeadsSentAt
       })),
       paginas: listagem.paginas,
       page: listagem.page,
       total: listagem.total,
-      busca
+      busca,
+      filtro,
+      leadsQuentesPendentes: leadsQuentesPendentes.length
     }));
+  },
+
+  async campanhaLeadsQuentes(req, res) {
+    const OnboardingEmailService = require('../services/onboardingEmailService');
+    try {
+      const { enviados, total, erros } = await OnboardingEmailService.enviarCampanhaLeadsQuentes();
+      let msg = `Campanha enviada para ${enviados} de ${total} lead(s) quente(s).`;
+      if (erros.length) msg += ` ${erros.length} falha(s).`;
+      res.redirect(`/super/organizadores?filtro=leads_quentes&msg=${encodeURIComponent(msg)}`);
+    } catch (err) {
+      res.redirect(`/super/organizadores?erro=${encodeURIComponent(err.message)}`);
+    }
+  },
+
+  async enviarNurtureOrganizador(req, res) {
+    const OnboardingEmailService = require('../services/onboardingEmailService');
+    const tipo = req.body.tipo === 'd3' ? 'd3' : 'd1';
+    const redirect = req.body.redirect || '/super/organizadores';
+    try {
+      await OnboardingEmailService.enviarNurtureManual(req.params.id, tipo);
+      const sep = redirect.includes('?') ? '&' : '?';
+      res.redirect(`${redirect}${sep}msg=${encodeURIComponent(`E-mail ${tipo.toUpperCase()} enviado.`)}`);
+    } catch (err) {
+      const sep = redirect.includes('?') ? '&' : '?';
+      res.redirect(`${redirect}${sep}erro=${encodeURIComponent(err.message)}`);
+    }
   },
 
   async plataforma(req, res) {

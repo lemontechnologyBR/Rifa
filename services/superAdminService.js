@@ -101,7 +101,56 @@ const SuperAdminService = {
     return { vendas, total, paginas: Math.max(1, Math.ceil(total / limite)), page };
   },
 
-  async listarOrganizadores({ page = 1, limite = 20, busca = '' } = {}) {
+  async listarOrganizadores({ page = 1, limite = 20, busca = '', filtro = '' } = {}) {
+    if (filtro === 'leads_quentes') {
+      const OnboardingEmailService = require('./onboardingEmailService');
+      const leads = await OnboardingEmailService.listarLeadsQuentes();
+      let filtrados = leads;
+      if (busca && String(busca).trim()) {
+        const q = String(busca).trim().toLowerCase();
+        filtrados = leads.filter((o) =>
+          o.nome.toLowerCase().includes(q)
+          || o.email.toLowerCase().includes(q)
+          || o.tenant.nome.toLowerCase().includes(q)
+          || o.tenant.slug.toLowerCase().includes(q)
+        );
+      }
+      const total = filtrados.length;
+      const slice = filtrados.slice((page - 1) * limite, page * limite);
+      const tenantIds = slice.map((o) => o.tenant.id);
+      const saldoMap = await this._saldoPorTenants(tenantIds);
+      const sacadoMap = await this._sacadoPorTenants(tenantIds);
+
+      const organizadores = slice.map((o) => {
+        const saldo = saldoMap[o.tenant.id] || { confirmado: 0, pendente: 0 };
+        const payment = paymentInfoForTenant(o.tenant);
+        const totalSacado = sacadoMap[o.tenant.id] || 0;
+        const parteBruta = saldo.confirmado * payment.organizadorPercentual;
+        const saldoDisponivel = payment.gateway === 'mercadopago'
+          ? parteBruta
+          : Math.max(0, parteBruta - totalSacado);
+        return {
+          ...o,
+          tenant: { ...o.tenant, _count: { rifas: 0 } },
+          saldo,
+          payment,
+          totalSacado,
+          saldoDisponivel,
+          totalRifas: 0,
+          carteiraOk: true,
+          diasCadastro: Math.floor((Date.now() - new Date(o.createdAt).getTime()) / 86400000),
+          leadQuente: true
+        };
+      });
+
+      return {
+        organizadores,
+        total,
+        paginas: Math.max(1, Math.ceil(total / limite)),
+        page
+      };
+    }
+
     const where = {};
     if (busca && String(busca).trim()) {
       const q = String(busca).trim();
@@ -111,6 +160,10 @@ const SuperAdminService = {
         { tenant: { nome: { contains: q } } },
         { tenant: { slug: { contains: q.toLowerCase() } } }
       ];
+    }
+
+    if (filtro === 'sem_rifa') {
+      where.tenant = { ...(where.tenant || {}), rifas: { none: {} } };
     }
 
     const [organizadores, total] = await Promise.all([
@@ -126,7 +179,8 @@ const SuperAdminService = {
               pixChave: true,
               mpUserId: true,
               mpAccessToken: true,
-              mpConnectedAt: true
+              mpConnectedAt: true,
+              _count: { select: { rifas: true } }
             }
           }
         },
@@ -139,43 +193,8 @@ const SuperAdminService = {
 
     // Calcular saldo confirmado e pendente por tenant
     const tenantIds = organizadores.map(o => o.tenant.id);
-    let saldoMap = {};
-
-    if (tenantIds.length) {
-      const rifas = await prisma.rifa.findMany({
-        where: { tenantId: { in: tenantIds } },
-        select: {
-          tenantId: true,
-          reservas: {
-            where: { statusPagamento: { in: ['confirmado', 'pendente'] } },
-            select: { valorTotal: true, statusPagamento: true }
-          }
-        }
-      });
-
-      for (const rifa of rifas) {
-        if (!saldoMap[rifa.tenantId]) saldoMap[rifa.tenantId] = { confirmado: 0, pendente: 0 };
-        for (const res of rifa.reservas) {
-          if (res.statusPagamento === 'confirmado') saldoMap[rifa.tenantId].confirmado += res.valorTotal;
-          else saldoMap[rifa.tenantId].pendente += res.valorTotal;
-        }
-      }
-    }
-
-    let sacadoMap = {};
-    if (tenantIds.length) {
-      const saques = await prisma.saque.groupBy({
-        by: ['tenantId'],
-        where: {
-          tenantId: { in: tenantIds },
-          status: { in: ['solicitado', 'processando', 'concluido'] }
-        },
-        _sum: { valorBruto: true }
-      });
-      for (const s of saques) {
-        sacadoMap[s.tenantId] = s._sum.valorBruto || 0;
-      }
-    }
+    const saldoMap = await this._saldoPorTenants(tenantIds);
+    const sacadoMap = await this._sacadoPorTenants(tenantIds);
 
     const organizadoresComSaldo = organizadores.map(o => {
       const saldo = saldoMap[o.tenant.id] || { confirmado: 0, pendente: 0 };
@@ -185,17 +204,79 @@ const SuperAdminService = {
       const saldoDisponivel = payment.gateway === 'mercadopago'
         ? parteBruta
         : Math.max(0, parteBruta - totalSacado);
+      const totalRifas = o.tenant._count?.rifas ?? 0;
+      const carteiraOk = payment.gateway === 'mercadopago' || payment.gateway === 'woovi';
+      const diasCadastro = Math.floor((Date.now() - new Date(o.createdAt).getTime()) / 86400000);
+      const leadQuente = totalRifas === 0 && carteiraOk && diasCadastro >= 5 && !o.campanhaLeadsSentAt;
 
       return {
         ...o,
         saldo,
         payment,
         totalSacado,
-        saldoDisponivel
+        saldoDisponivel,
+        totalRifas,
+        carteiraOk,
+        diasCadastro,
+        leadQuente
       };
     });
 
-    return { organizadores: organizadoresComSaldo, total, paginas: Math.max(1, Math.ceil(total / limite)), page };
+    return {
+      organizadores: organizadoresComSaldo,
+      total,
+      paginas: Math.max(1, Math.ceil(total / limite)),
+      page
+    };
+  },
+
+  async _saldoPorTenants(tenantIds) {
+    const saldoMap = {};
+    if (!tenantIds.length) return saldoMap;
+
+    const rifas = await prisma.rifa.findMany({
+      where: { tenantId: { in: tenantIds } },
+      select: {
+        tenantId: true,
+        reservas: {
+          where: { statusPagamento: { in: ['confirmado', 'pendente'] } },
+          select: { valorTotal: true, statusPagamento: true }
+        }
+      }
+    });
+
+    for (const rifa of rifas) {
+      if (!saldoMap[rifa.tenantId]) saldoMap[rifa.tenantId] = { confirmado: 0, pendente: 0 };
+      for (const res of rifa.reservas) {
+        if (res.statusPagamento === 'confirmado') saldoMap[rifa.tenantId].confirmado += res.valorTotal;
+        else saldoMap[rifa.tenantId].pendente += res.valorTotal;
+      }
+    }
+    return saldoMap;
+  },
+
+  async _sacadoPorTenants(tenantIds) {
+    const sacadoMap = {};
+    if (!tenantIds.length) return sacadoMap;
+
+    const saques = await prisma.saque.groupBy({
+      by: ['tenantId'],
+      where: {
+        tenantId: { in: tenantIds },
+        status: { in: ['solicitado', 'processando', 'concluido'] }
+      },
+      _sum: { valorBruto: true }
+    });
+    for (const s of saques) {
+      sacadoMap[s.tenantId] = s._sum.valorBruto || 0;
+    }
+    return sacadoMap;
+  },
+
+  async contarLeadsQuentes() {
+    const OnboardingEmailService = require('./onboardingEmailService');
+    const leads = await OnboardingEmailService.listarLeadsQuentes();
+    return leads.length;
   },
 
   async obterInfoPlataforma() {
