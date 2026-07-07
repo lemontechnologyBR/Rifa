@@ -113,6 +113,7 @@ const SuperAdminService = {
           || o.email.toLowerCase().includes(q)
           || o.tenant.nome.toLowerCase().includes(q)
           || o.tenant.slug.toLowerCase().includes(q)
+          || String(o.tenant.pixChave || '').toLowerCase().includes(q)
         );
       }
       const total = filtrados.length;
@@ -158,7 +159,8 @@ const SuperAdminService = {
         { nome: { contains: q } },
         { email: { contains: q } },
         { tenant: { nome: { contains: q } } },
-        { tenant: { slug: { contains: q.toLowerCase() } } }
+        { tenant: { slug: { contains: q.toLowerCase() } } },
+        { tenant: { pixChave: { contains: q } } }
       ];
     }
 
@@ -179,6 +181,7 @@ const SuperAdminService = {
               pixChave: true,
               mpUserId: true,
               mpAccessToken: true,
+              mpNickname: true,
               mpConnectedAt: true,
               _count: { select: { rifas: true } }
             }

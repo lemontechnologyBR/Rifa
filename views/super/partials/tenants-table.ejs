@@ -20,7 +20,7 @@
     <table class="super-table">
       <thead>
         <tr>
-          <th>Sistema</th><th>Slug</th><th>Sorteios</th><th>PIX</th><th>Criado</th><th>Status</th><th>Ações</th>
+          <th>Sistema</th><th>Slug</th><th>Sorteios</th><th>Chave PIX / Recebimento</th><th>Criado</th><th>Status</th><th>Ações</th>
         </tr>
       </thead>
       <tbody>
@@ -35,7 +35,14 @@
             </td>
             <td><a href="/<%= t.slug %>/" target="_blank" rel="noopener" class="super-action-link">/<%= t.slug %></a></td>
             <td><%= t._count.rifas %></td>
-            <td><span class="super-badge <%= t.pixOk ? 'super-badge--pix-ok' : 'super-badge--pix-no' %>"><%= t.pixOk ? 'OK' : 'Pendente' %></span></td>
+            <td class="super-pix-cell">
+              <% if (t.pixInfo && t.pixInfo.valor) { %>
+                <span class="super-badge <%= t.mpAccessToken ? 'super-badge--modalidade-mp' : 'super-badge--pix-ok' %> text-[10px]"><%= t.pixInfo.tipo %></span>
+                <span class="super-pix-key" title="<%= t.pixInfo.valor %>"><%= t.pixInfo.valor %></span>
+              <% } else { %>
+                <span class="super-badge super-badge--pix-no">Pendente</span>
+              <% } %>
+            </td>
             <td><%= t.createdAtFmt %></td>
             <td><span class="super-badge super-badge--<%= t.status === 'ativo' ? 'ativo' : 'suspenso' %>"><%= t.status %></span></td>
             <td>

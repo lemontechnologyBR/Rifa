@@ -22,11 +22,25 @@ function fmtDateTime(d) {
   return new Date(d).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
 }
 
+function pixRecebimentoInfo(tenant) {
+  if (!tenant) return { tipo: null, valor: null };
+  if (tenant.mpAccessToken) {
+    return { tipo: 'Mercado Pago', valor: tenant.mpNickname || 'Conta conectada' };
+  }
+  if (tenant.pixChave) {
+    const { detectarTipoChavePix, labelTipoPix } = require('../lib/pixKey');
+    const tipoPix = detectarTipoChavePix(tenant.pixChave);
+    return { tipo: labelTipoPix(tipoPix), valor: tenant.pixChave };
+  }
+  return { tipo: null, valor: null };
+}
+
 function mapTenants(rows) {
   return rows.map((t) => ({
     ...t,
     createdAtFmt: fmtDate(t.createdAt),
     pixOk: !!(t.pixChave || t.wooviAtivo || t.mpAccessToken),
+    pixInfo: pixRecebimentoInfo(t),
     org: t.organizadores?.[0] || null
   }));
 }
@@ -177,7 +191,8 @@ const superAdminController = {
         viaGoogle: !!o.googleId,
         nurtureD1: !!o.nurtureD1SentAt,
         nurtureD3: !!o.nurtureD3SentAt,
-        campanhaLeads: !!o.campanhaLeadsSentAt
+        campanhaLeads: !!o.campanhaLeadsSentAt,
+        pixInfo: pixRecebimentoInfo(o.tenant)
       })),
       paginas: listagem.paginas,
       page: listagem.page,

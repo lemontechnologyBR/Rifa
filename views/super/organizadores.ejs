@@ -39,6 +39,7 @@
           <th>Nome</th>
           <th>E-mail</th>
           <th>Sistema</th>
+          <th>Chave PIX / Recebimento</th>
           <th>Rifas</th>
           <th>Saldo confirmado</th>
           <th>Pendente</th>
@@ -52,7 +53,7 @@
       </thead>
       <tbody>
         <% if (!organizadores.length) { %>
-          <tr><td colspan="12" class="super-empty">Nenhum organizador encontrado.</td></tr>
+          <tr><td colspan="13" class="super-empty">Nenhum organizador encontrado.</td></tr>
         <% } %>
         <% organizadores.forEach(function(o) {
           const saldoConf = o.saldo ? o.saldo.confirmado : 0;
@@ -72,6 +73,15 @@
             <td>
               <a href="/<%= o.tenant.slug %>/" target="_blank" rel="noopener" class="super-action-link"><%= o.tenant.nome %></a>
               <span class="super-tenant-email">/<%= o.tenant.slug %></span>
+            </td>
+
+            <td class="super-pix-cell">
+              <% if (o.pixInfo && o.pixInfo.valor) { %>
+                <span class="super-badge super-badge--pix-ok text-[10px]"><%= o.pixInfo.tipo %></span>
+                <span class="super-pix-key" title="<%= o.pixInfo.valor %>"><%= o.pixInfo.valor %></span>
+              <% } else { %>
+                <span class="text-gray-400 text-xs">—</span>
+              <% } %>
             </td>
 
             <td>

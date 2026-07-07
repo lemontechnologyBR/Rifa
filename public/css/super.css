@@ -451,6 +451,24 @@
   margin-top: 0.125rem;
 }
 
+.super-pix-cell {
+  max-width: 220px;
+}
+
+.super-pix-key {
+  display: block;
+  margin-top: 0.25rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.6875rem;
+  line-height: 1.35;
+  color: #334155;
+  word-break: break-all;
+}
+
+.dark .super-pix-key {
+  color: #cbd5e1;
+}
+
 .super-badge {
   display: inline-flex;
   align-items: center;

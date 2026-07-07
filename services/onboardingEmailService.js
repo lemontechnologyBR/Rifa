@@ -128,7 +128,7 @@ const OnboardingEmailService = {
       },
       include: {
         tenant: {
-          select: { id: true, slug: true, nome: true, pixChave: true, mpAccessToken: true }
+          select: { id: true, slug: true, nome: true, pixChave: true, mpAccessToken: true, mpNickname: true }
         }
       },
       orderBy: { createdAt: 'asc' }
