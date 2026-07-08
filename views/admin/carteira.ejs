@@ -35,12 +35,12 @@
 
     <% const splitAtivo = typeof usesSplit !== 'undefined' && usesSplit; %>
     <% const mpSplit = typeof mpSplitConfigured !== 'undefined' && mpSplitConfigured; %>
-    <% const mpOk = typeof mpConnected !== 'undefined' && mpConnected; %>
+    <% const mpOk = mpSplit && typeof mpConnected !== 'undefined' && mpConnected; %>
     <% const w = resumo.woovi || { bruto: 0, cotas: 0, parteOrganizador: 0, pendente: 0, reservasPendentes: 0 }; %>
     <% const mp = resumo.mercadopago || { bruto: 0, cotas: 0, parteOrganizador: 0, pendente: 0, reservasPendentes: 0 }; %>
     <% const temWoovi = w.bruto > 0 || w.pendente > 0 || (resumo.saldoDisponivel != null && resumo.saldoDisponivel > 0); %>
     <% const temMp = mp.bruto > 0 || mp.pendente > 0; %>
-    <% const modoMisto = temWoovi && (temMp || mpOk); %>
+    <% const modoMisto = mpSplit && temWoovi && (temMp || mpOk); %>
 
     <%# Badges de modalidade %>
     <div class="flex flex-wrap items-center gap-2 mb-5">
@@ -89,20 +89,14 @@
       </article>
       <% } %>
 
-      <% if (temMp || mpOk) { %>
+      <% if (temMp) { %>
       <article class="admin-metric-card border-l-4 border-sky-400">
         <p class="admin-metric-label mb-1 flex items-center gap-1.5">
           <i data-lucide="zap" class="w-3.5 h-3.5 text-sky-500"></i> Recebido no Mercado Pago
         </p>
         <p class="admin-metric-value text-sky-600">R$ <%= mp.parteOrganizador.toFixed(2).replace('.', ',') %></p>
         <p class="text-xs text-gray-400 mt-1">
-          <% if (mp.cotas > 0) { %>
-            <%= mp.cotas %> cota(s) · <%= Math.round((mpPercentual||0.95)*100) %>% de R$ <%= mp.bruto.toFixed(2).replace('.', ',') %> · creditado direto
-          <% } else if (mpOk) { %>
-            Novas vendas caem direto na sua conta MP
-          <% } else { %>
-            Sem vendas via Mercado Pago ainda
-          <% } %>
+          <%= mp.cotas %> cota(s) · <%= Math.round((mpPercentual||0.95)*100) %>% de R$ <%= mp.bruto.toFixed(2).replace('.', ',') %> · vendas anteriores
         </p>
       </article>
       <% } %>
@@ -122,29 +116,6 @@
         </p>
       </article>
     </div>
-
-    <% if (mpOk) { %>
-    <div class="grid grid-cols-1 sm:grid-cols-1 gap-4 mb-6">
-      <article class="admin-metric-card !mb-0">
-        <p class="admin-metric-label mb-1">Mercado Pago</p>
-        <p class="text-sm font-bold mt-1 text-emerald-600 flex items-center gap-1.5">
-          <i data-lucide="check-circle-2" class="w-4 h-4"></i> Conectada
-        </p>
-        <p class="text-xs text-gray-500 mt-1 truncate" title="<%= tenant.mpNickname || tenant.mpUserId %>"><%= tenant.mpNickname || ('Conta #' + tenant.mpUserId) %></p>
-      </article>
-    </div>
-    <% } %>
-
-    <% if (mpOk) { %>
-    <div class="admin-alert mb-4" style="background:#fef9c3;border:1px solid #fde047;color:#713f12;border-radius:12px;padding:14px 16px;display:flex;gap:10px;align-items:flex-start;">
-      <i data-lucide="info" class="w-5 h-5 shrink-0 mt-0.5" style="color:#b45309;"></i>
-      <div class="text-sm">
-        <strong>Chave PIX obrigatória no Mercado Pago</strong><br>
-        Para que seus clientes consigam pagar, sua conta Mercado Pago precisa ter uma <strong>chave PIX cadastrada</strong>.<br>
-        <span class="mt-1 block">Acesse o app ou site do Mercado Pago → <strong>PIX</strong> → <strong>Minhas chaves</strong> → cadastre qualquer chave (pode ser aleatória).</span>
-      </div>
-    </div>
-    <% } %>
 
     <% if (!mpSplitConfigured) { %>
     <div class="admin-alert admin-alert-error mb-6" style="background:#fff7ed;border-color:#fdba74;color:#9a3412;">
