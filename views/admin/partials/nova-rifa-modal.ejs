@@ -95,7 +95,7 @@
           <div><dt>Nome</dt><dd x-text="titulo"></dd></div>
           <div><dt>Cota</dt><dd>R$ <span x-text="fmt(valorCota)"></span> · <span x-text="fmtInt(totalCotas)"></span> cotas</dd></div>
           <div><dt>Sorteio</dt><dd x-text="dataSorteio ? new Date(dataSorteio).toLocaleString('pt-BR') : '—'"></dd></div>
-          <div><dt>Recebimento</dt><dd><% if (typeof mpSplitConfigured !== 'undefined' && mpSplitConfigured) { %><%= typeof mpConnected !== 'undefined' && mpConnected ? 'Mercado Pago — 95% automático' : 'Mercado Pago (conectar na Carteira)' %><% } else { %>Chave PIX da Carteira<% } %></dd></div>
+          <div><dt>Recebimento</dt><dd><% if (typeof mpSplitConfigured !== 'undefined' && mpSplitConfigured) { %><%= typeof mpConnected !== 'undefined' && mpConnected ? 'Mercado Pago — 95% automático' : 'Mercado Pago (conectar na Carteira)' %><% } else { %>Chave PIX da Carteira — 95%<% } %></dd></div>
         </dl>
         <%- include('rifa-simulacao', { full: true }) %>
       </div>

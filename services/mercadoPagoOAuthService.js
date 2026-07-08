@@ -31,8 +31,17 @@ const MercadoPagoOAuthService = {
     return String(process.env.MERCADOPAGO_CLIENT_SECRET || '').trim();
   },
 
+  /**
+   * Feature flag: desliga OAuth/split sem apagar credenciais.
+   * Defina MERCADOPAGO_SPLIT_ENABLED=false para forçar modalidade Plataforma (Woovi).
+   */
+  isSplitEnabled() {
+    const flag = String(process.env.MERCADOPAGO_SPLIT_ENABLED || 'true').trim().toLowerCase();
+    return flag !== 'false' && flag !== '0' && flag !== 'off';
+  },
+
   isSplitConfigured() {
-    return !!(this.getClientId() && this.getClientSecret());
+    return this.isSplitEnabled() && !!(this.getClientId() && this.getClientSecret());
   },
 
   getCallbackUrl(req) {

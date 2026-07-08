@@ -146,6 +146,20 @@
     </div>
     <% } %>
 
+    <% if (!mpSplitConfigured) { %>
+    <div class="admin-alert admin-alert-error mb-6" style="background:#fff7ed;border-color:#fdba74;color:#9a3412;">
+      <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0 mt-0.5"></i>
+      <div>
+        <strong>Mercado Pago temporariamente indisponível</strong><br>
+        O Mercado Pago notificou que contas usadas em sorteios podem ser suspensas. Por segurança, desativamos essa modalidade.
+        <span class="mt-1 block">Continue vendendo com <strong>chave PIX na carteira</strong> — a taxa da plataforma agora é <strong><%= Math.round((wooviTaxa||0.05)*100) %>%</strong> (você recebe <strong><%= Math.round((wooviPercentual||0.95)*100) %>%</strong>).</span>
+        <% if (!tenant.pixChave) { %>
+        <span class="mt-1 block font-semibold">Configure sua chave PIX abaixo para voltar a receber pagamentos.</span>
+        <% } %>
+      </div>
+    </div>
+    <% } %>
+
     <% if (mpSplitConfigured) { %>
     <div class="admin-panel-card p-6 mb-6 border-l-4 <%= mpOk ? 'border-emerald-500' : 'border-sky-500' %>">
       <div class="admin-config-section-head mb-4">
@@ -487,7 +501,7 @@
             autocomplete="off"
             spellcheck="false">
           <p class="admin-hint" x-text="hint()"></p>
-          <p class="admin-hint mt-1">A plataforma retém <strong><%= Math.round((wooviTaxa||0.07)*100) %>%</strong> do valor arrecadado. Você recebe <strong><%= Math.round((wooviPercentual||0.93)*100) %>%</strong> de cada venda — solicite o saque quando quiser.</p>
+          <p class="admin-hint mt-1">A plataforma retém <strong><%= Math.round((wooviTaxa||0.05)*100) %>%</strong> do valor arrecadado. Você recebe <strong><%= Math.round((wooviPercentual||0.95)*100) %>%</strong> de cada venda — solicite o saque quando quiser.</p>
         </div>
 
         <button type="submit" class="admin-btn-primary px-6 py-3 text-sm">
@@ -544,7 +558,7 @@
             </li>
             <li class="flex items-start gap-2.5">
               <span class="w-5 h-5 rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-400 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
-            <span><strong class="text-gray-700 dark:text-gray-200"><%= Math.round((wooviPercentual||0.93)*100) %>%</strong> acumula no seu saldo — a plataforma retém <%= Math.round((wooviTaxa||0.07)*100) %>%</span>
+            <span><strong class="text-gray-700 dark:text-gray-200"><%= Math.round((wooviPercentual||0.95)*100) %>%</strong> acumula no seu saldo — a plataforma retém <%= Math.round((wooviTaxa||0.05)*100) %>%</span>
             </li>
             <li class="flex items-start gap-2.5">
               <span class="w-5 h-5 rounded-full bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-400 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">4</span>

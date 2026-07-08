@@ -13,7 +13,10 @@ const WOOVI_ENABLED = process.env.WOOVI_ENABLED === 'true';
 /** Detecta o provider correto para um tenant específico. */
 function getProviderForTenant(tenant) {
   if (tenant && MercadoPagoService.isConfigured(tenant)) return 'mercadopago';
-  if (WOOVI_ENABLED && WooviService.isPlatformConfigured()) return 'woovi';
+  if (WOOVI_ENABLED && WooviService.isPlatformConfigured()) {
+    if (!tenant) return 'woovi';
+    if (tenant.pixChave) return 'woovi';
+  }
   return null;
 }
 

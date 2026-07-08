@@ -70,11 +70,10 @@ const MercadoPagoService = {
   },
 
   isConfigured(tenant) {
+    // Split desativado (flag) → nunca usar MP para novas cobranças
+    if (!MercadoPagoOAuthService.isSplitConfigured()) return false;
     if (!this.isPlatformConfigured()) return false;
-    if (MercadoPagoOAuthService.isSplitConfigured()) {
-      return MercadoPagoOAuthService.isTenantConnected(tenant);
-    }
-    return !!tenant?.pixChave;
+    return MercadoPagoOAuthService.isTenantConnected(tenant);
   },
 
   notificationUrl() {

@@ -8,8 +8,8 @@
   <div class="grid grid-cols-2 gap-3 mb-3">
     <div class="admin-sim-card admin-sim-card-you">
       <p class="admin-sim-card-label">Você recebe / cota</p>
-      <p class="admin-sim-card-value">R$ <span x-text="fmt(valorCota * 0.95)"></span></p>
-      <p class="admin-sim-card-sub">95% do valor da cota</p>
+      <p class="admin-sim-card-value">R$ <span x-text="fmt(valorCota * <%= typeof organizadorPercentual !== 'undefined' ? organizadorPercentual : 0.95 %>)"></span></p>
+      <p class="admin-sim-card-sub"><%= Math.round((typeof organizadorPercentual !== 'undefined' ? organizadorPercentual : 0.95) * 100) %>% do valor da cota</p>
     </div>
     <div class="admin-sim-card">
       <p class="admin-sim-card-label">Comprador paga / cota</p>
