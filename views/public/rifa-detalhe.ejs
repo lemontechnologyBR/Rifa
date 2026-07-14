@@ -124,6 +124,25 @@ body .glass-nav { background: rgba(18,18,31,.97) !important; border-color: rgba(
 .grade-legenda-dot.reservado { background: rgba(251,191,36,.25); border-color: rgba(251,191,36,.55); }
 .grade-legenda-dot.pago { background: color-mix(in srgb, var(--brand-from) 25%, transparent); border-color: color-mix(in srgb, var(--brand-from) 55%, transparent); }
 .grade-legenda-dot.selecionado { background: var(--brand-to); border-color: color-mix(in srgb, var(--brand-from) 65%, white); }
+.imp-hero-img {
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+}
+.imp-hero-img img,
+.imp-hero-img .imp-hero-placeholder {
+  width: 100%;
+  height: 380px;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+@media (min-width: 640px) {
+  .imp-hero-img img,
+  .imp-hero-img .imp-hero-placeholder {
+    height: 420px;
+  }
+}
 </style>
 
 <%
@@ -141,14 +160,13 @@ body .glass-nav { background: rgba(18,18,31,.97) !important; border-color: rgba(
       <i data-lucide="arrow-left" class="w-4 h-4"></i> Campanhas
     </a>
 
-    <!-- Imagem principal -->
-    <div style="position:relative;border-radius:14px;overflow:hidden;margin-bottom:0;" class="imp-card-dark">
+    <!-- Imagem principal — mais alta, sem estourar a lateral -->
+    <div class="imp-hero-img imp-card-dark">
       <% if (rifa.imagemUrl) { %>
-        <img src="<%= rifa.imagemUrl %>" alt="<%= rifa.titulo %>"
-             style="width:100%;max-height:280px;object-fit:cover;display:block;">
+        <img src="<%= rifa.imagemUrl %>" alt="<%= rifa.titulo %>">
         <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(18,18,31,.9) 0%,transparent 50%);"></div>
       <% } else { %>
-        <div style="width:100%;height:200px;background:linear-gradient(135deg,#1a1a2e,#0d0d1a);display:flex;align-items:center;justify-content:center;font-size:5rem;">🏆</div>
+        <div class="imp-hero-placeholder" style="background:linear-gradient(135deg,#1a1a2e,#0d0d1a);display:flex;align-items:center;justify-content:center;font-size:5rem;">🏆</div>
         <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(18,18,31,.9) 0%,transparent 60%);"></div>
       <% } %>
 

@@ -56,7 +56,7 @@
         <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700">
           <i data-lucide="zap" class="w-3.5 h-3.5"></i> Modalidade: Mercado Pago Direto
         </span>
-        <span class="text-xs text-gray-500"><%= Math.round((mpPercentual||0.95)*100) %>% cai na sua conta MP na hora do pagamento</span>
+        <span class="text-xs text-gray-500">repassado na hora · comissão <%= Math.round((mpTaxa||0.05)*100) %>%</span>
       <% } else { %>
         <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300 border border-sky-200 dark:border-sky-700">
           <i data-lucide="building-2" class="w-3.5 h-3.5"></i> Modalidade: Plataforma VouRifar
@@ -80,7 +80,7 @@
         <% const saldoPlat = resumo.saldoDisponivel != null ? resumo.saldoDisponivel : w.parteOrganizador; %>
         <p class="admin-metric-value text-emerald-600">R$ <%= saldoPlat.toFixed(2).replace('.', ',') %></p>
         <p class="text-xs text-gray-400 mt-1">
-          <%= w.cotasDisponiveis %> cota(s) · <%= Math.round((wooviPercentual||0.93)*100) %>% − R$ <%= (wooviTaxaFixaCota||0.5).toFixed(2).replace('.', ',') %>/cota de R$ <%= w.brutoDisponivel.toFixed(2).replace('.', ',') %> · vendas anteriores
+          <%= w.cotasDisponiveis %> cota(s) · comissão 5% + R$ <%= (wooviTaxaFixaCota||0.5).toFixed(2).replace('.', ',') %>/cota · bruto R$ <%= w.brutoDisponivel.toFixed(2).replace('.', ',') %>
         </p>
       </article>
       <% } %>
@@ -92,7 +92,7 @@
         </p>
         <p class="admin-metric-value text-sky-600">R$ <%= mp.parteOrganizador.toFixed(2).replace('.', ',') %></p>
         <p class="text-xs text-gray-400 mt-1">
-          <%= mp.cotas %> cota(s) · <%= Math.round((mpPercentual||0.95)*100) %>% de R$ <%= mp.bruto.toFixed(2).replace('.', ',') %> · vendas anteriores
+          <%= mp.cotas %> cota(s) · bruto R$ <%= mp.bruto.toFixed(2).replace('.', ',') %> · comissão <%= Math.round((mpTaxa||0.05)*100) %>% · vendas anteriores
         </p>
       </article>
       <% } %>
@@ -119,7 +119,7 @@
         <div class="admin-config-section-icon blue"><i data-lucide="link" class="w-5 h-5"></i></div>
         <div>
           <h2 class="font-bold text-base">Conta Mercado Pago</h2>
-          <p class="text-sm text-gray-500 dark:text-gray-400">Conecte sua conta para receber <strong><%= Math.round((mpPercentual||0.95)*100) %>%</strong> de cada venda automaticamente — sem taxa de saque. A plataforma retém apenas <strong><%= Math.round((mpTaxa||0.05)*100) %>%</strong>.</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Conecte sua conta para receber automaticamente na hora — sem taxa de saque. A plataforma retém <strong><%= Math.round((mpTaxa||0.05)*100) %>%</strong> de cada venda.</p>
         </div>
       </div>
 
@@ -472,7 +472,7 @@
           </li>
           <li class="flex items-start gap-2.5">
             <span class="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
-            <span><strong class="text-gray-700 dark:text-gray-200"><%= Math.round((mpPercentual||0.95)*100) %>%</strong> cai na sua conta MP na hora — a plataforma retém <strong class="text-gray-700 dark:text-gray-200"><%= Math.round((mpTaxa||0.05)*100) %>%</strong> automaticamente</span>
+            <span>O valor cai na sua conta MP na hora — a plataforma retém <strong class="text-gray-700 dark:text-gray-200"><%= Math.round((mpTaxa||0.05)*100) %>%</strong> automaticamente</span>
           </li>
           <li class="flex items-start gap-2.5">
             <span class="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">✓</span>
@@ -507,7 +507,7 @@
             </li>
             <li class="flex items-start gap-2.5">
               <span class="w-5 h-5 rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-400 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
-            <span><strong class="text-gray-700 dark:text-gray-200"><%= Math.round((wooviPercentual||0.95)*100) %>%</strong> acumula no seu saldo — a plataforma retém <%= Math.round((wooviTaxa||0.05)*100) %>% + R$ <%= (wooviTaxaFixaCota||0.5).toFixed(2).replace('.', ',') %>/cota</span>
+            <span>Saldo acumula na plataforma — comissão de <%= Math.round((wooviTaxa||0.05)*100) %>% + R$ <%= (wooviTaxaFixaCota||0.5).toFixed(2).replace('.', ',') %>/cota</span>
             </li>
             <li class="flex items-start gap-2.5">
               <span class="w-5 h-5 rounded-full bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-400 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">4</span>
@@ -545,7 +545,7 @@
           <ul class="text-sm text-gray-500 dark:text-gray-400 space-y-2">
             <li class="flex items-start gap-2">
               <i data-lucide="zap" class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5"></i>
-              <span>Novas vendas: <strong class="text-gray-700 dark:text-gray-200"><%= Math.round((mpPercentual||0.95)*100) %>%</strong> cai direto na sua conta MP</span>
+              <span>Novas vendas: valor cai direto na sua conta MP (comissão <%= Math.round((mpTaxa||0.05)*100) %>%)</span>
             </li>
             <li class="flex items-start gap-2">
               <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5"></i>

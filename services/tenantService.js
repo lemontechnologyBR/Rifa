@@ -140,6 +140,7 @@ const TenantService = {
       select: {
         valorTotal: true,
         wooviCorrelationId: true,
+        _count: { select: { reservaNumeros: true } },
         rifa: {
           select: {
             tenant: {
@@ -160,7 +161,9 @@ const TenantService = {
       const tenant = r.rifa?.tenant;
       const provider = PaymentService.getProviderForReserva(r, tenant);
       const valor = Number(r.valorTotal || 0);
-      const comissao = PaymentService.calcularReceitaReserva(r, tenant);
+      // Receita do painel = só a % sobre o GMV (sem R$ 0,50/cota Woovi).
+      // A taxa fixa reduz o líquido do organizador, mas não entra neste KPI.
+      const comissao = valor * PaymentService.getTaxaPlataformaReserva(r, tenant);
       receitaPlataforma += comissao;
       if (provider === 'mercadopago') {
         receitaMp += comissao;

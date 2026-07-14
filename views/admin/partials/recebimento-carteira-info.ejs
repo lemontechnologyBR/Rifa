@@ -1,6 +1,5 @@
 <% const mpSplit = typeof mpSplitConfigured !== 'undefined' && mpSplitConfigured; %>
 <% const mpOk = typeof mpConnected !== 'undefined' && mpConnected; %>
-<% const pctOrg = Math.round((typeof organizadorPercentual !== 'undefined' ? organizadorPercentual : (typeof wooviPercentual !== 'undefined' ? wooviPercentual : 0.95)) * 100); %>
 <div class="admin-panel-card p-4 text-sm space-y-2 <%= typeof compact !== 'undefined' && compact ? '!shadow-none border border-gray-100 dark:border-gray-800' : '' %>">
   <% if (mpSplit) { %>
     <p class="font-semibold flex items-center gap-2">
@@ -8,7 +7,7 @@
       Pagamentos via Mercado Pago
     </p>
     <p class="text-gray-500 dark:text-gray-400">
-      Compradores pagam via PIX. Você recebe <strong class="text-gray-700 dark:text-gray-200"><%= pctOrg %>%</strong> direto na sua conta Mercado Pago. Confirmação automática após o pagamento.
+      Compradores pagam via PIX. Você recebe o valor líquido direto na sua conta Mercado Pago (comissão <strong class="text-gray-700 dark:text-gray-200"><%= Math.round((typeof mpTaxa !== 'undefined' ? mpTaxa : 0.05) * 100) %>%</strong>). Confirmação automática após o pagamento.
     </p>
     <% if (mpOk) { %>
       <p class="text-xs text-emerald-700 dark:text-emerald-400 font-medium flex items-center gap-1.5">
@@ -23,7 +22,7 @@
   <% } else if (tenant.pixChave) { %>
     <% const taxaFixa = typeof taxaFixaCota !== 'undefined' ? taxaFixaCota : (typeof wooviTaxaFixaCota !== 'undefined' ? wooviTaxaFixaCota : 0); %>
     <p class="font-semibold flex items-center gap-2"><i data-lucide="wallet" class="w-4 h-4 text-emerald-600"></i> Pagamentos automáticos</p>
-    <p class="text-gray-500 dark:text-gray-400">PIX processado pela VouRifar — você recebe <strong class="text-gray-700 dark:text-gray-200"><%= pctOrg %>%<% if (taxaFixa > 0) { %> − R$ <%= taxaFixa.toFixed(2).replace('.', ',') %>/cota<% } %></strong>. Confirmação automática após o pagamento.</p>
+    <p class="text-gray-500 dark:text-gray-400">PIX processado pela VouRifar — comissão de <strong class="text-gray-700 dark:text-gray-200">5%<% if (taxaFixa > 0) { %> + R$ <%= taxaFixa.toFixed(2).replace('.', ',') %>/cota<% } %></strong>. Você recebe o restante. Confirmação automática após o pagamento.</p>
     <p class="text-xs text-emerald-700 dark:text-emerald-400 font-medium">Chave: <%= tenant.pixChave %></p>
   <% } else { %>
     <p class="font-semibold flex items-center gap-2"><i data-lucide="wallet" class="w-4 h-4 text-emerald-600"></i> Recebimento</p>

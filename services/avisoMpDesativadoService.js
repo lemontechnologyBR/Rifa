@@ -48,7 +48,7 @@ const AvisoMpDesativadoService = {
           `Olá, ${org.nome}!`,
           'O Mercado Pago avisou que contas usadas em sorteios podem ser suspensas.',
           'Por segurança, desativamos temporariamente o Mercado Pago na VouRifar.',
-          'Continue vendendo com chave PIX na carteira. Taxa da plataforma: 5% (você recebe 95%).',
+          'Continue vendendo com chave PIX na carteira. Taxa da plataforma: 5% + R$ 0,50 por cota.',
           temPix
             ? `Carteira: https://vourifar.com.br/${org.tenant.slug}/admin/carteira`
             : `URGENTE: cadastre sua chave PIX em https://vourifar.com.br/${org.tenant.slug}/admin/carteira`

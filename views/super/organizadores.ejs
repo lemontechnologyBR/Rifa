@@ -59,12 +59,11 @@
           const saldoConf = o.saldo ? o.saldo.confirmado : 0;
           const saldoPend = o.saldo ? o.saldo.pendente : 0;
           const payment = o.payment || {};
-          const pct = payment.organizadorPercentual || 0.93;
-          const pctLabel = Math.round(pct * 100);
-          const saldoDisp = o.saldoDisponivel != null ? o.saldoDisponivel : saldoConf * pct;
-          const temPix = !!(o.tenant.pixChave);
           const isMp = payment.gateway === 'mercadopago';
           const isWoovi = payment.gateway === 'woovi';
+          const taxaLabel = isWoovi ? '5% + R$ 0,50/cota' : (isMp ? '5%' : '—');
+          const saldoDisp = o.saldoDisponivel != null ? o.saldoDisponivel : 0;
+          const temPix = !!(o.tenant.pixChave);
           const totalRifas = o.totalRifas != null ? o.totalRifas : 0;
         %>
           <tr>
@@ -114,9 +113,9 @@
 
             <td>
               <% if (isMp) { %>
-                <span class="super-badge super-badge--modalidade-mp">MP Direto · <%= pctLabel %>%</span>
+                <span class="super-badge super-badge--modalidade-mp">MP Direto · <%= taxaLabel %></span>
               <% } else if (isWoovi) { %>
-                <span class="super-badge super-badge--modalidade-woovi">Plataforma · <%= pctLabel %>%</span>
+                <span class="super-badge super-badge--modalidade-woovi">Plataforma · <%= taxaLabel %></span>
               <% } else { %>
                 <span class="super-badge super-badge--modalidade-none"><%= payment.gatewayLabel || 'Não configurado' %></span>
               <% } %>

@@ -9,6 +9,11 @@
     <p class="super-metric-hint"><%= resumo.countConcluido %> saque<%= resumo.countConcluido !== 1 ? 's' : '' %></p>
   </article>
   <article class="super-metric">
+    <p class="super-metric-label">Taxas de saque</p>
+    <p class="super-metric-value super-metric-value--green">R$ <%= resumo.totalTaxasFmt %></p>
+    <p class="super-metric-hint">lucro retido</p>
+  </article>
+  <article class="super-metric">
     <p class="super-metric-label">Em processamento</p>
     <p class="super-metric-value"><%= resumo.countPendente %></p>
     <p class="super-metric-hint">R$ <%= resumo.totalPendenteFmt %> pendente</p>

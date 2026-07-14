@@ -140,18 +140,19 @@
 <p class="plat-section-title">Receita da plataforma</p>
 <div class="plat-grid">
   <div class="plat-card">
-    <p class="plat-card-label">Receita total</p>
-    <p class="plat-card-value plat-card-value--green">R$ <%= metricas.receitaPlataformaFmt %></p>
+    <p class="plat-card-label">Lucro total</p>
+    <p class="plat-card-value plat-card-value--green">R$ <%= metricas.lucroTotalFmt %></p>
+    <p class="plat-card-hint">comissões + taxas de saque</p>
   </div>
   <div class="plat-card">
-    <p class="plat-card-label">Via MP (<%= Math.round((metricas.taxaMp || 0.05) * 100) %>%)</p>
-    <p class="plat-card-value">R$ <%= metricas.receitaMpFmt %></p>
-    <p class="plat-card-hint">GMV MP R$ <%= metricas.gmvMpFmt %></p>
+    <p class="plat-card-label">Comissões (<%= Math.round((metricas.taxaMp || 0.05) * 100) %>%)</p>
+    <p class="plat-card-value">R$ <%= metricas.receitaPlataformaFmt %></p>
+    <p class="plat-card-hint">MP R$ <%= metricas.receitaMpFmt %> · PIX R$ <%= metricas.receitaWooviFmt %></p>
   </div>
   <div class="plat-card">
-    <p class="plat-card-label">Via Plataforma (<%= Math.round((metricas.taxaWoovi || 0.07) * 100) %>%)</p>
-    <p class="plat-card-value">R$ <%= metricas.receitaWooviFmt %></p>
-    <p class="plat-card-hint">GMV PIX R$ <%= metricas.gmvWooviFmt %></p>
+    <p class="plat-card-label">Taxas de saque</p>
+    <p class="plat-card-value">R$ <%= metricas.totalTaxasSaqueFmt %></p>
+    <p class="plat-card-hint">saques concluídos</p>
   </div>
 </div>
 
@@ -162,6 +163,11 @@
     <p class="plat-card-label">Total sacado</p>
     <p class="plat-card-value">R$ <%= info.totalSacadoFmt %></p>
     <p class="plat-card-hint"><%= info.countSaquesConcluidos %> saque<%= info.countSaquesConcluidos !== 1 ? 's' : '' %> concluído<%= info.countSaquesConcluidos !== 1 ? 's' : '' %></p>
+  </div>
+  <div class="plat-card">
+    <p class="plat-card-label">Taxas retidas</p>
+    <p class="plat-card-value plat-card-value--green">R$ <%= info.totalTaxasSaqueFmt %></p>
+    <p class="plat-card-hint">lucro dos saques</p>
   </div>
   <div class="plat-card">
     <p class="plat-card-label">Saques pendentes</p>

@@ -419,8 +419,8 @@ const ReservaService = {
           ? Math.max(0, reservaFull.valorTotal * orgPct - numeros.length * TAXA_FIXA_COTA_WOOVI)
           : reservaFull.valorTotal * orgPct;
         const taxaDescricao = provider === 'woovi'
-          ? `${Math.round(orgPct * 100)}% − R$ ${TAXA_FIXA_COTA_WOOVI.toFixed(2).replace('.', ',')}/cota de R$ ${Number(reservaFull.valorTotal).toFixed(2).replace('.', ',')}`
-          : `${Math.round(orgPct * 100)}% de R$ ${Number(reservaFull.valorTotal).toFixed(2).replace('.', ',')}`;
+          ? `após comissão 5% + R$ ${TAXA_FIXA_COTA_WOOVI.toFixed(2).replace('.', ',')}/cota`
+          : `após comissão ${Math.round((1 - orgPct) * 100)}%`;
 
         for (const org of (tenant.organizadores || [])) {
           if (!org.email) continue;

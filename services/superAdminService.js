@@ -304,7 +304,7 @@ const SuperAdminService = {
       prisma.tenant.count({ where: { mpAccessToken: { not: null }, status: 'ativo' } }),
       prisma.tenant.count({ where: { pixChave: { not: null }, mpAccessToken: null, status: 'ativo' } }),
       prisma.saque.aggregate({
-        _sum: { valorLiquido: true, valorBruto: true },
+        _sum: { valorLiquido: true, valorBruto: true, taxa: true },
         _count: { id: true },
         where: { status: 'concluido' }
       }),
@@ -324,6 +324,10 @@ const SuperAdminService = {
       where: { status: { in: ['solicitado', 'processando'] } }
     });
 
+    const totalSacadoLiquido = saquesResumo._sum.valorLiquido || 0;
+    const totalSacadoBruto = saquesResumo._sum.valorBruto || 0;
+    const totalTaxasSaque = Number(saquesResumo._sum.taxa || 0) || Math.max(0, totalSacadoBruto - totalSacadoLiquido);
+
     return {
       totalUsuarios,
       reservasPendentes,
@@ -333,7 +337,9 @@ const SuperAdminService = {
       rifasCanceladas,
       tenantsMP,
       tenantsWoovi,
-      totalSacadoLiquido: saquesResumo._sum.valorLiquido || 0,
+      totalSacadoLiquido,
+      totalSacadoBruto,
+      totalTaxasSaque,
       countSaquesConcluidos: saquesResumo._count.id || 0,
       totalSaquesPendenteValor: saquesPendentes._sum.valorLiquido || 0,
       countSaquesPendentes: saquesPendentes._count.id || 0,
@@ -385,7 +391,7 @@ const SuperAdminService = {
   async resumoSaques() {
     const [totais, pendentes] = await Promise.all([
       prisma.saque.aggregate({
-        _sum: { valorLiquido: true, valorBruto: true },
+        _sum: { valorLiquido: true, valorBruto: true, taxa: true },
         _count: { id: true },
         where: { status: 'concluido' }
       }),
@@ -396,8 +402,14 @@ const SuperAdminService = {
       })
     ]);
 
+    const totalConcluido = totais._sum.valorLiquido || 0;
+    const totalBruto = totais._sum.valorBruto || 0;
+    const totalTaxas = Number(totais._sum.taxa || 0) || Math.max(0, totalBruto - totalConcluido);
+
     return {
-      totalConcluido: totais._sum.valorLiquido || 0,
+      totalConcluido,
+      totalBruto,
+      totalTaxas,
       countConcluido: totais._count.id || 0,
       totalPendente: pendentes._sum.valorLiquido || 0,
       countPendente: pendentes._count.id || 0

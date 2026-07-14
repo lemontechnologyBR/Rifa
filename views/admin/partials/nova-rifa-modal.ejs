@@ -95,9 +95,8 @@
           <div><dt>Nome</dt><dd x-text="titulo"></dd></div>
           <div><dt>Cota</dt><dd>R$ <span x-text="fmt(valorCota)"></span> · <span x-text="fmtInt(totalCotas)"></span> cotas</dd></div>
           <div><dt>Sorteio</dt><dd x-text="dataSorteio ? new Date(dataSorteio).toLocaleString('pt-BR') : '—'"></dd></div>
-          <% const pctRecebimento = Math.round((typeof organizadorPercentual !== 'undefined' ? organizadorPercentual : 0.95) * 100); %>
           <% const taxaFixaRecebimento = typeof taxaFixaCota !== 'undefined' ? taxaFixaCota : 0; %>
-          <div><dt>Recebimento</dt><dd><% if (typeof mpSplitConfigured !== 'undefined' && mpSplitConfigured) { %><%= typeof mpConnected !== 'undefined' && mpConnected ? `Mercado Pago — ${pctRecebimento}% automático` : 'Mercado Pago (conectar na Carteira)' %><% } else { %>Chave PIX da Carteira — <%= pctRecebimento %>%<% if (taxaFixaRecebimento > 0) { %> − R$ <%= taxaFixaRecebimento.toFixed(2).replace('.', ',') %>/cota<% } %><% } %></dd></div>
+          <div><dt>Recebimento</dt><dd><% if (typeof mpSplitConfigured !== 'undefined' && mpSplitConfigured) { %><%= typeof mpConnected !== 'undefined' && mpConnected ? 'Mercado Pago — repasse automático' : 'Mercado Pago (conectar na Carteira)' %><% } else { %>Chave PIX da Carteira — comissão 5%<% if (taxaFixaRecebimento > 0) { %> + R$ <%= taxaFixaRecebimento.toFixed(2).replace('.', ',') %>/cota<% } %><% } %></dd></div>
         </dl>
         <%- include('rifa-simulacao', { full: true }) %>
       </div>

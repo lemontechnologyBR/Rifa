@@ -79,10 +79,14 @@ const superAdminController = {
   },
 
   async dashboard(req, res) {
-    const [metricas, recentes] = await Promise.all([
+    const [metricas, recentes, info] = await Promise.all([
       TenantService.obterMetricasPlataforma(),
-      TenantService.obterTenantsRecentes(5)
+      TenantService.obterTenantsRecentes(5),
+      SuperAdminService.obterInfoPlataforma()
     ]);
+
+    const totalTaxasSaque = Number(info.totalTaxasSaque || 0);
+    const lucroTotal = Number(metricas.receitaPlataforma || 0) + totalTaxasSaque;
 
     res.render('super/dashboard', renderLocals(req, res, {
       titulo: 'Visão geral',
@@ -92,7 +96,9 @@ const superAdminController = {
         gmvTotalFmt: fmtMoney(metricas.gmvTotal),
         receitaPlataformaFmt: fmtMoney(metricas.receitaPlataforma),
         receitaMpFmt: fmtMoney(metricas.receitaMp),
-        receitaWooviFmt: fmtMoney(metricas.receitaWoovi)
+        receitaWooviFmt: fmtMoney(metricas.receitaWoovi),
+        totalTaxasSaqueFmt: fmtMoney(totalTaxasSaque),
+        lucroTotalFmt: fmtMoney(lucroTotal)
       },
       recentes: recentes.map((t) => ({
         ...t,
@@ -153,14 +159,14 @@ const superAdminController = {
       active: 'vendas',
       vendas: listagem.vendas.map((v) => {
         const tenant = v.rifa?.tenant;
-        const taxaPct = PaymentService.getTaxaPlataformaReserva(v, tenant);
+        // Comissão total retida: % + R$0,50/cota (Woovi). KPI de receita do painel fica só com a %.
         const comissao = PaymentService.calcularReceitaReserva(v, tenant);
         return {
           ...v,
           createdAtFmt: fmtDateTime(v.createdAt),
           valorFmt: fmtMoney(v.valorTotal),
           taxaFmt: fmtMoney(comissao),
-          taxaPctLabel: `${Math.round(taxaPct * 100)}%`,
+          taxaPctLabel: PaymentService.getTaxaLabelReserva(v, tenant),
           cotas: v._count?.reservaNumeros || 0
         };
       }),
@@ -240,6 +246,8 @@ const superAdminController = {
     const ticketMedio = reservasConf > 0 ? gmvTotal / reservasConf : 0;
     const totalReservas = reservasConf + (info.reservasPendentes || 0) + (info.reservasExpiradas || 0);
     const taxaConversao = totalReservas > 0 ? ((reservasConf / totalReservas) * 100).toFixed(1) : '0.0';
+    const totalTaxasSaque = Number(info.totalTaxasSaque || 0);
+    const lucroTotal = Number(metricas.receitaPlataforma || 0) + totalTaxasSaque;
 
     res.render('super/plataforma', renderLocals(req, res, {
       titulo: 'Plataforma',
@@ -252,12 +260,17 @@ const superAdminController = {
         receitaPlataformaFmt: fmtMoney(metricas.receitaPlataforma),
         receitaMpFmt: fmtMoney(metricas.receitaMp),
         receitaWooviFmt: fmtMoney(metricas.receitaWoovi),
+        totalTaxasSaque,
+        totalTaxasSaqueFmt: fmtMoney(totalTaxasSaque),
+        lucroTotal,
+        lucroTotalFmt: fmtMoney(lucroTotal),
         ticketMedioFmt: fmtMoney(ticketMedio),
         taxaConversao
       },
       info: {
         ...info,
         totalSacadoFmt: fmtMoney(info.totalSacadoLiquido),
+        totalTaxasSaqueFmt: fmtMoney(totalTaxasSaque),
         saquesPendentesFmt: fmtMoney(info.totalSaquesPendenteValor),
         gmvMesFmt: fmtMoney(info.gmvMes)
       }
@@ -319,7 +332,8 @@ const superAdminController = {
         totalConcluidoFmt: fmtMoney(resumo.totalConcluido),
         countConcluido: resumo.countConcluido,
         totalPendenteFmt: fmtMoney(resumo.totalPendente),
-        countPendente: resumo.countPendente
+        countPendente: resumo.countPendente,
+        totalTaxasFmt: fmtMoney(resumo.totalTaxas || 0)
       }
     }));
   },

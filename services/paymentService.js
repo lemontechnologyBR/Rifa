@@ -6,7 +6,11 @@
 const WooviService = require('./wooviService');
 const MercadoPagoService = require('./mercadoPagoService');
 
-const { TAXA_PLATAFORMA, TAXA_PLATAFORMA_WOOVI } = require('../lib/config');
+const {
+  TAXA_PLATAFORMA,
+  TAXA_PLATAFORMA_WOOVI,
+  TAXA_FIXA_COTA_WOOVI
+} = require('../lib/config');
 
 const WOOVI_ENABLED = process.env.WOOVI_ENABLED === 'true';
 
@@ -114,7 +118,24 @@ const PaymentService = {
 
   /** Valor em reais retido pela plataforma em uma venda. */
   calcularReceitaReserva(reserva, tenant) {
-    return Number(reserva?.valorTotal || 0) * this.getTaxaPlataformaReserva(reserva, tenant);
+    const valor = Number(reserva?.valorTotal || 0);
+    const pct = this.getTaxaPlataformaReserva(reserva, tenant);
+    const provider = this.getProviderForReserva(reserva, tenant);
+    if (provider === 'woovi') {
+      const cotas = Number(reserva?._count?.reservaNumeros || reserva?.numeros?.length || 0);
+      return valor * pct + cotas * TAXA_FIXA_COTA_WOOVI;
+    }
+    return valor * pct;
+  },
+
+  /** Rótulo da comissão para UI (ex.: "5% + R$ 0,50/cota"). */
+  getTaxaLabelReserva(reserva, tenant) {
+    const provider = this.getProviderForReserva(reserva, tenant);
+    const pct = Math.round(this.getTaxaPlataformaReserva(reserva, tenant) * 100);
+    if (provider === 'woovi') {
+      return `${pct}% + R$ ${TAXA_FIXA_COTA_WOOVI.toFixed(2).replace('.', ',')}/cota`;
+    }
+    return `${pct}%`;
   }
 };
 
