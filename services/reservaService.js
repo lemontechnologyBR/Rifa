@@ -143,13 +143,18 @@ const ReservaService = {
     const {
       TAXA_PLATAFORMA,
       ORGANIZADOR_PERCENTUAL,
-      ORGANIZADOR_PERCENTUAL_WOOVI
+      ORGANIZADOR_PERCENTUAL_WOOVI,
+      TAXA_FIXA_COTA_WOOVI
     } = require('../lib/config');
     const provider = PaymentService.getProvider(tenant);
 
     const valorCobrado = reserva.valorTotal;
+    const cotasReserva = (reserva.numeros || reserva.reservaNumeros || []).length;
     const orgPct = provider === 'woovi' ? ORGANIZADOR_PERCENTUAL_WOOVI : ORGANIZADOR_PERCENTUAL;
-    const valorOrganizador = reserva.valorTotal * orgPct;
+    // Woovi: 5% do valor + R$ 0,50 por cota (descontado do organizador, comprador paga valor exato).
+    const valorOrganizador = provider === 'woovi'
+      ? Math.max(0, reserva.valorTotal * orgPct - cotasReserva * TAXA_FIXA_COTA_WOOVI)
+      : reserva.valorTotal * orgPct;
 
     const charge = await PaymentService.criarCobranca(tenant, {
       correlationID,
@@ -407,24 +412,31 @@ const ReservaService = {
         }
 
         // Email para cada organizador do tenant
-        const { ORGANIZADOR_PERCENTUAL, ORGANIZADOR_PERCENTUAL_WOOVI } = require('../lib/config');
+        const { ORGANIZADOR_PERCENTUAL, ORGANIZADOR_PERCENTUAL_WOOVI, TAXA_FIXA_COTA_WOOVI } = require('../lib/config');
         const provider = PaymentService.getProvider(tenant);
         const orgPct = provider === 'woovi' ? ORGANIZADOR_PERCENTUAL_WOOVI : ORGANIZADOR_PERCENTUAL;
+        const valorOrganizador = provider === 'woovi'
+          ? Math.max(0, reservaFull.valorTotal * orgPct - numeros.length * TAXA_FIXA_COTA_WOOVI)
+          : reservaFull.valorTotal * orgPct;
+        const taxaDescricao = provider === 'woovi'
+          ? `${Math.round(orgPct * 100)}% − R$ ${TAXA_FIXA_COTA_WOOVI.toFixed(2).replace('.', ',')}/cota de R$ ${Number(reservaFull.valorTotal).toFixed(2).replace('.', ',')}`
+          : `${Math.round(orgPct * 100)}% de R$ ${Number(reservaFull.valorTotal).toFixed(2).replace('.', ',')}`;
 
         for (const org of (tenant.organizadores || [])) {
           if (!org.email) continue;
           await enviarEmail({
             para: org.email,
-            assunto: `Nova venda confirmada — ${reservaFull.rifa.titulo} (+R$ ${(reservaFull.valorTotal * orgPct).toFixed(2).replace('.', ',')})`,
+            assunto: `Nova venda confirmada — ${reservaFull.rifa.titulo} (+R$ ${valorOrganizador.toFixed(2).replace('.', ',')})`,
             html: templateVendaOrganizador({
               rifa: reservaFull.rifa,
               reserva: reservaFull,
               usuario: reservaFull.usuario,
               numeros,
               tenantSlug,
-              organizadorPercentual: orgPct
+              valorOrganizador,
+              taxaDescricao
             }),
-            texto: `Nova venda! Rifa "${reservaFull.rifa.titulo}" — Comprador: ${reservaFull.usuario?.nome || 'Anônimo'} — ${numeros.length} cota(s) — Valor: R$ ${reservaFull.valorTotal.toFixed(2).replace('.', ',')} — Sua parte: R$ ${(reservaFull.valorTotal * orgPct).toFixed(2).replace('.', ',')}`
+            texto: `Nova venda! Rifa "${reservaFull.rifa.titulo}" — Comprador: ${reservaFull.usuario?.nome || 'Anônimo'} — ${numeros.length} cota(s) — Valor: R$ ${reservaFull.valorTotal.toFixed(2).replace('.', ',')} — Sua parte: R$ ${valorOrganizador.toFixed(2).replace('.', ',')}`
           });
         }
       } catch (e) {

@@ -12,6 +12,11 @@ const OrganizadorService = require('../services/organizadorService');
 function cartPaymentContext(tenant) {
   const PaymentService = require('../services/paymentService');
   const MercadoPagoOAuthService = require('../services/mercadoPagoOAuthService');
+  const {
+    ORGANIZADOR_PERCENTUAL,
+    ORGANIZADOR_PERCENTUAL_WOOVI,
+    TAXA_FIXA_COTA_WOOVI
+  } = require('../lib/config');
   const mpSplitConfigured = MercadoPagoOAuthService.isSplitConfigured();
   const mpConnected = MercadoPagoOAuthService.isTenantConnected(tenant);
   const provider = PaymentService.getProvider(tenant);
@@ -20,7 +25,9 @@ function cartPaymentContext(tenant) {
     mpSplitConfigured,
     mpConnected,
     usesSplit: provider === 'mercadopago',
-    gateway: provider
+    gateway: provider,
+    organizadorPercentual: provider === 'woovi' ? ORGANIZADOR_PERCENTUAL_WOOVI : ORGANIZADOR_PERCENTUAL,
+    taxaFixaCota: provider === 'woovi' ? TAXA_FIXA_COTA_WOOVI : 0
   };
 }
 
@@ -207,7 +214,9 @@ const organizadorController = {
         TAXA_PLATAFORMA_WOOVI,
         ORGANIZADOR_PERCENTUAL,
         ORGANIZADOR_PERCENTUAL_WOOVI,
-        TAXA_SAQUE
+        TAXA_FIXA_COTA_WOOVI,
+        TAXA_SAQUE,
+        SAQUE_MINIMO
       } = require('../lib/config');
       // taxas específicas de cada modalidade (sempre passadas para a view)
       const taxaPlataforma = provider === 'woovi' ? TAXA_PLATAFORMA_WOOVI : TAXA_PLATAFORMA;
@@ -232,7 +241,9 @@ const organizadorController = {
         mpPercentual: ORGANIZADOR_PERCENTUAL,
         wooviTaxa: TAXA_PLATAFORMA_WOOVI,
         wooviPercentual: ORGANIZADOR_PERCENTUAL_WOOVI,
+        wooviTaxaFixaCota: TAXA_FIXA_COTA_WOOVI,
         taxaSaqueValor: TAXA_SAQUE,
+        saqueMinimoValor: SAQUE_MINIMO,
         pixTipo,
         pixTipoLabel: labelTipoPix(pixTipoDetectado),
         adminBase: `/${req.tenant.slug}/admin`,

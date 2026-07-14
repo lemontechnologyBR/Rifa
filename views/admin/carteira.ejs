@@ -80,11 +80,7 @@
         <% const saldoPlat = resumo.saldoDisponivel != null ? resumo.saldoDisponivel : w.parteOrganizador; %>
         <p class="admin-metric-value text-emerald-600">R$ <%= saldoPlat.toFixed(2).replace('.', ',') %></p>
         <p class="text-xs text-gray-400 mt-1">
-          <%= w.cotas %> cota(s) · <%= Math.round((wooviPercentual||0.93)*100) %>% de R$ <%= w.bruto.toFixed(2).replace('.', ',') %>
-          <% if (w.saldoSubconta != null && w.saldoSubconta < w.parteOrganizador - 0.01) { %>
-            · subconta real R$ <%= w.saldoSubconta.toFixed(2).replace('.', ',') %> (após taxas Woovi)
-          <% } %>
-          <% if (resumo.totalSacado > 0) { %> · R$ <%= resumo.totalSacado.toFixed(2).replace('.', ',') %> sacado<% } %>
+          <%= w.cotasDisponiveis %> cota(s) · <%= Math.round((wooviPercentual||0.93)*100) %>% − R$ <%= (wooviTaxaFixaCota||0.5).toFixed(2).replace('.', ',') %>/cota de R$ <%= w.brutoDisponivel.toFixed(2).replace('.', ',') %> · vendas anteriores
         </p>
       </article>
       <% } %>
@@ -116,20 +112,6 @@
         </p>
       </article>
     </div>
-
-    <% if (!mpSplitConfigured) { %>
-    <div class="admin-alert admin-alert-error mb-6" style="background:#fff7ed;border-color:#fdba74;color:#9a3412;">
-      <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0 mt-0.5"></i>
-      <div>
-        <strong>Mercado Pago temporariamente indisponível</strong><br>
-        O Mercado Pago notificou que contas usadas em sorteios podem ser suspensas. Por segurança, desativamos essa modalidade.
-        <span class="mt-1 block">Continue vendendo com <strong>chave PIX na carteira</strong> — a taxa da plataforma agora é <strong><%= Math.round((wooviTaxa||0.05)*100) %>%</strong> (você recebe <strong><%= Math.round((wooviPercentual||0.95)*100) %>%</strong>).</span>
-        <% if (!tenant.pixChave) { %>
-        <span class="mt-1 block font-semibold">Configure sua chave PIX abaixo para voltar a receber pagamentos.</span>
-        <% } %>
-      </div>
-    </div>
-    <% } %>
 
     <% if (mpSplitConfigured) { %>
     <div class="admin-panel-card p-6 mb-6 border-l-4 <%= mpOk ? 'border-emerald-500' : 'border-sky-500' %>">
@@ -183,42 +165,38 @@
     <% if (!mpOk || (resumo.saldoDisponivel != null && resumo.saldoDisponivel > 0)) { %>
     <% if (mpOk && resumo.saldoDisponivel > 0) { %>
       <div class="mb-4 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 text-sm text-amber-800 dark:text-amber-300">
-        <strong>Saldo na plataforma:</strong> Você conectou o Mercado Pago, mas ainda tem <strong>R$ <%= resumo.saldoDisponivel.toFixed(2).replace('.', ',') %></strong> de vendas anteriores via PIX da plataforma (<%= w.cotas %> cota(s), bruto R$ <%= w.bruto.toFixed(2).replace('.', ',') %>). Esse valor precisa ser sacado abaixo — novas vendas já caem direto no MP.
+        <strong>Saldo na plataforma:</strong> Você conectou o Mercado Pago, mas ainda tem <strong>R$ <%= resumo.saldoDisponivel.toFixed(2).replace('.', ',') %></strong> de vendas anteriores via PIX da plataforma (<%= w.cotasDisponiveis %> cota(s), bruto R$ <%= w.brutoDisponivel.toFixed(2).replace('.', ',') %>). Esse valor precisa ser sacado abaixo — novas vendas já caem direto no MP.
       </div>
     <% } %>
     <%
       const saldoDisp = saque ? saque.saldoDisponivel : (resumo.saldoDisponivel != null ? resumo.saldoDisponivel : resumo.saldoConfirmado * 0.95);
-      const saqueGratis = saque ? saque.saqueGratis : saldoDisp >= 500;
       const podeSacar = saque ? saque.podeSacar : saldoDisp >= 50;
-      const taxaSaque = saque ? saque.taxa : (saqueGratis ? 0 : (taxaSaqueValor || 5.50));
-      const saldoLiquido = saque ? saque.saldoLiquido : (podeSacar ? (saqueGratis ? saldoDisp : saldoDisp - taxaSaque) : 0);
-      const saqueMinimo = saque ? saque.saqueMinimo : 50;
+      const taxaSaque = saque ? saque.taxa : (taxaSaqueValor || 5.50);
+      const saldoLiquido = saque ? saque.saldoLiquido : (podeSacar ? saldoDisp - taxaSaque : 0);
+      const saqueMinimo = saque ? saque.saqueMinimo : 100;
     %>
     <div
-      x-data="carteiraSaqueData(<%= saldoDisp %>, <%= taxaSaqueValor || 5.50 %>, <%= saqueGratis ? 'true' : 'false' %>, <%= saqueMinimo %>, '<%= saldoDisp.toFixed(2) %>')"
+      x-data="carteiraSaqueData(<%= saldoDisp %>, <%= taxaSaqueValor || 5.50 %>, false, <%= saqueMinimo %>, '<%= saldoDisp.toFixed(2) %>')"
       @keydown.escape.window="fecharModal()">
-    <div class="admin-panel-card p-5 mb-6 border-l-4 <%= saqueGratis ? 'border-emerald-500' : podeSacar ? 'border-violet-400' : 'border-gray-300 dark:border-gray-700' %>">
+    <div class="admin-panel-card p-5 mb-6 border-l-4 <%= podeSacar ? 'border-violet-400' : 'border-gray-300 dark:border-gray-700' %>">
       <div class="flex flex-col sm:flex-row sm:items-center gap-4">
         <div class="flex items-start gap-3 flex-1">
-          <div class="w-10 h-10 rounded-xl <%= saqueGratis ? 'bg-emerald-100 dark:bg-emerald-900/40' : podeSacar ? 'bg-violet-100 dark:bg-violet-900/30' : 'bg-gray-100 dark:bg-gray-800' %> flex items-center justify-center shrink-0">
-            <i data-lucide="<%= saqueGratis ? 'arrow-down-to-line' : podeSacar ? 'wallet' : 'clock' %>" class="w-5 h-5 <%= saqueGratis ? 'text-emerald-600' : podeSacar ? 'text-violet-600' : 'text-gray-400' %>"></i>
+          <div class="w-10 h-10 rounded-xl <%= podeSacar ? 'bg-violet-100 dark:bg-violet-900/30' : 'bg-gray-100 dark:bg-gray-800' %> flex items-center justify-center shrink-0">
+            <i data-lucide="<%= podeSacar ? 'wallet' : 'clock' %>" class="w-5 h-5 <%= podeSacar ? 'text-violet-600' : 'text-gray-400' %>"></i>
           </div>
           <div>
-            <% if (saqueGratis) { %>
-              <p class="font-bold text-sm text-emerald-800 dark:text-emerald-300">✅ Saque gratuito disponível — R$ <%= saldoDisp.toFixed(2).replace('.', ',') %></p>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Saldo acima de R$ 500,00 — <strong>saque sem taxa</strong>. Você receberá R$ <strong><%= saldoDisp.toFixed(2).replace('.', ',') %></strong> na sua chave PIX.</p>
-            <% } else if (podeSacar) { %>
+            <% if (podeSacar) { %>
               <p class="font-bold text-sm text-violet-800 dark:text-violet-300">💰 Saque disponível — R$ <%= saldoDisp.toFixed(2).replace('.', ',') %></p>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Taxa de saque: <strong>R$ <%= (taxaSaqueValor||5.50).toFixed(2).replace('.', ',') %></strong>. Você receberá <strong>R$ <%= saldoLiquido.toFixed(2).replace('.', ',') %></strong> na chave PIX (saque total). Saques acima de R$ 500,00 são gratuitos.</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Taxa de saque: <strong>R$ <%= (taxaSaqueValor||5.50).toFixed(2).replace('.', ',') %></strong>. Você receberá <strong>R$ <%= saldoLiquido.toFixed(2).replace('.', ',') %></strong> na chave PIX (saque total).</p>
             <% } else { %>
               <p class="font-bold text-sm text-gray-600 dark:text-gray-400">⏳ Saldo insuficiente para saque</p>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Mínimo para saque: <strong>R$ 50,00</strong>. Disponível: R$ <%= saldoDisp.toFixed(2).replace('.', ',') %>. Faltam R$ <%= Math.max(0, 50 - saldoDisp).toFixed(2).replace('.', ',') %>.</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Mínimo para saque: <strong>R$ <%= saqueMinimo.toFixed(2).replace('.', ',') %></strong>. Disponível: R$ <%= saldoDisp.toFixed(2).replace('.', ',') %>. Faltam R$ <%= Math.max(0, saqueMinimo - saldoDisp).toFixed(2).replace('.', ',') %>.</p>
             <% } %>
           </div>
         </div>
         <% if (podeSacar && tenant.pixChave) { %>
         <button type="button" @click="abrirModal()"
-          class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl <%= saqueGratis ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-violet-600 hover:bg-violet-700' %> text-white text-sm font-bold transition shrink-0 shadow">
+          class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold transition shrink-0 shadow">
           <i data-lucide="arrow-down-to-line" class="w-4 h-4"></i>
           Sacar agora
         </button>
@@ -276,7 +254,7 @@
           </div>
 
           <p x-show="!valorValido() && parseValor() > 0" x-cloak class="text-xs text-red-600">
-            Informe um valor entre R$ <%= saqueMinimo.toFixed(2).replace('.', ',') %> e R$ <%= saldoDisp.toFixed(2).replace('.', ',') %><% if (!saqueGratis) { %>, acima da taxa<% } %>.
+            Informe um valor entre R$ <%= saqueMinimo.toFixed(2).replace('.', ',') %> e R$ <%= saldoDisp.toFixed(2).replace('.', ',') %>, acima da taxa.
           </p>
 
           <div class="flex gap-3 pt-1">
@@ -472,7 +450,7 @@
             autocomplete="off"
             spellcheck="false">
           <p class="admin-hint" x-text="hint()"></p>
-          <p class="admin-hint mt-1">A plataforma retém <strong><%= Math.round((wooviTaxa||0.05)*100) %>%</strong> do valor arrecadado. Você recebe <strong><%= Math.round((wooviPercentual||0.95)*100) %>%</strong> de cada venda — solicite o saque quando quiser.</p>
+          <p class="admin-hint mt-1">A plataforma retém <strong><%= Math.round((wooviTaxa||0.05)*100) %>% + R$ <%= (wooviTaxaFixaCota||0.5).toFixed(2).replace('.', ',') %> por cota vendida</strong>. Você recebe o restante de cada venda — solicite o saque quando quiser.</p>
         </div>
 
         <button type="submit" class="admin-btn-primary px-6 py-3 text-sm">
@@ -529,7 +507,7 @@
             </li>
             <li class="flex items-start gap-2.5">
               <span class="w-5 h-5 rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-400 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
-            <span><strong class="text-gray-700 dark:text-gray-200"><%= Math.round((wooviPercentual||0.95)*100) %>%</strong> acumula no seu saldo — a plataforma retém <%= Math.round((wooviTaxa||0.05)*100) %>%</span>
+            <span><strong class="text-gray-700 dark:text-gray-200"><%= Math.round((wooviPercentual||0.95)*100) %>%</strong> acumula no seu saldo — a plataforma retém <%= Math.round((wooviTaxa||0.05)*100) %>% + R$ <%= (wooviTaxaFixaCota||0.5).toFixed(2).replace('.', ',') %>/cota</span>
             </li>
             <li class="flex items-start gap-2.5">
               <span class="w-5 h-5 rounded-full bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-400 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">4</span>
@@ -537,7 +515,7 @@
             </li>
             <li class="flex items-start gap-2.5">
               <span class="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">✓</span>
-              <span>Saldo <strong class="text-gray-700 dark:text-gray-200">≥ R$ 500,00</strong>: saque gratuito. Abaixo: taxa de <strong class="text-gray-700 dark:text-gray-200">R$ <%= (taxaSaqueValor||5.50).toFixed(2).replace('.', ',') %></strong></span>
+              <span>Taxa fixa de <strong class="text-gray-700 dark:text-gray-200">R$ <%= (taxaSaqueValor||5.50).toFixed(2).replace('.', ',') %></strong> em todo saque</span>
             </li>
           </ol>
         </div>
@@ -545,17 +523,13 @@
         <div class="admin-panel-card p-5">
           <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Regras de saque</p>
           <ul class="text-sm space-y-2">
-            <li class="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
-              <i data-lucide="check-circle-2" class="w-4 h-4 shrink-0"></i>
-              <span><strong>Grátis</strong> — saldo ≥ R$ 500,00</span>
-            </li>
             <li class="flex items-center gap-2 text-amber-700 dark:text-amber-400">
               <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
-              <span><strong>R$ <%= (taxaSaqueValor||5.50).toFixed(2).replace('.', ',') %></strong> — saque abaixo de R$ 500,00</span>
+              <span><strong>R$ <%= (taxaSaqueValor||5.50).toFixed(2).replace('.', ',') %></strong> — taxa fixa em todo saque</span>
             </li>
             <li class="flex items-center gap-2 text-gray-500 dark:text-gray-400">
               <i data-lucide="arrow-up" class="w-4 h-4 shrink-0"></i>
-              <span>Saldo mínimo para saque: <strong>R$ 50,00</strong></span>
+              <span>Saldo mínimo para saque: <strong>R$ <%= (saqueMinimoValor||100).toFixed(2).replace('.', ',') %></strong></span>
             </li>
           </ul>
         </div>

@@ -5,7 +5,6 @@ const prisma = require('../lib/prisma');
 const PaymentService = require('./paymentService');
 const LogService = require('./logService');
 const {
-  SAQUE_GRATIS_MIN,
   TAXA_SAQUE,
   SAQUE_MINIMO
 } = require('../lib/config');
@@ -13,8 +12,8 @@ const {
 const SaqueService = {
   calcularResumo(saldoDisponivel) {
     const saldo = Math.max(0, Number(saldoDisponivel) || 0);
-    const saqueGratis = saldo >= SAQUE_GRATIS_MIN;
-    const taxa = saqueGratis ? 0 : TAXA_SAQUE;
+    const saqueGratis = false;
+    const taxa = TAXA_SAQUE;
     const podeSacar = saldo >= SAQUE_MINIMO;
     const saldoLiquido = podeSacar ? Math.max(0, saldo - taxa) : 0;
 
@@ -26,7 +25,6 @@ const SaqueService = {
       saldoLiquido,
       valorBruto: podeSacar ? saldo : 0,
       valorLiquido: podeSacar ? saldoLiquido : 0,
-      saqueGratisMin: SAQUE_GRATIS_MIN,
       saqueMinimo: SAQUE_MINIMO
     };
   },
@@ -34,8 +32,8 @@ const SaqueService = {
   calcularResumoValor(saldoDisponivel, valorBruto) {
     const saldo = Math.max(0, Number(saldoDisponivel) || 0);
     const valor = Math.round(Number(valorBruto) * 100) / 100;
-    const saqueGratis = saldo >= SAQUE_GRATIS_MIN;
-    const taxa = saqueGratis ? 0 : TAXA_SAQUE;
+    const saqueGratis = false;
+    const taxa = TAXA_SAQUE;
     const podeSacar = saldo >= SAQUE_MINIMO;
 
     if (!podeSacar) {
@@ -66,7 +64,6 @@ const SaqueService = {
       podeSacar,
       valorLiquido,
       saldoLiquido: valorLiquido,
-      saqueGratisMin: SAQUE_GRATIS_MIN,
       saqueMinimo: SAQUE_MINIMO
     };
   },
@@ -224,15 +221,9 @@ const SaqueService = {
     return atualizados;
   },
 
-  /** Limita saldo contábil ao que existe de fato nas subcontas Woovi (inclui chaves históricas). */
-  async saldoEfetivoWoovi(tenant, saldoContabil, correlationIds = []) {
-    const saldo = Math.max(0, Number(saldoContabil) || 0);
-    if (!tenant?.pixChave || saldo <= 0) return saldo;
-    const WooviService = require('./wooviService');
-    if (!WooviService.isPlatformConfigured()) return saldo;
-    const subconta = await WooviService.consultarSaldoAgregado(tenant, correlationIds);
-    if (subconta == null) return saldo;
-    return Math.min(saldo, subconta);
+  /** Mantido por compatibilidade — saldo disponível vem do banco (carteiraService). */
+  async saldoEfetivoWoovi(tenant, saldoContabil) {
+    return Math.max(0, Number(saldoContabil) || 0);
   },
 
   async _wooviRefsTenant(tenantId) {

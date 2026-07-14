@@ -21,14 +21,14 @@
       </p>
     <% } %>
   <% } else if (tenant.pixChave) { %>
+    <% const taxaFixa = typeof taxaFixaCota !== 'undefined' ? taxaFixaCota : (typeof wooviTaxaFixaCota !== 'undefined' ? wooviTaxaFixaCota : 0); %>
     <p class="font-semibold flex items-center gap-2"><i data-lucide="wallet" class="w-4 h-4 text-emerald-600"></i> Pagamentos automáticos</p>
-    <p class="text-gray-500 dark:text-gray-400">PIX processado pela VouRifar — você recebe <strong class="text-gray-700 dark:text-gray-200"><%= pctOrg %>%</strong>. Confirmação automática após o pagamento.</p>
+    <p class="text-gray-500 dark:text-gray-400">PIX processado pela VouRifar — você recebe <strong class="text-gray-700 dark:text-gray-200"><%= pctOrg %>%<% if (taxaFixa > 0) { %> − R$ <%= taxaFixa.toFixed(2).replace('.', ',') %>/cota<% } %></strong>. Confirmação automática após o pagamento.</p>
     <p class="text-xs text-emerald-700 dark:text-emerald-400 font-medium">Chave: <%= tenant.pixChave %></p>
   <% } else { %>
     <p class="font-semibold flex items-center gap-2"><i data-lucide="wallet" class="w-4 h-4 text-emerald-600"></i> Recebimento</p>
     <p class="text-amber-700 dark:text-amber-400">
       Configure a <a href="<%= adminBase %>/carteira" class="underline font-medium">Carteira</a> antes de publicar sorteios.
-      <% if (!mpSplit) { %><span class="block mt-1">Mercado Pago está temporariamente indisponível — use chave PIX.</span><% } %>
     </p>
   <% } %>
 </div>

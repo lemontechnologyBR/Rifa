@@ -15,7 +15,7 @@ body .glass-nav { background: rgba(18,18,31,.97) !important; border-color: rgba(
 }
 
 .imp-progress-wrap { background: rgba(255,255,255,.1); border-radius: 9999px; height: 10px; overflow: hidden; }
-.imp-progress-bar  { height: 100%; border-radius: 9999px; background: linear-gradient(90deg,#22c55e,#16a34a); transition: width .6s; }
+.imp-progress-bar  { height: 100%; border-radius: 9999px; background: linear-gradient(90deg,var(--brand-from),var(--brand-to)); transition: width .6s; }
 
 .imp-pkg-btn {
   background: #1a1a2e;
@@ -28,12 +28,12 @@ body .glass-nav { background: rgba(18,18,31,.97) !important; border-color: rgba(
   position: relative;
 }
 .imp-pkg-btn:hover, .imp-pkg-btn.active {
-  border-color: #22c55e;
-  background: rgba(34,197,94,.08);
+  border-color: var(--brand-from);
+  background: color-mix(in srgb, var(--brand-from) 8%, transparent);
 }
 .imp-pkg-popular {
   position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
-  background: #22c55e; color: #000; font-size: 10px; font-weight: 900;
+  background: var(--brand-from); color: #000; font-size: 10px; font-weight: 900;
   padding: 2px 10px; border-radius: 9999px; white-space: nowrap;
 }
 
@@ -52,12 +52,12 @@ body .glass-nav { background: rgba(18,18,31,.97) !important; border-color: rgba(
 }
 
 .imp-btn-green {
-  background: #22c55e; color: #000; font-weight: 900; border-radius: 12px;
+  background: var(--brand-from); color: #000; font-weight: 900; border-radius: 12px;
   padding: 15px 20px; font-size: 15px; border: none; cursor: pointer;
   display: flex; align-items: center; justify-content: center; gap: 8px;
   width: 100%; transition: background .15s, transform .15s;
 }
-.imp-btn-green:hover { background: #16a34a; transform: translateY(-1px); }
+.imp-btn-green:hover { background: var(--brand-to); transform: translateY(-1px); }
 .imp-btn-green:disabled { background: #374151; color: #6b7280; cursor: not-allowed; transform: none; }
 
 .imp-accordion-trigger {
@@ -101,16 +101,16 @@ body .glass-nav { background: rgba(18,18,31,.97) !important; border-color: rgba(
   opacity: 1;
 }
 .grade-num-btn.vendido {
-  background: rgba(34,197,94,.25) !important; color: #22c55e !important;
-  border-color: rgba(34,197,94,.55) !important; cursor: not-allowed;
+  background: color-mix(in srgb, var(--brand-from) 25%, transparent) !important; color: var(--brand-from) !important;
+  border-color: color-mix(in srgb, var(--brand-from) 55%, transparent) !important; cursor: not-allowed;
   opacity: 1;
 }
 .grade-num-btn.selecionado {
-  background: #16a34a !important;
+  background: var(--brand-to) !important;
   color: #fff !important;
-  border-color: #4ade80 !important;
+  border-color: color-mix(in srgb, var(--brand-from) 65%, white) !important;
   transform: scale(1.12);
-  box-shadow: 0 0 0 3px rgba(34,197,94,.35), 0 4px 12px rgba(34,197,94,.4);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-from) 35%, transparent), 0 4px 12px color-mix(in srgb, var(--brand-from) 40%, transparent);
   font-size: 14px;
   z-index: 1;
   position: relative;
@@ -122,8 +122,8 @@ body .glass-nav { background: rgba(18,18,31,.97) !important; border-color: rgba(
 .grade-legenda-dot { width: 14px; height: 14px; border-radius: 4px; border: 2px solid transparent; flex-shrink: 0; }
 .grade-legenda-dot.livre { background: #2d3748; border-color: rgba(255,255,255,.15); }
 .grade-legenda-dot.reservado { background: rgba(251,191,36,.25); border-color: rgba(251,191,36,.55); }
-.grade-legenda-dot.pago { background: rgba(34,197,94,.25); border-color: rgba(34,197,94,.55); }
-.grade-legenda-dot.selecionado { background: #16a34a; border-color: #4ade80; }
+.grade-legenda-dot.pago { background: color-mix(in srgb, var(--brand-from) 25%, transparent); border-color: color-mix(in srgb, var(--brand-from) 55%, transparent); }
+.grade-legenda-dot.selecionado { background: var(--brand-to); border-color: color-mix(in srgb, var(--brand-from) 65%, white); }
 </style>
 
 <%
@@ -154,7 +154,7 @@ body .glass-nav { background: rgba(18,18,31,.97) !important; border-color: rgba(
 
       <!-- Badge status -->
       <div style="position:absolute;top:12px;left:12px;display:flex;gap:6px;">
-        <span style="background:rgba(34,197,94,.2);border:1px solid rgba(34,197,94,.4);color:#22c55e;padding:4px 10px;border-radius:9999px;font-size:10px;font-weight:900;text-transform:uppercase;">● <%= rifa.status === 'ativa' ? 'ATIVA' : rifa.status.toUpperCase() %></span>
+        <span style="background:color-mix(in srgb, var(--brand-from) 20%, transparent);border:1px solid color-mix(in srgb, var(--brand-from) 40%, transparent);color:var(--brand-from);padding:4px 10px;border-radius:9999px;font-size:10px;font-weight:900;text-transform:uppercase;">● <%= rifa.status === 'ativa' ? 'ATIVA' : rifa.status.toUpperCase() %></span>
         <% if (pctVend >= 75) { %><span style="background:rgba(249,115,22,.2);border:1px solid rgba(249,115,22,.4);color:#fb923c;padding:4px 10px;border-radius:9999px;font-size:10px;font-weight:900;">🔥 Quase esgotando!</span><% } %>
       </div>
 
@@ -173,7 +173,7 @@ body .glass-nav { background: rgba(18,18,31,.97) !important; border-color: rgba(
         <a href="<%= tenantBase %>/minhas-reservas" style="font-size:12px;color:#9ca3af;font-weight:700;text-decoration:none;display:flex;align-items:center;gap:4px;">
           <i data-lucide="ticket" class="w-3.5 h-3.5"></i> Meus títulos
         </a>
-        <span style="font-size:14px;font-weight:900;color:#22c55e;"><%= pctVend %>%</span>
+        <span style="font-size:14px;font-weight:900;color:var(--brand-from);"><%= pctVend %>%</span>
       </div>
       <div class="imp-progress-wrap">
         <div class="imp-progress-bar" style="width:<%= Math.max(pctVend,2) %>%;"></div>
@@ -194,19 +194,19 @@ body .glass-nav { background: rgba(18,18,31,.97) !important; border-color: rgba(
         <div style="font-size:11px;color:#6b7280;margin-bottom:4px;">Sorteio em</div>
         <div style="display:flex;gap:6px;">
           <div style="background:#111827;border-radius:8px;padding:6px 10px;text-align:center;">
-            <span id="cd-dias" style="display:block;font-size:16px;font-weight:900;color:#22c55e;line-height:1;">--</span>
+            <span id="cd-dias" style="display:block;font-size:16px;font-weight:900;color:var(--brand-from);line-height:1;">--</span>
             <span style="font-size:9px;color:#6b7280;text-transform:uppercase;">dias</span>
           </div>
           <div style="background:#111827;border-radius:8px;padding:6px 10px;text-align:center;">
-            <span id="cd-horas" style="display:block;font-size:16px;font-weight:900;color:#22c55e;line-height:1;">--</span>
+            <span id="cd-horas" style="display:block;font-size:16px;font-weight:900;color:var(--brand-from);line-height:1;">--</span>
             <span style="font-size:9px;color:#6b7280;text-transform:uppercase;">hrs</span>
           </div>
           <div style="background:#111827;border-radius:8px;padding:6px 10px;text-align:center;">
-            <span id="cd-min" style="display:block;font-size:16px;font-weight:900;color:#22c55e;line-height:1;">--</span>
+            <span id="cd-min" style="display:block;font-size:16px;font-weight:900;color:var(--brand-from);line-height:1;">--</span>
             <span style="font-size:9px;color:#6b7280;text-transform:uppercase;">min</span>
           </div>
         </div>
-        <p id="sorteio-status" class="hidden" style="font-size:12px;font-weight:800;color:#22c55e;margin-top:4px;"></p>
+        <p id="sorteio-status" class="hidden" style="font-size:12px;font-weight:800;color:var(--brand-from);margin-top:4px;"></p>
       </div>
     </div>
 
@@ -220,7 +220,7 @@ body .glass-nav { background: rgba(18,18,31,.97) !important; border-color: rgba(
       <div style="display:flex;gap:8px;margin-bottom:14px;justify-content:center;">
         <span id="grade-stat-livres" style="background:#374151;color:#d1d5db;font-size:12px;font-weight:700;padding:5px 14px;border-radius:9999px;">— Livres</span>
         <span id="grade-stat-reservados" style="background:rgba(251,191,36,.15);color:#fbbf24;font-size:12px;font-weight:700;padding:5px 14px;border-radius:9999px;">— Reservados</span>
-        <span id="grade-stat-pagos" style="background:rgba(34,197,94,.15);color:#22c55e;font-size:12px;font-weight:700;padding:5px 14px;border-radius:9999px;">— Pagos</span>
+        <span id="grade-stat-pagos" style="background:color-mix(in srgb, var(--brand-from) 15%, transparent);color:var(--brand-from);font-size:12px;font-weight:700;padding:5px 14px;border-radius:9999px;">— Pagos</span>
       </div>
 
       <div class="grade-legenda">
@@ -244,8 +244,8 @@ body .glass-nav { background: rgba(18,18,31,.97) !important; border-color: rgba(
 
       <!-- Selecionados info -->
       <p style="text-align:center;font-size:12px;color:#6b7280;margin:0 0 8px;">
-        <span id="grade-selecionados-qtd" style="color:#22c55e;font-weight:900;">0</span> número(s) selecionado(s) ·
-        Total: <span id="grade-total-label" style="color:#22c55e;font-weight:900;">R$ 0,00</span>
+        <span id="grade-selecionados-qtd" style="color:var(--brand-from);font-weight:900;">0</span> número(s) selecionado(s) ·
+        Total: <span id="grade-total-label" style="color:var(--brand-from);font-weight:900;">R$ 0,00</span>
       </p>
       <p id="aviso-grade-minima" style="text-align:center;font-size:12px;color:#fbbf24;margin:0 0 10px;" class="hidden">
         Compra mínima: R$ 5,00 — selecione pelo menos <span id="grade-minimo-qtd">1</span> número(s)
@@ -271,7 +271,7 @@ body .glass-nav { background: rgba(18,18,31,.97) !important; border-color: rgba(
         <button type="button" class="imp-pkg-btn" data-add-qtd="<%= f.quantidadeMin %>"
           style="padding-top:<%= fi===0?'20px':'14px' %>;">
           <% if (fi === 0) { %><span class="imp-pkg-popular">Mais popular</span><% } %>
-          <div style="font-size:16px;font-weight:900;color:#22c55e;">+<%= f.quantidadeMin.toLocaleString('pt-BR') %></div>
+          <div style="font-size:16px;font-weight:900;color:var(--brand-from);">+<%= f.quantidadeMin.toLocaleString('pt-BR') %></div>
           <div style="font-size:13px;font-weight:700;color:#fff;margin-top:2px;">R$&nbsp;<%= f.valorTotal.toFixed(2).replace('.',',') %></div>
           <div style="font-size:10px;color:#6b7280;margin-top:2px;">SELECIONAR</div>
         </button>
@@ -288,16 +288,16 @@ body .glass-nav { background: rgba(18,18,31,.97) !important; border-color: rgba(
       <% if (!rifa.faixasDesconto || !rifa.faixasDesconto.length) { %>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;">
         <button type="button" class="imp-pkg-btn" data-add-qtd="10">
-          <div style="font-size:15px;font-weight:900;color:#22c55e;">+10</div>
+          <div style="font-size:15px;font-weight:900;color:var(--brand-from);">+10</div>
           <div style="font-size:10px;color:#6b7280;margin-top:2px;">SELECIONAR</div>
         </button>
         <button type="button" class="imp-pkg-btn" style="padding-top:20px;">
           <span class="imp-pkg-popular">Mais popular</span>
-          <div style="font-size:15px;font-weight:900;color:#22c55e;">+50</div>
+          <div style="font-size:15px;font-weight:900;color:var(--brand-from);">+50</div>
           <div style="font-size:10px;color:#6b7280;margin-top:2px;">SELECIONAR</div>
         </button>
         <button type="button" class="imp-pkg-btn" data-add-qtd="100">
-          <div style="font-size:15px;font-weight:900;color:#22c55e;">+100</div>
+          <div style="font-size:15px;font-weight:900;color:var(--brand-from);">+100</div>
           <div style="font-size:10px;color:#6b7280;margin-top:2px;">SELECIONAR</div>
         </button>
       </div>
@@ -323,7 +323,7 @@ body .glass-nav { background: rgba(18,18,31,.97) !important; border-color: rgba(
         <div style="display:flex;justify-content:space-between;color:#9ca3af;"><span>Subtotal</span><span id="page-res-subtotal">R$ 0,00</span></div>
         <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:900;padding-top:10px;border-top:1px solid rgba(255,255,255,.08);">
           <span style="color:#fff;">Total PIX</span>
-          <span id="page-res-total" style="color:#22c55e;">R$ 0,00</span>
+          <span id="page-res-total" style="color:var(--brand-from);">R$ 0,00</span>
         </div>
       </div>
 
@@ -362,7 +362,7 @@ body .glass-nav { background: rgba(18,18,31,.97) !important; border-color: rgba(
     <!-- Depoimentos -->
     <div style="background:#1a1a2e;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:16px;" class="imp-fade" id="comentarios">
       <h2 style="font-size:15px;font-weight:800;color:#fff;margin:0 0 14px;display:flex;align-items:center;gap:6px;">
-        <i data-lucide="message-circle" class="w-4 h-4" style="color:#22c55e;"></i> Depoimentos
+        <i data-lucide="message-circle" class="w-4 h-4" style="color:var(--brand-from);"></i> Depoimentos
       </h2>
       <div id="lista-comentarios" style="display:flex;flex-direction:column;gap:10px;">
         <% if (!(comentarios || []).length) { %>
@@ -370,7 +370,7 @@ body .glass-nav { background: rgba(18,18,31,.97) !important; border-color: rgba(
         <% } %>
         <% (comentarios || []).forEach(function(c) { %>
           <div class="depoimento-item" style="display:flex;gap:10px;padding:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:10px;">
-            <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#22c55e,#16a34a);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:#000;flex-shrink:0;"><%= c.usuario.nome.charAt(0).toUpperCase() %></div>
+            <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--brand-from),var(--brand-to));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:#000;flex-shrink:0;"><%= c.usuario.nome.charAt(0).toUpperCase() %></div>
             <div>
               <p style="font-size:13px;color:#d1d5db;margin:0 0 4px;" class="depoimento-texto"><%= c.texto %></p>
               <p style="font-size:11px;color:#6b7280;margin:0;"><%= c.usuario.nome %> · <%= new Date(c.createdAt).toLocaleDateString('pt-BR') %></p>
@@ -381,7 +381,7 @@ body .glass-nav { background: rgba(18,18,31,.97) !important; border-color: rgba(
 
       <form id="form-depoimento" style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;gap:10px;">
         <p style="font-size:11px;color:#6b7280;margin:0;display:flex;align-items:flex-start;gap:6px;">
-          <i data-lucide="shield-check" class="w-3.5 h-3.5" style="color:#22c55e;flex-shrink:0;margin-top:1px;"></i>
+          <i data-lucide="shield-check" class="w-3.5 h-3.5" style="color:var(--brand-from);flex-shrink:0;margin-top:1px;"></i>
           Somente quem comprou com pagamento confirmado pode comentar.
         </p>
         <input type="text" name="cpf" id="depoimento-cpf" required placeholder="Seu CPF (000.000.000-00)" inputmode="numeric" maxlength="14"
@@ -404,7 +404,7 @@ body .glass-nav { background: rgba(18,18,31,.97) !important; border-color: rgba(
   <div style="display:flex;align-items:center;gap:12px;max-width:480px;margin:0 auto;">
     <div style="flex:1;">
       <div style="font-size:11px;color:#6b7280;"><span id="sticky-qtd">1</span> cota(s)</div>
-      <div style="font-size:18px;font-weight:900;color:#22c55e;" id="sticky-total">R$ 0,00</div>
+      <div style="font-size:18px;font-weight:900;color:var(--brand-from);" id="sticky-total">R$ 0,00</div>
     </div>
     <button id="btn-comprar-mobile" class="imp-btn-green" style="flex:1;max-width:180px;padding:12px 16px;font-size:14px;">
       <i data-lucide="qr-code" class="w-4 h-4"></i> Participar
@@ -435,7 +435,7 @@ body .glass-nav { background: rgba(18,18,31,.97) !important; border-color: rgba(
       <div id="checkout-resumo" style="display:none;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:14px;margin-bottom:14px;font-size:13px;">
         <div style="display:flex;justify-content:space-between;color:#9ca3af;margin-bottom:6px;"><span>Subtotal</span><span id="checkout-subtotal">R$ 0,00</span></div>
         <div style="display:flex;justify-content:space-between;font-weight:900;font-size:15px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08);">
-          <span style="color:#fff;">Total PIX</span><span id="valor-total" style="color:#22c55e;">R$ 0,00</span>
+          <span style="color:#fff;">Total PIX</span><span id="valor-total" style="color:var(--brand-from);">R$ 0,00</span>
         </div>
       </div>
       <form id="form-compra" style="display:flex;flex-direction:column;gap:10px;">
@@ -457,11 +457,11 @@ body .glass-nav { background: rgba(18,18,31,.97) !important; border-color: rgba(
 
 <!-- ══ MODAL SUCESSO ═════════════════════════════════════════════ -->
 <div id="modal-sucesso" class="fixed inset-0 z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4" style="background:rgba(0,0,0,.85);">
-  <div style="background:#1a1a2e;border:1px solid rgba(34,197,94,.25);color:#fff;width:100%;max-width:440px;border-radius:20px 20px 0 0;overflow-y:auto;max-height:92vh;" class="sm:rounded-2xl pb-safe">
+  <div style="background:#1a1a2e;border:1px solid color-mix(in srgb, var(--brand-from) 25%, transparent);color:#fff;width:100%;max-width:440px;border-radius:20px 20px 0 0;overflow-y:auto;max-height:92vh;" class="sm:rounded-2xl pb-safe">
     <div style="width:48px;height:4px;background:rgba(255,255,255,.15);border-radius:9999px;margin:12px auto 0;" class="sm:hidden"></div>
     <div style="padding:24px 20px;text-align:center;">
-      <div style="width:56px;height:56px;border-radius:50%;background:rgba(34,197,94,.15);border:2px solid rgba(34,197,94,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
-        <i data-lucide="check-circle" class="w-9 h-9" style="color:#22c55e;"></i>
+      <div style="width:56px;height:56px;border-radius:50%;background:color-mix(in srgb, var(--brand-from) 15%, transparent);border:2px solid color-mix(in srgb, var(--brand-from) 30%, transparent);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+        <i data-lucide="check-circle" class="w-9 h-9" style="color:var(--brand-from);"></i>
       </div>
       <h3 style="font-size:18px;font-weight:900;color:#fff;margin:0 0 6px;">Reserva Confirmada!</h3>
       <p style="font-size:13px;color:#6b7280;margin:0 0 16px;">Realize o pagamento PIX para garantir seus números</p>
