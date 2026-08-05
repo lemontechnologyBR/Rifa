@@ -19,7 +19,10 @@
 }
 .imp-featured-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 16px 48px rgba(0,0,0,.5);
+  box-shadow: 0 16px 48px rgba(15, 23, 42, 0.12);
+}
+.dark .imp-featured-card:hover {
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
 }
 
 /* Cards menores (lista) */
@@ -40,7 +43,7 @@
 
 /* Progress bar */
 .imp-progress-wrap {
-  background: rgba(255,255,255,.08);
+  background: var(--imp-progress-track, rgba(15, 23, 42, 0.08));
   border-radius: 9999px;
   height: 8px;
   overflow: hidden;

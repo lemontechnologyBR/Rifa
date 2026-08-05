@@ -2,24 +2,27 @@
 
 <style>
 /* ═══════════════════════════════════════════════
-   DETALHE RIFA — ESTILO IMPÉRIO PRÊMIOS
+   DETALHE RIFA — tema claro por padrão / dark via .dark
 ═══════════════════════════════════════════════ */
 .imp-detail { min-height: 100vh; }
 
 .imp-card-dark {
-  background: var(--imp-panel, #1a1a2e);
-  border: 1px solid var(--imp-panel-border, rgba(255,255,255,.07));
+  background: var(--imp-panel);
+  border: 1px solid var(--imp-panel-border);
   border-radius: 14px;
   overflow: hidden;
 }
 
 .imp-progress-wrap {
-  background: rgba(255,255,255,.08);
+  background: var(--imp-progress-track);
   border-radius: 9999px;
   height: 12px;
   overflow: hidden;
   position: relative;
-  box-shadow: inset 0 1px 3px rgba(0,0,0,.35);
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+.dark .imp-progress-wrap {
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.35);
 }
 .imp-progress-bar {
   height: 100%;
@@ -36,14 +39,20 @@
   100% { background-position: -100% 0; }
 }
 .imp-progress-card {
-  background: linear-gradient(165deg, #1e1e36 0%, #1a1a2e 100%);
-  border: 1px solid rgba(255,255,255,.08);
+  background: var(--imp-panel);
+  border: 1px solid var(--imp-panel-border);
   border-radius: 14px;
   padding: 14px 16px;
   margin-top: 10px;
   margin-bottom: 10px;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+.dark .imp-progress-card {
+  background: linear-gradient(165deg, #1e1e36 0%, #1a1a2e 100%);
+  border-color: rgba(255,255,255,.08);
+  box-shadow: none;
 }
 .imp-progress-card::before {
   content: '';
@@ -57,16 +66,24 @@
 
 .imp-stepper-btn {
   width: 44px; height: 44px; border-radius: 10px;
-  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15);
-  color: #fff; font-size: 22px; font-weight: 700; cursor: pointer;
+  background: var(--imp-input-bg);
+  border: 1px solid var(--imp-input-border);
+  color: var(--imp-text);
+  font-size: 22px; font-weight: 700; cursor: pointer;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
-.imp-stepper-btn:hover { background: rgba(255,255,255,.15); }
+.imp-stepper-btn:hover {
+  background: color-mix(in srgb, var(--brand-from) 10%, var(--imp-input-bg));
+  border-color: color-mix(in srgb, var(--brand-from) 35%, var(--imp-input-border));
+}
 
 .imp-stepper-input {
   width: 90px; text-align: center; font-size: 22px; font-weight: 900;
-  background: #111827; border: 1px solid rgba(255,255,255,.15); border-radius: 10px;
-  color: #fff; padding: 8px;
+  background: var(--imp-input-bg);
+  border: 1px solid var(--imp-input-border);
+  border-radius: 10px;
+  color: var(--imp-text);
+  padding: 8px;
 }
 
 .imp-btn-green {
@@ -84,15 +101,22 @@
   flex-shrink: 0;
 }
 .imp-btn-green:hover { background: var(--brand-to); transform: translateY(-1px); }
-.imp-btn-green:disabled { background: #374151; color: #6b7280; cursor: not-allowed; transform: none; }
+.imp-btn-green:disabled { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; transform: none; }
+.dark .imp-btn-green:disabled { background: #374151; color: #6b7280; }
 
 .imp-accordion-trigger {
-  width: 100%; background: #1e1e32; border: 1px solid rgba(255,255,255,.07);
+  width: 100%;
+  background: var(--imp-panel);
+  border: 1px solid var(--imp-panel-border);
   border-radius: 12px; padding: 14px 18px; display: flex; align-items: center;
-  justify-content: space-between; cursor: pointer; color: #d1d5db; font-weight: 700;
+  justify-content: space-between; cursor: pointer;
+  color: var(--imp-text);
+  font-weight: 700;
   font-size: 14px; transition: border-radius .15s, background .15s;
 }
-.imp-accordion-trigger:hover { background: #232338; }
+.imp-accordion-trigger:hover {
+  background: color-mix(in srgb, var(--brand-from) 6%, var(--imp-panel));
+}
 .imp-accordion-trigger.is-open {
   border-radius: 12px 12px 0 0;
   border-bottom-color: transparent;
@@ -100,14 +124,15 @@
 .imp-accordion-trigger .imp-acc-chevron {
   transition: transform .2s ease;
   flex-shrink: 0;
+  color: var(--imp-text-muted);
 }
 .imp-accordion-trigger.is-open .imp-acc-chevron {
   transform: rotate(180deg);
 }
 .imp-accordion-panel {
   display: none;
-  background: #1a1a2e;
-  border: 1px solid rgba(255,255,255,.07);
+  background: var(--imp-panel);
+  border: 1px solid var(--imp-panel-border);
   border-top: none;
   border-radius: 0 0 12px 12px;
   padding: 16px;
@@ -118,13 +143,19 @@
 .imp-fade { animation: imp-slide-up .4s ease forwards; }
 
 .imp-premios {
-  background: linear-gradient(165deg, #1e1e36 0%, #1a1a2e 55%, #161628 100%);
-  border: 1px solid rgba(255,255,255,.08);
+  background: var(--imp-panel);
+  border: 1px solid var(--imp-panel-border);
   border-radius: 14px;
   padding: 16px;
   margin-bottom: 10px;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+.dark .imp-premios {
+  background: linear-gradient(165deg, #1e1e36 0%, #1a1a2e 55%, #161628 100%);
+  border-color: rgba(255,255,255,.08);
+  box-shadow: none;
 }
 .imp-premios::before {
   content: '';
@@ -138,27 +169,35 @@
   display: flex; align-items: center; gap: 12px;
   padding: 12px 12px;
   border-radius: 12px;
-  background: rgba(255,255,255,.03);
-  border: 1px solid rgba(255,255,255,.06);
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   transition: border-color .15s, background .15s, transform .15s;
+}
+.dark .imp-premio-row {
+  background: rgba(255,255,255,.03);
+  border-color: rgba(255,255,255,.06);
 }
 .imp-premio-row + .imp-premio-row { margin-top: 8px; }
 .imp-premio-row:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+.dark .imp-premio-row:hover {
   background: rgba(255,255,255,.05);
   border-color: rgba(255,255,255,.1);
 }
 .imp-premio-row.is-gold {
-  background: linear-gradient(135deg, rgba(251,191,36,.12), rgba(245,158,11,.04));
-  border-color: rgba(251,191,36,.35);
+  background: linear-gradient(135deg, rgba(251,191,36,.14), rgba(245,158,11,.05));
+  border-color: rgba(251,191,36,.4);
   box-shadow: 0 0 0 1px rgba(251,191,36,.08), 0 8px 24px rgba(251,191,36,.06);
 }
 .imp-premio-row.is-silver {
-  background: linear-gradient(135deg, rgba(148,163,184,.1), rgba(100,116,139,.03));
-  border-color: rgba(148,163,184,.28);
+  background: linear-gradient(135deg, rgba(148,163,184,.12), rgba(100,116,139,.04));
+  border-color: rgba(148,163,184,.32);
 }
 .imp-premio-row.is-bronze {
-  background: linear-gradient(135deg, rgba(217,119,6,.1), rgba(180,83,9,.03));
-  border-color: rgba(217,119,6,.28);
+  background: linear-gradient(135deg, rgba(217,119,6,.12), rgba(180,83,9,.04));
+  border-color: rgba(217,119,6,.32);
 }
 .imp-premio-medal {
   width: 44px; height: 44px; border-radius: 50%;
@@ -194,10 +233,57 @@
 }
 .imp-premio-body { min-width: 0; flex: 1; }
 .imp-premio-nome {
-  font-size: 15px; font-weight: 800; color: #fff; margin: 0; line-height: 1.3;
+  font-size: 15px; font-weight: 800; color: var(--imp-text); margin: 0; line-height: 1.3;
   word-break: break-word;
 }
 .imp-premio-row.is-gold .imp-premio-nome { font-size: 16px; }
+.imp-premio-desc { font-size: 12px; color: var(--imp-text-muted); margin: 4px 0 0; line-height: 1.4; }
+
+.imp-countdown-cell {
+  background: var(--imp-input-bg);
+  border: 1px solid var(--imp-input-border);
+  border-radius: 8px;
+  padding: 6px 8px;
+  text-align: center;
+  min-width: 42px;
+}
+.imp-countdown-label {
+  font-size: 9px;
+  color: var(--imp-text-muted);
+  text-transform: uppercase;
+}
+
+.imp-sticky-buy {
+  background: rgba(255, 255, 255, 0.97);
+  border-top: 1px solid var(--imp-panel-border);
+  box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.08);
+}
+.dark .imp-sticky-buy {
+  background: rgba(18, 18, 31, 0.97);
+  border-top-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.imp-modal-sheet {
+  background: var(--imp-panel) !important;
+  border: 1px solid var(--imp-panel-border) !important;
+  color: var(--imp-text) !important;
+}
+.imp-modal-head {
+  border-bottom: 1px solid var(--imp-panel-border);
+  background: var(--imp-panel);
+}
+.imp-soft-box {
+  background: color-mix(in srgb, var(--imp-text) 3%, var(--imp-panel));
+  border: 1px solid var(--imp-panel-border);
+  border-radius: 10px;
+}
+.imp-pkg-price-line {
+  font-size: 11px;
+  font-weight: 700;
+  margin-top: 2px;
+  color: var(--imp-text);
+}
 
 /* Grade de Números */
 .grade-num-btn {
@@ -207,18 +293,30 @@
   font-size: 13px; font-weight: 800;
   border-radius: 8px; border: 2px solid transparent;
   padding: 10px 2px; cursor: pointer;
+  background: #e2e8f0; color: #64748b;
+}
+.dark .grade-num-btn {
   background: #2d3748; color: #9ca3af;
 }
 .grade-num-btn.disponivel {
-  background: #2d3748; color: #9ca3af; border-color: transparent;
+  background: #e2e8f0; color: #64748b; border-color: transparent;
+}
+.dark .grade-num-btn.disponivel {
+  background: #2d3748; color: #9ca3af;
 }
 .grade-num-btn.disponivel:hover {
+  background: #cbd5e1; color: #0f172a; border-color: #94a3b8;
+}
+.dark .grade-num-btn.disponivel:hover {
   background: #374151; color: #fff; border-color: rgba(255,255,255,.2);
 }
 .grade-num-btn.reservado {
-  background: rgba(251,191,36,.25) !important; color: #fbbf24 !important;
+  background: rgba(251,191,36,.25) !important; color: #b45309 !important;
   border-color: rgba(251,191,36,.55) !important; cursor: not-allowed;
   opacity: 1;
+}
+.dark .grade-num-btn.reservado {
+  color: #fbbf24 !important;
 }
 .grade-num-btn.vendido {
   background: color-mix(in srgb, var(--brand-from) 25%, transparent) !important; color: var(--brand-from) !important;
@@ -238,9 +336,10 @@
 .grade-num-btn:disabled { cursor: not-allowed; pointer-events: none; }
 
 .grade-legenda { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 12px; }
-.grade-legenda-item { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: #9ca3af; font-weight: 600; }
+.grade-legenda-item { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--imp-text-muted); font-weight: 600; }
 .grade-legenda-dot { width: 14px; height: 14px; border-radius: 4px; border: 2px solid transparent; flex-shrink: 0; }
-.grade-legenda-dot.livre { background: #2d3748; border-color: rgba(255,255,255,.15); }
+.grade-legenda-dot.livre { background: #e2e8f0; border-color: #cbd5e1; }
+.dark .grade-legenda-dot.livre { background: #2d3748; border-color: rgba(255,255,255,.15); }
 .grade-legenda-dot.reservado { background: rgba(251,191,36,.25); border-color: rgba(251,191,36,.55); }
 .grade-legenda-dot.pago { background: color-mix(in srgb, var(--brand-from) 25%, transparent); border-color: color-mix(in srgb, var(--brand-from) 55%, transparent); }
 .grade-legenda-dot.selecionado { background: var(--brand-to); border-color: color-mix(in srgb, var(--brand-from) 65%, white); }
@@ -248,6 +347,19 @@
   position: relative;
   overflow: hidden;
   border-radius: 14px;
+}
+.imp-hero-img.imp-card-dark {
+  /* hero com foto: fundo neutro; caption continua legível pelo gradiente */
+  background: #e2e8f0;
+}
+.dark .imp-hero-img.imp-card-dark {
+  background: var(--imp-panel);
+}
+.imp-hero-placeholder {
+  background: linear-gradient(135deg, #e2e8f0, #cbd5e1) !important;
+}
+.dark .imp-hero-placeholder {
+  background: linear-gradient(135deg, #1a1a2e, #0d0d1a) !important;
 }
 .imp-hero-img img,
 .imp-hero-img .imp-hero-placeholder {
@@ -312,8 +424,9 @@
   cursor: pointer;
 }
 .imp-hero-slider-dot.is-active { background: var(--brand-from); width: 18px; }
-.imp-resumo-desconto { color: #4ade80 !important; font-weight: 700; }
-.imp-resumo-cheio { text-decoration: line-through; color: #6b7280 !important; font-size: 12px; }
+.imp-resumo-desconto { color: #16a34a !important; font-weight: 700; }
+.dark .imp-resumo-desconto { color: #4ade80 !important; }
+.imp-resumo-cheio { text-decoration: line-through; color: var(--imp-text-dim) !important; font-size: 12px; }
 </style>
 
 <%
@@ -349,7 +462,7 @@
   <div class="max-w-2xl mx-auto px-3 sm:px-4 py-4">
 
     <!-- Voltar -->
-    <a href="<%= tenantBase %>/" style="display:inline-flex;align-items:center;gap:6px;color:#6b7280;font-size:13px;font-weight:600;margin-bottom:14px;text-decoration:none;">
+    <a href="<%= tenantBase %>/" class="imp-txt-muted" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;margin-bottom:14px;text-decoration:none;">
       <i data-lucide="arrow-left" class="w-4 h-4"></i> Campanhas
     </a>
 
@@ -402,7 +515,7 @@
         <div class="imp-progress-bar" style="width:<%= Math.max(pctVend, 3) %>%;"></div>
       </div>
       <div style="margin-top:10px;display:flex;justify-content:flex-end;">
-        <a href="<%= tenantBase %>/minhas-reservas" style="font-size:11px;color:#9ca3af;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
+        <a href="<%= tenantBase %>/minhas-reservas" class="imp-txt-muted" style="font-size:11px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
           <i data-lucide="ticket" class="w-3.5 h-3.5"></i> Ver minhas cotas
         </a>
       </div>
@@ -428,7 +541,7 @@
           <div class="imp-premio-body">
             <p class="imp-premio-nome"><%= p.titulo %></p>
             <% if (p.descricao) { %>
-              <p style="font-size:12px;color:#9ca3af;margin:4px 0 0;line-height:1.4;"><%= p.descricao %></p>
+              <p class="imp-premio-desc"><%= p.descricao %></p>
             <% } %>
           </div>
         </div>
@@ -445,21 +558,21 @@
       <div style="text-align:right;">
         <div class="imp-txt-muted" style="font-size:11px;margin-bottom:4px;">Sorteio em</div>
         <div style="display:flex;gap:5px;flex-wrap:nowrap;">
-          <div style="background:#111827;border-radius:8px;padding:6px 8px;text-align:center;min-width:42px;">
+          <div class="imp-countdown-cell">
             <span id="cd-dias" style="display:block;font-size:15px;font-weight:900;color:var(--brand-from);line-height:1;">--</span>
-            <span style="font-size:9px;color:#6b7280;text-transform:uppercase;">dias</span>
+            <span class="imp-countdown-label">dias</span>
           </div>
-          <div style="background:#111827;border-radius:8px;padding:6px 8px;text-align:center;min-width:42px;">
+          <div class="imp-countdown-cell">
             <span id="cd-horas" style="display:block;font-size:15px;font-weight:900;color:var(--brand-from);line-height:1;">--</span>
-            <span style="font-size:9px;color:#6b7280;text-transform:uppercase;">hrs</span>
+            <span class="imp-countdown-label">hrs</span>
           </div>
-          <div style="background:#111827;border-radius:8px;padding:6px 8px;text-align:center;min-width:42px;">
+          <div class="imp-countdown-cell">
             <span id="cd-min" style="display:block;font-size:15px;font-weight:900;color:var(--brand-from);line-height:1;">--</span>
-            <span style="font-size:9px;color:#6b7280;text-transform:uppercase;">min</span>
+            <span class="imp-countdown-label">min</span>
           </div>
-          <div style="background:#111827;border-radius:8px;padding:6px 8px;text-align:center;min-width:42px;">
+          <div class="imp-countdown-cell">
             <span id="cd-seg" style="display:block;font-size:15px;font-weight:900;color:var(--brand-from);line-height:1;">--</span>
-            <span style="font-size:9px;color:#6b7280;text-transform:uppercase;">seg</span>
+            <span class="imp-countdown-label">seg</span>
           </div>
         </div>
         <p id="sorteio-status" class="hidden" style="font-size:12px;font-weight:800;color:var(--brand-from);margin-top:4px;"></p>
@@ -558,8 +671,8 @@
         <button type="button" class="imp-pkg-btn" data-add-qtd="<%= qtd %>" style="padding-top:<%= meio ? '20px' : '14px' %>;">
           <% if (meio) { %><span class="imp-pkg-popular">Mais popular</span><% } %>
           <div style="font-size:15px;font-weight:900;color:var(--brand-from);">+<%= qtd.toLocaleString('pt-BR') %></div>
-          <div style="font-size:11px;font-weight:700;color:#fff;margin-top:2px;">R$&nbsp;<%= precoPacote.toFixed(2).replace('.',',') %></div>
-          <div style="font-size:10px;color:#6b7280;margin-top:2px;">SELECIONAR</div>
+          <div class="imp-pkg-price-line">R$&nbsp;<%= precoPacote.toFixed(2).replace('.',',') %></div>
+          <div class="imp-pkg-select">SELECIONAR</div>
         </button>
         <% }) %>
       </div>
@@ -572,7 +685,7 @@
         <button type="button" class="imp-stepper-btn" id="qtd-mais" aria-label="Aumentar">+</button>
       </div>
 
-      <p style="text-align:center;font-size:12px;color:#6b7280;margin:0 0 14px;">
+      <p class="imp-txt-muted" style="text-align:center;font-size:12px;margin:0 0 14px;">
         <span id="label-qtd-cotas">1</span> cota(s) selecionada(s)
       </p>
       <p id="aviso-limite-qtd" style="text-align:center;font-size:12px;color:#fbbf24;margin:0 0 6px;" class="hidden"></p>
@@ -593,7 +706,7 @@
         <div class="imp-summary-row">
           <span id="page-res-subtotal-label"><%= temDescIni ? 'Subtotal com desconto' : 'Subtotal' %></span><span id="page-res-subtotal" class="imp-summary-val">R$ <%= moedaBr(detIni.subtotal) %></span>
         </div>
-        <div id="page-res-economia-badge" style="display:<%= temDescIni ? 'block' : 'none' %>;text-align:center;font-size:11px;font-weight:800;color:#4ade80;padding:4px 0;"><%= temDescIni ? 'Você economiza R$ ' + moedaBr(detIni.economia) + ' nesta compra' : '' %></div>
+        <div id="page-res-economia-badge" style="display:<%= temDescIni ? 'block' : 'none' %>;text-align:center;font-size:11px;font-weight:800;color:#16a34a;padding:4px 0;"><%= temDescIni ? 'Você economiza R$ ' + moedaBr(detIni.economia) + ' nesta compra' : '' %></div>
         <div class="imp-summary-total">
           <span class="imp-summary-label">Total PIX</span>
           <span id="page-res-total" class="imp-summary-total-val">R$ <%= moedaBr(detIni.total) %></span>
@@ -647,25 +760,25 @@
           <p id="depoimentos-vazio" style="font-size:13px;color:#6b7280;text-align:center;padding:16px 0;margin:0;">Seja o primeiro a comentar!</p>
         <% } %>
         <% (comentarios || []).forEach(function(c) { %>
-          <div class="depoimento-item" style="display:flex;gap:10px;padding:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:10px;">
+          <div class="depoimento-item imp-soft-box" style="display:flex;gap:10px;padding:12px;">
             <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--brand-from),var(--brand-to));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:#000;flex-shrink:0;"><%= c.usuario.nome.charAt(0).toUpperCase() %></div>
             <div>
-              <p style="font-size:13px;color:#d1d5db;margin:0 0 4px;" class="depoimento-texto"><%= c.texto %></p>
-              <p style="font-size:11px;color:#6b7280;margin:0;"><%= c.usuario.nome %> · <%= new Date(c.createdAt).toLocaleDateString('pt-BR') %></p>
+              <p class="imp-txt depoimento-texto" style="font-size:13px;margin:0 0 4px;"><%= c.texto %></p>
+              <p class="imp-txt-muted" style="font-size:11px;margin:0;"><%= c.usuario.nome %> · <%= new Date(c.createdAt).toLocaleDateString('pt-BR') %></p>
             </div>
           </div>
         <% }); %>
       </div>
 
-      <form id="form-depoimento" style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;gap:10px;">
-        <p style="font-size:11px;color:#6b7280;margin:0;display:flex;align-items:flex-start;gap:6px;">
+      <form id="form-depoimento" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--imp-panel-border);display:flex;flex-direction:column;gap:10px;">
+        <p class="imp-txt-muted" style="font-size:11px;margin:0;display:flex;align-items:flex-start;gap:6px;">
           <i data-lucide="shield-check" class="w-3.5 h-3.5" style="color:var(--brand-from);flex-shrink:0;margin-top:1px;"></i>
           Somente quem comprou com pagamento confirmado pode comentar.
         </p>
         <input type="text" name="cpf" id="depoimento-cpf" required placeholder="Seu CPF (000.000.000-00)" inputmode="numeric" maxlength="14"
-          style="background:#111827;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:11px 14px;color:#fff;font-size:13px;width:100%;">
+          class="imp-input" style="border-radius:10px;padding:11px 14px;font-size:13px;width:100%;">
         <textarea name="texto" rows="3" maxlength="500" required placeholder="Conte como foi sua experiência..."
-          style="background:#111827;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:11px 14px;color:#fff;font-size:13px;width:100%;resize:none;"></textarea>
+          class="imp-input" style="border-radius:10px;padding:11px 14px;font-size:13px;width:100%;resize:none;"></textarea>
         <button type="submit" class="imp-btn-green" style="font-size:13px;padding:12px;">
           <i data-lucide="send" class="w-4 h-4"></i> Enviar depoimento
         </button>
@@ -677,11 +790,11 @@
 
 <!-- ══ STICKY BAR MOBILE ══════════════════════════════════════════ -->
 <% if (rifa.status === 'ativa') { %>
-<div id="sticky-buy" class="lg:hidden fixed bottom-0 inset-x-0 z-40"
-     style="background:rgba(18,18,31,.97);border-top:1px solid rgba(255,255,255,.08);padding:12px 16px;">
+<div id="sticky-buy" class="imp-sticky-buy lg:hidden fixed bottom-0 inset-x-0 z-40"
+     style="padding:12px 16px;">
   <div style="display:flex;align-items:center;gap:12px;max-width:480px;margin:0 auto;">
     <div style="flex:1;">
-      <div style="font-size:11px;color:#6b7280;"><span id="sticky-qtd">1</span> cota(s)</div>
+      <div class="imp-txt-muted" style="font-size:11px;"><span id="sticky-qtd">1</span> cota(s)</div>
       <div style="font-size:18px;font-weight:900;color:var(--brand-from);" id="sticky-total">R$ 0,00</div>
     </div>
     <button id="btn-comprar-mobile" class="imp-btn-green" style="flex:1;max-width:180px;padding:12px 16px;font-size:14px;">
@@ -694,27 +807,27 @@
 <!-- ══ MODAL COMPRA ══════════════════════════════════════════════ -->
 <div id="modal-compra" class="fixed inset-0 z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4" style="background:rgba(0,0,0,.8);">
   <div class="imp-panel imp-modal-sheet sm:rounded-2xl pb-safe" style="width:100%;max-width:480px;border-radius:20px 20px 0 0;overflow-y:auto;max-height:92vh;">
-    <div style="width:48px;height:4px;background:rgba(255,255,255,.15);border-radius:9999px;margin:12px auto 0;" class="sm:hidden"></div>
-    <div style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;">
+    <div style="width:48px;height:4px;background:var(--imp-progress-track);border-radius:9999px;margin:12px auto 0;" class="sm:hidden"></div>
+    <div class="imp-modal-head" style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;">
       <h3 class="imp-txt" style="font-weight:800;font-size:16px;margin:0;">Finalizar compra</h3>
-      <button id="btn-fechar-modal" style="background:rgba(255,255,255,.08);border:none;border-radius:8px;padding:8px;cursor:pointer;color:#9ca3af;">
+      <button id="btn-fechar-modal" class="imp-stepper-btn" style="width:auto;height:auto;padding:8px;border:none;" type="button">
         <i data-lucide="x" class="w-5 h-5"></i>
       </button>
     </div>
     <div style="padding:20px;">
-      <div id="timer-reserva" style="display:none;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#fbbf24;display:flex;align-items:center;gap:8px;">
+      <div id="timer-reserva" style="display:none;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#b45309;display:flex;align-items:center;gap:8px;">
         <i data-lucide="clock" class="w-4 h-4"></i>
         Reserva expira em <strong id="timer-texto" style="margin-left:4px;"><%= typeof tempoReservaMin !== 'undefined' ? tempoReservaMin : 10 %>:00</strong>
       </div>
       <div style="margin-bottom:14px;">
-        <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:8px;">Suas cotas</div>
-        <div id="numeros-selecionados" style="font-size:13px;color:#d1d5db;"></div>
+        <div class="imp-txt-muted" style="font-size:11px;font-weight:700;text-transform:uppercase;margin-bottom:8px;">Suas cotas</div>
+        <div id="numeros-selecionados" class="imp-txt" style="font-size:13px;"></div>
       </div>
-      <div id="checkout-resumo" style="display:none;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:14px;margin-bottom:14px;font-size:13px;">
-        <div id="checkout-cheio-row" class="hidden" style="display:flex;justify-content:space-between;color:#9ca3af;margin-bottom:6px;">
+      <div id="checkout-resumo" class="imp-soft-box" style="display:none;padding:14px;margin-bottom:14px;font-size:13px;">
+        <div id="checkout-cheio-row" class="hidden" style="display:flex;justify-content:space-between;color:var(--imp-text-muted);margin-bottom:6px;">
           <span>Valor cheio</span><span id="checkout-cheio" class="imp-resumo-cheio">R$ 0,00</span>
         </div>
-        <div id="checkout-desconto-row" class="hidden" style="display:flex;justify-content:space-between;color:#9ca3af;margin-bottom:6px;">
+        <div id="checkout-desconto-row" class="hidden" style="display:flex;justify-content:space-between;color:var(--imp-text-muted);margin-bottom:6px;">
           <span id="checkout-desconto-label">Desconto</span><span id="checkout-desconto" class="imp-resumo-desconto">− R$ 0,00</span>
         </div>
         <div class="imp-summary-row" style="margin-bottom:6px;"><span id="checkout-subtotal-label">Subtotal</span><span id="checkout-subtotal" class="imp-summary-val">R$ 0,00</span></div>
@@ -724,13 +837,13 @@
       </div>
       <form id="form-compra" style="display:flex;flex-direction:column;gap:10px;">
         <input type="text" name="nome" required placeholder="Nome completo *"
-          style="background:#111827;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:12px 14px;color:#fff;font-size:14px;width:100%;">
+          class="imp-input" style="border-radius:10px;padding:12px 14px;font-size:14px;width:100%;">
         <input type="email" name="email" required placeholder="E-mail *" autocomplete="email" id="input-email"
-          style="background:#111827;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:12px 14px;color:#fff;font-size:14px;width:100%;">
+          class="imp-input" style="border-radius:10px;padding:12px 14px;font-size:14px;width:100%;">
         <input type="text" name="cpf" required placeholder="000.000.000-00" inputmode="numeric" maxlength="14" id="input-cpf"
-          style="background:#111827;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:12px 14px;color:#fff;font-size:14px;width:100%;">
+          class="imp-input" style="border-radius:10px;padding:12px 14px;font-size:14px;width:100%;">
         <input type="tel" name="telefone" required placeholder="(11) 99999-9999" inputmode="numeric" maxlength="15" id="input-telefone"
-          style="background:#111827;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:12px 14px;color:#fff;font-size:14px;width:100%;">
+          class="imp-input" style="border-radius:10px;padding:12px 14px;font-size:14px;width:100%;">
         <button type="submit" id="btn-confirmar" disabled class="imp-btn-green" style="margin-top:4px;font-size:15px;padding:15px;">
           <i data-lucide="qr-code" class="w-5 h-5"></i> Pagar via PIX
         </button>
@@ -742,16 +855,16 @@
 <!-- ══ MODAL SUCESSO ═════════════════════════════════════════════ -->
 <div id="modal-sucesso" class="fixed inset-0 z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4" style="background:rgba(0,0,0,.85);">
   <div class="imp-panel imp-modal-sheet sm:rounded-2xl pb-safe" style="width:100%;max-width:440px;border-radius:20px 20px 0 0;overflow-y:auto;max-height:92vh;border-color:color-mix(in srgb, var(--brand-from) 25%, var(--imp-panel-border));">
-    <div style="width:48px;height:4px;background:rgba(255,255,255,.15);border-radius:9999px;margin:12px auto 0;" class="sm:hidden"></div>
+    <div style="width:48px;height:4px;background:var(--imp-progress-track);border-radius:9999px;margin:12px auto 0;" class="sm:hidden"></div>
     <div style="padding:24px 20px;text-align:center;">
       <div style="width:56px;height:56px;border-radius:50%;background:color-mix(in srgb, var(--brand-from) 15%, transparent);border:2px solid color-mix(in srgb, var(--brand-from) 30%, transparent);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
         <i data-lucide="check-circle" class="w-9 h-9" style="color:var(--brand-from);"></i>
       </div>
-      <h3 style="font-size:18px;font-weight:900;color:#fff;margin:0 0 6px;">Reserva Confirmada!</h3>
-      <p style="font-size:13px;color:#6b7280;margin:0 0 16px;">Realize o pagamento PIX para garantir seus números</p>
-      <div id="sucesso-detalhes" style="text-align:left;font-size:13px;color:#d1d5db;"></div>
+      <h3 class="imp-txt" style="font-size:18px;font-weight:900;margin:0 0 6px;">Reserva Confirmada!</h3>
+      <p class="imp-txt-muted" style="font-size:13px;margin:0 0 16px;">Realize o pagamento PIX para garantir seus números</p>
+      <div id="sucesso-detalhes" class="imp-txt" style="text-align:left;font-size:13px;"></div>
       <a id="link-comprovante" href="#" class="imp-btn-green" style="display:flex;margin-top:16px;">Ver Comprovante</a>
-      <button id="btn-fechar-sucesso" style="background:transparent;border:none;color:#6b7280;font-size:13px;padding:10px;cursor:pointer;width:100%;margin-top:8px;">Fechar</button>
+      <button id="btn-fechar-sucesso" class="imp-txt-muted" style="background:transparent;border:none;font-size:13px;padding:10px;cursor:pointer;width:100%;margin-top:8px;">Fechar</button>
     </div>
   </div>
 </div>

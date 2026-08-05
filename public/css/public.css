@@ -157,6 +157,14 @@
   color: #4ade80 !important;
 }
 
+.dark .public-site #page-res-economia-badge {
+  color: #4ade80 !important;
+}
+
+.dark .public-site #timer-reserva {
+  color: #fbbf24 !important;
+}
+
 /* Painéis/modais ainda com inline escuro — força tema claro */
 html:not(.dark) .public-site .imp-detail [style*="background:#1a1a2e"],
 html:not(.dark) .public-site .imp-store [style*="background:#1a1a2e"],
@@ -535,9 +543,15 @@ html:not(.dark) .public-site .imp-detail [style*="border-top:1px solid rgba(255,
 
 /* Compra por quantidade (página da rifa) */
 .compra-qtd-panel {
-  background: linear-gradient(160deg, #111827 0%, #0b1120 100%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--imp-panel, #ffffff);
+  border: 1px solid var(--imp-panel-border, #e2e8f0);
   border-radius: 1.25rem;
+  box-shadow: 0 8px 32px -8px rgba(15, 23, 42, 0.12);
+  color: var(--imp-text, #0f172a);
+}
+.dark .compra-qtd-panel {
+  background: linear-gradient(160deg, #111827 0%, #0b1120 100%);
+  border-color: rgba(255, 255, 255, 0.08);
   box-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.5);
   color: #f3f4f6;
 }
