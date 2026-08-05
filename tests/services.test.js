@@ -107,6 +107,38 @@ describe('rifaPremiosParse', () => {
   });
 });
 
+describe('carteiraSaldo', () => {
+  const {
+    isLegacyMpPaymentRef,
+    classificarReserva,
+    isReservaSacavelWoovi,
+    parteOrganizadorReserva
+  } = require('../lib/carteiraSaldo');
+
+  test('detecta refs legadas Mercado Pago (só dígitos)', () => {
+    expect(isLegacyMpPaymentRef('1234567890')).toBe(true);
+    expect(isLegacyMpPaymentRef('woovi-abc-123')).toBe(false);
+    expect(isLegacyMpPaymentRef(null)).toBe(false);
+  });
+
+  test('classifica e marca sacável só plataforma', () => {
+    expect(classificarReserva({ wooviCorrelationId: '999888' })).toBe('legado_mp');
+    expect(classificarReserva({ wooviCorrelationId: 'corr-uuid-1' })).toBe('plataforma');
+    expect(isReservaSacavelWoovi({ wooviCorrelationId: 'corr-uuid-1' })).toBe(true);
+    expect(isReservaSacavelWoovi({ wooviCorrelationId: '12345' })).toBe(false);
+  });
+
+  test('parteOrganizadorReserva aplica 5% e taxa fixa pós-vigência', () => {
+    const r = {
+      valorTotal: 100,
+      createdAt: new Date('2026-08-01'),
+      _count: { reservaNumeros: 2 }
+    };
+    // 95 - 1.00 = 94
+    expect(parteOrganizadorReserva(r)).toBe(94);
+  });
+});
+
 describe('sorteioUtil', () => {
   const { embaralharLista, sortearPremiosDistinctos } = require('../lib/sorteioUtil');
 

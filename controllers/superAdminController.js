@@ -226,9 +226,18 @@ const superAdminController = {
   },
 
   async plataforma(req, res) {
-    const [metricas, info] = await Promise.all([
+    const CarteiraService = require('../services/carteiraService');
+    const WooviService = require('../services/wooviService');
+
+    const [metricas, info, saldosCarteira, saldoConta] = await Promise.all([
       TenantService.obterMetricasPlataforma(),
-      SuperAdminService.obterInfoPlataforma()
+      SuperAdminService.obterInfoPlataforma(),
+      CarteiraService.somarSaldosSacaveisPlataforma().catch(() => ({
+        saldoSubcontasEstimado: null,
+        tenantsComSaldo: 0,
+        parteLegadoMpExcluida: 0
+      })),
+      WooviService.consultarSaldoContaPrincipal().catch(() => null)
     ]);
 
     const gmvTotal = metricas.gmvTotal || 0;
@@ -261,6 +270,17 @@ const superAdminController = {
         totalTaxasSaqueFmt: fmtMoney(totalTaxasSaque),
         saquesPendentesFmt: fmtMoney(info.totalSaquesPendenteValor),
         gmvMesFmt: fmtMoney(info.gmvMes)
+      },
+      wooviSaldos: {
+        conta: saldoConta,
+        contaAvailableFmt: saldoConta ? fmtMoney(saldoConta.available) : '—',
+        contaBlockedFmt: saldoConta ? fmtMoney(saldoConta.blocked) : '—',
+        subcontasEstimado: saldosCarteira.saldoSubcontasEstimado,
+        subcontasEstimadoFmt: saldosCarteira.saldoSubcontasEstimado != null
+          ? fmtMoney(saldosCarteira.saldoSubcontasEstimado)
+          : '—',
+        tenantsComSaldo: saldosCarteira.tenantsComSaldo || 0,
+        legadoExcluidoFmt: fmtMoney(saldosCarteira.parteLegadoMpExcluida || 0)
       }
     }));
   },

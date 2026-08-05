@@ -47,6 +47,11 @@
         <p class="text-xs text-gray-400 mt-1">
           <%= w.cotasDisponiveis %> cota(s) · comissão 5% + R$ <%= (wooviTaxaFixaCota||0.5).toFixed(2).replace('.', ',') %>/cota · bruto R$ <%= w.brutoDisponivel.toFixed(2).replace('.', ',') %>
         </p>
+        <% if (w.parteLegadoMp > 0) { %>
+          <p class="text-xs text-amber-600 dark:text-amber-400 mt-1">
+            Vendas antigas (Mercado Pago) R$ <%= Number(w.parteLegadoMp).toFixed(2).replace('.', ',') %> não entram no saldo sacável.
+          </p>
+        <% } %>
       </article>
       <% } %>
 

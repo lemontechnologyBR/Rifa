@@ -1,13 +1,19 @@
 /**
  * Carteira do organizador — PIX via plataforma (Woovi).
+ * Saldo sacável = apenas vendas Woovi (exclui legado Mercado Pago).
  */
 const prisma = require('../lib/prisma');
 const PaymentService = require('./paymentService');
 const { chavesPixEquivalentes, validarChavePixPorTipo } = require('../lib/pixKey');
 const {
-  ORGANIZADOR_PERCENTUAL_WOOVI,
-  taxaFixaCotaWooviPara
-} = require('../lib/config');
+  parteOrganizadorReserva,
+  isReservaSacavelWoovi,
+  classificarReserva
+} = require('../lib/carteiraSaldo');
+
+function round2(n) {
+  return Math.round(Number(n || 0) * 100) / 100;
+}
 
 const CarteiraService = {
   usesSplit() {
@@ -44,6 +50,8 @@ const CarteiraService = {
         brutoDisponivel: 0,
         cotasDisponiveis: 0,
         parteOrganizador: 0,
+        parteLegadoMp: 0,
+        brutoLegadoMp: 0,
         saldoSubconta: null,
         pendente: 0,
         reservasPendentes: 0
@@ -59,6 +67,7 @@ const CarteiraService = {
         select: {
           valorTotal: true,
           createdAt: true,
+          wooviCorrelationId: true,
           _count: { select: { reservaNumeros: true } }
         }
       }),
@@ -69,15 +78,35 @@ const CarteiraService = {
       this.totalSacado(tenantId)
     ]);
 
-    const woovi = { bruto: 0, cotas: 0, parteOrganizador: 0, pendente: 0, reservasPendentes: 0 };
+    const woovi = {
+      bruto: 0,
+      cotas: 0,
+      parteOrganizador: 0,
+      parteLegadoMp: 0,
+      brutoLegadoMp: 0,
+      pendente: 0,
+      reservasPendentes: 0
+    };
+
+    const reservasWoovi = [];
 
     for (const r of confirmadasList) {
       const valor = Number(r.valorTotal || 0);
       const cotas = r._count.reservaNumeros || 0;
+      const parte = parteOrganizadorReserva(r);
+      const cls = classificarReserva(r);
+
       woovi.bruto += valor;
       woovi.cotas += cotas;
-      const taxaFixa = taxaFixaCotaWooviPara(r.createdAt);
-      woovi.parteOrganizador += Math.max(0, valor * ORGANIZADOR_PERCENTUAL_WOOVI - cotas * taxaFixa);
+
+      if (cls === 'plataforma') {
+        woovi.parteOrganizador += parte;
+        reservasWoovi.push(r);
+      } else if (cls === 'legado_mp') {
+        woovi.parteLegadoMp += parte;
+        woovi.brutoLegadoMp += valor;
+      }
+      // sem_ref: entra no bruto exibido, mas não no saldo sacável
     }
 
     for (const r of pendentesList) {
@@ -85,11 +114,12 @@ const CarteiraService = {
       woovi.reservasPendentes++;
     }
 
+    // Sacável = só o que entrou/entra na subconta Woovi
     const saldoTeorico = woovi.parteOrganizador - totalSacado;
     let saldoDisponivel = Math.max(0, saldoTeorico);
 
-    woovi.brutoDisponivel = woovi.bruto;
-    woovi.cotasDisponiveis = woovi.cotas;
+    woovi.brutoDisponivel = reservasWoovi.reduce((s, r) => s + Number(r.valorTotal || 0), 0);
+    woovi.cotasDisponiveis = reservasWoovi.reduce((s, r) => s + (r._count.reservaNumeros || 0), 0);
 
     if (totalSacado > 0) {
       const ultimoSaque = await prisma.saque.findFirst({
@@ -97,7 +127,7 @@ const CarteiraService = {
         orderBy: { createdAt: 'desc' }
       });
       if (ultimoSaque) {
-        const posteriores = confirmadasList.filter(
+        const posteriores = reservasWoovi.filter(
           (r) => new Date(r.createdAt) > ultimoSaque.createdAt
         );
         woovi.brutoDisponivel = posteriores.reduce((soma, r) => soma + Number(r.valorTotal || 0), 0);
@@ -106,11 +136,7 @@ const CarteiraService = {
         if (saldoTeorico < 0) {
           saldoDisponivel = Math.max(
             0,
-            posteriores.reduce((soma, r) => {
-              const valor = Number(r.valorTotal || 0);
-              const cotas = r._count.reservaNumeros || 0;
-              return soma + Math.max(0, valor * ORGANIZADOR_PERCENTUAL_WOOVI - cotas * taxaFixaCotaWooviPara(r.createdAt));
-            }, 0)
+            posteriores.reduce((soma, r) => soma + parteOrganizadorReserva(r), 0)
           );
         }
       }
@@ -122,8 +148,69 @@ const CarteiraService = {
       cotasConfirmadas: woovi.cotas,
       reservasPendentes: woovi.reservasPendentes,
       totalSacado,
-      saldoDisponivel,
-      woovi
+      saldoDisponivel: round2(saldoDisponivel),
+      woovi: {
+        ...woovi,
+        parteOrganizador: round2(woovi.parteOrganizador),
+        parteLegadoMp: round2(woovi.parteLegadoMp),
+        brutoLegadoMp: round2(woovi.brutoLegadoMp)
+      }
+    };
+  },
+
+  /** Soma saldos sacáveis (teóricos) — uma passada no banco, sem N+1. */
+  async somarSaldosSacaveisPlataforma() {
+    const [reservas, saquesPorTenant] = await Promise.all([
+      prisma.reserva.findMany({
+        where: { statusPagamento: 'confirmado' },
+        select: {
+          valorTotal: true,
+          createdAt: true,
+          wooviCorrelationId: true,
+          _count: { select: { reservaNumeros: true } },
+          rifa: { select: { tenantId: true } }
+        }
+      }),
+      prisma.saque.groupBy({
+        by: ['tenantId'],
+        where: { status: { in: ['solicitado', 'processando', 'concluido'] } },
+        _sum: { valorBruto: true }
+      })
+    ]);
+
+    const sacadoMap = new Map(
+      saquesPorTenant.map((s) => [s.tenantId, Number(s._sum.valorBruto || 0)])
+    );
+    const parteWooviPorTenant = new Map();
+    let legadoTotal = 0;
+
+    for (const r of reservas) {
+      const tenantId = r.rifa?.tenantId;
+      if (!tenantId) continue;
+      const parte = parteOrganizadorReserva(r);
+      const cls = classificarReserva(r);
+      if (cls === 'plataforma') {
+        parteWooviPorTenant.set(tenantId, (parteWooviPorTenant.get(tenantId) || 0) + parte);
+      } else if (cls === 'legado_mp') {
+        legadoTotal += parte;
+      }
+    }
+
+    let total = 0;
+    let comSaldo = 0;
+    const tenantIds = new Set([...parteWooviPorTenant.keys(), ...sacadoMap.keys()]);
+    for (const tenantId of tenantIds) {
+      const parte = parteWooviPorTenant.get(tenantId) || 0;
+      const sacado = sacadoMap.get(tenantId) || 0;
+      const saldo = Math.max(0, parte - sacado);
+      total += saldo;
+      if (saldo > 0.009) comSaldo++;
+    }
+
+    return {
+      saldoSubcontasEstimado: round2(total),
+      tenantsComSaldo: comSaldo,
+      parteLegadoMpExcluida: round2(legadoTotal)
     };
   },
 
@@ -161,7 +248,9 @@ const CarteiraService = {
       select: { wooviCorrelationId: true }
     });
 
-    return reservas.map((r) => r.wooviCorrelationId).filter(Boolean);
+    return reservas
+      .map((r) => r.wooviCorrelationId)
+      .filter((id) => id && isReservaSacavelWoovi({ wooviCorrelationId: id }));
   },
 
   async salvarConfig(tenantId, { pix_chave, pix_tipo }) {

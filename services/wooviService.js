@@ -235,6 +235,36 @@ const WooviService = {
   },
 
   /**
+   * Saldo da conta principal da plataforma (centavos → reais).
+   * Conta Woovi da empresa — pode incluir outros produtos além do VouRifar.
+   */
+  async consultarSaldoContaPrincipal() {
+    if (!this.isPlatformConfigured()) return null;
+    try {
+      const list = await this._request('/account');
+      const accounts = list?.accounts || [];
+      const account = accounts.find((a) => a.isDefault) || accounts[0];
+      if (!account?.accountId) return null;
+
+      const detail = await this._request(`/account/${account.accountId}`);
+      const bal = detail?.account?.balance || detail?.balance || {};
+      const toReais = (cents) => Math.round(Number(cents || 0)) / 100;
+
+      return {
+        accountId: account.accountId,
+        accountName: account.accountName || account.tradeName || account.officialName || null,
+        available: toReais(bal.available ?? bal.total),
+        total: toReais(bal.total ?? bal.available),
+        blocked: toReais(bal.blocked),
+        blockedByWithdrawSafety: toReais(bal.blockedByWithdrawSafety)
+      };
+    } catch (err) {
+      console.error('[Woovi] consultarSaldoContaPrincipal:', err.message);
+      return null;
+    }
+  },
+
+  /**
    * Chaves PIX de subcontas ligadas ao tenant (atual + splits históricos nas cobranças).
    */
   async _coletarChavesSubconta(tenant, correlationIds = []) {
