@@ -236,6 +236,7 @@ async function bootstrap() {
   require('./jobs/syncPagamentos').iniciar();
   require('./jobs/syncSaques').iniciar();
   require('./jobs/onboardingEmails').iniciar();
+  require('./jobs/syncWooviSaldos').iniciar();
 
   AnalyticsService.limparAntigos().catch((err) => console.error('[Analytics] Limpeza:', err.message));
   setInterval(() => {

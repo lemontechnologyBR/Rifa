@@ -163,7 +163,11 @@
     <p class="plat-card-label">Saldo das subcontas</p>
     <p class="plat-card-value">R$ <%= wooviSaldos.subcontasEstimadoFmt %></p>
     <p class="plat-card-hint">
-      <%= wooviSaldos.tenantsComSaldo %> loja(s) · vendas Woovi − saques
+      <% if (wooviSaldos.subcontasFonte === 'api') { %>
+        API Woovi<%= wooviSaldos.subcontasAtualizadoHint ? ' · atualizado ' + wooviSaldos.subcontasAtualizadoHint : '' %>
+      <% } else { %>
+        estimado (DB) · sincronizando com Woovi…
+      <% } %>
     </p>
   </div>
   <div class="plat-card">

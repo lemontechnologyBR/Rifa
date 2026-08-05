@@ -15,15 +15,18 @@ function fmtMoney(v) {
 /**
  * Saldos no estilo do painel Woovi:
  * - Saldo da conta = balance.available da API
- * - Subcontas = soma teórica (vendas Woovi − saques)
- * - Saldo disponível (caixa) = conta − subcontas  ← o que a Woovi chama "Saldo disponível"
+ * - Subcontas = soma LIVE em cache (API) ou estimativa DB
+ * - Saldo disponível = conta − subcontas
  */
-function montarWooviSaldosView(saldoConta, saldosCarteira) {
+function montarWooviSaldosView(saldoConta, saldosCarteira, cacheLive = null) {
   const conta = saldoConta ? Number(saldoConta.available || 0) : null;
   const bloqueado = saldoConta ? Number(saldoConta.blocked || 0) : 0;
-  const subcontas = saldosCarteira?.saldoSubcontasEstimado != null
+  const estimado = saldosCarteira?.saldoSubcontasEstimado != null
     ? Number(saldosCarteira.saldoSubcontasEstimado)
     : null;
+  const live = cacheLive?.subcontasLive != null ? Number(cacheLive.subcontasLive) : null;
+  const usaLive = live != null;
+  const subcontas = usaLive ? live : estimado;
 
   let disponivel = null;
   if (conta != null && subcontas != null) {
@@ -32,15 +35,23 @@ function montarWooviSaldosView(saldoConta, saldosCarteira) {
     disponivel = conta;
   }
 
+  let atualizadoHint = '';
+  if (usaLive && cacheLive?.updatedAt) {
+    const min = Math.max(0, Math.round((Date.now() - cacheLive.updatedAt) / 60000));
+    atualizadoHint = min <= 0 ? 'agora' : `há ${min} min`;
+  }
+
   return {
     conta: saldoConta,
     contaSaldo: conta,
     contaSaldoFmt: conta != null ? fmtMoney(conta) : '—',
     contaBlockedFmt: fmtMoney(bloqueado),
-    subcontasEstimado: subcontas,
+    subcontasEstimado: estimado,
+    subcontasLive: live,
+    subcontasFonte: usaLive ? 'api' : 'estimado',
     subcontasEstimadoFmt: subcontas != null ? fmtMoney(subcontas) : '—',
-    tenantsComSaldo: saldosCarteira?.tenantsComSaldo || 0,
-    /** Caixa da plataforma = Saldo disponível Woovi (conta − subcontas) */
+    subcontasAtualizadoHint: atualizadoHint,
+    tenantsComSaldo: saldosCarteira?.tenantsComSaldo || cacheLive?.tenants || 0,
     saldoDisponivel: disponivel,
     saldoDisponivelFmt: disponivel != null ? fmtMoney(disponivel) : '—'
   };
@@ -142,7 +153,8 @@ const superAdminController = {
   async dashboard(req, res) {
     const CarteiraService = require('../services/carteiraService');
     const WooviService = require('../services/wooviService');
-    const [metricas, recentes, info, saldosCarteira, saldoConta] = await Promise.all([
+    const WooviSaldoCacheService = require('../services/wooviSaldoCacheService');
+    const [metricas, recentes, info, saldosCarteira, saldoConta, cacheLive] = await Promise.all([
       TenantService.obterMetricasPlataforma(),
       TenantService.obterTenantsRecentes(5),
       SuperAdminService.obterInfoPlataforma(),
@@ -150,13 +162,15 @@ const superAdminController = {
         saldoSubcontasEstimado: null,
         tenantsComSaldo: 0
       })),
-      WooviService.consultarSaldoContaPrincipal().catch(() => null)
+      WooviService.consultarSaldoContaPrincipal().catch(() => null),
+      WooviSaldoCacheService.getCached()
     ]);
+    WooviSaldoCacheService.maybeRefreshAsync();
 
     const receitaMes = Number(metricas.receitaMes || 0);
     const taxasSaqueMes = Number(info.taxasSaqueMes || 0);
     const lucroMes = receitaMes + taxasSaqueMes;
-    const wooviSaldos = montarWooviSaldosView(saldoConta, saldosCarteira);
+    const wooviSaldos = montarWooviSaldosView(saldoConta, saldosCarteira, cacheLive);
 
     res.render('super/dashboard', renderLocals(req, res, {
       titulo: 'Visão geral',
@@ -272,16 +286,19 @@ const superAdminController = {
   async plataforma(req, res) {
     const CarteiraService = require('../services/carteiraService');
     const WooviService = require('../services/wooviService');
+    const WooviSaldoCacheService = require('../services/wooviSaldoCacheService');
 
-    const [metricas, info, saldosCarteira, saldoConta] = await Promise.all([
+    const [metricas, info, saldosCarteira, saldoConta, cacheLive] = await Promise.all([
       TenantService.obterMetricasPlataforma(),
       SuperAdminService.obterInfoPlataforma(),
       CarteiraService.somarSaldosSacaveisPlataforma().catch(() => ({
         saldoSubcontasEstimado: null,
         tenantsComSaldo: 0
       })),
-      WooviService.consultarSaldoContaPrincipal().catch(() => null)
+      WooviService.consultarSaldoContaPrincipal().catch(() => null),
+      WooviSaldoCacheService.getCached()
     ]);
+    WooviSaldoCacheService.maybeRefreshAsync();
 
     const gmvTotal = metricas.gmvTotal || 0;
     const reservasConf = metricas.reservasConfirmadas || 0;
@@ -293,7 +310,7 @@ const superAdminController = {
     const receitaMes = Number(metricas.receitaMes || 0);
     const taxasSaqueMes = Number(info.taxasSaqueMes || 0);
     const lucroMes = receitaMes + taxasSaqueMes;
-    const wooviSaldos = montarWooviSaldosView(saldoConta, saldosCarteira);
+    const wooviSaldos = montarWooviSaldosView(saldoConta, saldosCarteira, cacheLive);
 
     res.render('super/plataforma', renderLocals(req, res, {
       titulo: 'Plataforma',
