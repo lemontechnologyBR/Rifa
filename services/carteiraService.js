@@ -182,18 +182,13 @@ const CarteiraService = {
       saquesPorTenant.map((s) => [s.tenantId, Number(s._sum.valorBruto || 0)])
     );
     const parteWooviPorTenant = new Map();
-    let legadoTotal = 0;
 
     for (const r of reservas) {
       const tenantId = r.rifa?.tenantId;
       if (!tenantId) continue;
+      if (!isReservaSacavelWoovi(r)) continue;
       const parte = parteOrganizadorReserva(r);
-      const cls = classificarReserva(r);
-      if (cls === 'plataforma') {
-        parteWooviPorTenant.set(tenantId, (parteWooviPorTenant.get(tenantId) || 0) + parte);
-      } else if (cls === 'legado_mp') {
-        legadoTotal += parte;
-      }
+      parteWooviPorTenant.set(tenantId, (parteWooviPorTenant.get(tenantId) || 0) + parte);
     }
 
     let total = 0;
@@ -209,8 +204,7 @@ const CarteiraService = {
 
     return {
       saldoSubcontasEstimado: round2(total),
-      tenantsComSaldo: comSaldo,
-      parteLegadoMpExcluida: round2(legadoTotal)
+      tenantsComSaldo: comSaldo
     };
   },
 

@@ -105,12 +105,12 @@
   <div class="plat-card">
     <p class="plat-card-label">GMV total</p>
     <p class="plat-card-value">R$ <%= metricas.gmvTotalFmt %></p>
-    <p class="plat-card-hint">PIX plataforma (Woovi)</p>
+    <p class="plat-card-hint">só vendas Woovi (PIX)</p>
   </div>
   <div class="plat-card">
     <p class="plat-card-label">GMV este mês</p>
     <p class="plat-card-value plat-card-value--blue">R$ <%= info.gmvMesFmt %></p>
-    <p class="plat-card-hint"><%= info.vendasMes %> venda<%= info.vendasMes !== 1 ? 's' : '' %> confirmada<%= info.vendasMes !== 1 ? 's' : '' %></p>
+    <p class="plat-card-hint"><%= info.vendasMes %> venda<%= info.vendasMes !== 1 ? 's' : '' %> Woovi</p>
   </div>
   <div class="plat-card">
     <p class="plat-card-label">Vendas confirmadas</p>
@@ -132,22 +132,22 @@
 </div>
 
 <%# ── RECEITA ─────────────────────────────────── %>
-<p class="plat-section-title">Receita da plataforma</p>
+<p class="plat-section-title">Receita da plataforma (este mês · Woovi)</p>
 <div class="plat-grid">
   <div class="plat-card">
-    <p class="plat-card-label">Lucro total</p>
+    <p class="plat-card-label">Lucro do mês</p>
     <p class="plat-card-value plat-card-value--green">R$ <%= metricas.lucroTotalFmt %></p>
-    <p class="plat-card-hint">comissões + taxas de saque</p>
+    <p class="plat-card-hint">comissões + taxas de saque · só PIX Woovi</p>
   </div>
   <div class="plat-card">
     <p class="plat-card-label">Comissões PIX</p>
     <p class="plat-card-value">R$ <%= metricas.receitaPlataformaFmt %></p>
-    <p class="plat-card-hint">5% + R$ 0,50/cota · Woovi R$ <%= metricas.receitaWooviFmt %></p>
+    <p class="plat-card-hint">5% + R$ 0,50/cota · este mês</p>
   </div>
   <div class="plat-card">
     <p class="plat-card-label">Taxas de saque</p>
     <p class="plat-card-value">R$ <%= metricas.totalTaxasSaqueFmt %></p>
-    <p class="plat-card-hint">saques concluídos</p>
+    <p class="plat-card-hint">saques concluídos este mês</p>
   </div>
 </div>
 
@@ -170,11 +170,6 @@
     <p class="plat-card-hint">
       <%= wooviSaldos.tenantsComSaldo %> loja(s) com saldo · vendas Woovi − saques
     </p>
-  </div>
-  <div class="plat-card">
-    <p class="plat-card-label">Legado MP (não sacável)</p>
-    <p class="plat-card-value plat-card-value--amber">R$ <%= wooviSaldos.legadoExcluidoFmt %></p>
-    <p class="plat-card-hint">excluído do saldo das carteiras</p>
   </div>
 </div>
 

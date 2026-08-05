@@ -4,6 +4,7 @@
 const prisma = require('../lib/prisma');
 const { slugify, isSlugReservado } = require('../lib/reservedSlugs');
 const PaymentService = require('./paymentService');
+const { isReservaSacavelWoovi } = require('../lib/carteiraSaldo');
 
 const { TAXA_PLATAFORMA_WOOVI } = require('../lib/config');
 
@@ -114,8 +115,6 @@ const TenantService = {
       tenantsSuspensos,
       totalRifas,
       rifasAtivas,
-      reservasConfirmadas,
-      receita,
       novosTenantsMes,
       totalOrganizadores
     ] = await Promise.all([
@@ -123,33 +122,42 @@ const TenantService = {
       prisma.tenant.count({ where: { status: 'suspenso' } }),
       prisma.rifa.count(),
       prisma.rifa.count({ where: { status: 'ativa' } }),
-      prisma.reserva.count({ where: { statusPagamento: 'confirmado' } }),
-      prisma.reserva.aggregate({
-        where: { statusPagamento: 'confirmado' },
-        _sum: { valorTotal: true }
-      }),
       prisma.tenant.count({ where: { createdAt: { gte: inicioMes } } }),
       prisma.organizador.count()
     ]);
 
-    const gmvTotal = receita._sum.valorTotal || 0;
-
+    // Só vendas Woovi (PIX plataforma) — ignora refs legadas numéricas
     const reservasConfirmadasLista = await prisma.reserva.findMany({
-      where: { statusPagamento: 'confirmado' },
+      where: {
+        statusPagamento: 'confirmado',
+        wooviCorrelationId: { not: null }
+      },
       select: {
         valorTotal: true,
         createdAt: true,
+        wooviCorrelationId: true,
         _count: { select: { reservaNumeros: true } }
       }
     });
 
-    let receitaPlataforma = 0;
-    let gmvWoovi = 0;
+    const reservasWoovi = reservasConfirmadasLista.filter(isReservaSacavelWoovi);
 
-    for (const r of reservasConfirmadasLista) {
+    let receitaPlataforma = 0;
+    let receitaMes = 0;
+    let gmvWoovi = 0;
+    let gmvMes = 0;
+    let vendasMes = 0;
+
+    for (const r of reservasWoovi) {
       const valor = Number(r.valorTotal || 0);
+      const comissao = PaymentService.calcularReceitaReserva(r);
       gmvWoovi += valor;
-      receitaPlataforma += PaymentService.calcularReceitaReserva(r);
+      receitaPlataforma += comissao;
+      if (new Date(r.createdAt) >= inicioMes) {
+        gmvMes += valor;
+        receitaMes += comissao;
+        vendasMes++;
+      }
     }
 
     return {
@@ -157,11 +165,14 @@ const TenantService = {
       tenantsSuspensos,
       totalRifas,
       rifasAtivas,
-      reservasConfirmadas,
-      gmvTotal,
+      reservasConfirmadas: reservasWoovi.length,
+      gmvTotal: gmvWoovi,
       gmvWoovi,
+      gmvMes,
+      vendasMes,
       receitaPlataforma,
       receitaWoovi: receitaPlataforma,
+      receitaMes,
       taxaWoovi: TAXA_PLATAFORMA_WOOVI,
       novosTenantsMes,
       totalOrganizadores

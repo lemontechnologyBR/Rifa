@@ -7,6 +7,7 @@ const {
   ORGANIZADOR_PERCENTUAL_WOOVI,
   taxaFixaCotaWooviPara
 } = require('../lib/config');
+const { isReservaSacavelWoovi } = require('../lib/carteiraSaldo');
 
 function paymentInfoForTenant(tenant) {
   const provider = PaymentService.getProvider(tenant);
@@ -308,7 +309,8 @@ const SuperAdminService = {
       rifasCanceladas,
       tenantsWoovi,
       saquesResumo,
-      gmvMes
+      reservasMesLista,
+      saquesMes
     ] = await Promise.all([
       prisma.usuario.count(),
       prisma.reserva.count({ where: { statusPagamento: 'pendente' } }),
@@ -322,13 +324,24 @@ const SuperAdminService = {
         _count: { id: true },
         where: { status: 'concluido' }
       }),
-      prisma.reserva.aggregate({
+      prisma.reserva.findMany({
         where: {
           statusPagamento: 'confirmado',
+          wooviCorrelationId: { not: null },
           createdAt: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) }
         },
-        _sum: { valorTotal: true },
-        _count: { id: true }
+        select: {
+          valorTotal: true,
+          wooviCorrelationId: true
+        }
+      }),
+      prisma.saque.aggregate({
+        _sum: { taxa: true },
+        _count: { id: true },
+        where: {
+          status: 'concluido',
+          createdAt: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) }
+        }
       })
     ]);
 
@@ -338,9 +351,13 @@ const SuperAdminService = {
       where: { status: { in: ['solicitado', 'processando'] } }
     });
 
+    const reservasMesWoovi = reservasMesLista.filter(isReservaSacavelWoovi);
+    const gmvMesValor = reservasMesWoovi.reduce((s, r) => s + Number(r.valorTotal || 0), 0);
+
     const totalSacadoLiquido = saquesResumo._sum.valorLiquido || 0;
     const totalSacadoBruto = saquesResumo._sum.valorBruto || 0;
     const totalTaxasSaque = Number(saquesResumo._sum.taxa || 0) || Math.max(0, totalSacadoBruto - totalSacadoLiquido);
+    const taxasSaqueMes = Number(saquesMes._sum.taxa || 0);
 
     return {
       totalUsuarios,
@@ -353,11 +370,13 @@ const SuperAdminService = {
       totalSacadoLiquido,
       totalSacadoBruto,
       totalTaxasSaque,
+      taxasSaqueMes,
       countSaquesConcluidos: saquesResumo._count.id || 0,
+      countSaquesMes: saquesMes._count.id || 0,
       totalSaquesPendenteValor: saquesPendentes._sum.valorLiquido || 0,
       countSaquesPendentes: saquesPendentes._count.id || 0,
-      gmvMes: gmvMes._sum.valorTotal || 0,
-      vendasMes: gmvMes._count.id || 0
+      gmvMes: gmvMesValor,
+      vendasMes: reservasMesWoovi.length
     };
   },
 

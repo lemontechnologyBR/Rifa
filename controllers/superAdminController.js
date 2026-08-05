@@ -112,8 +112,9 @@ const superAdminController = {
       SuperAdminService.obterInfoPlataforma()
     ]);
 
-    const totalTaxasSaque = Number(info.totalTaxasSaque || 0);
-    const lucroTotal = Number(metricas.receitaPlataforma || 0) + totalTaxasSaque;
+    const receitaMes = Number(metricas.receitaMes || 0);
+    const taxasSaqueMes = Number(info.taxasSaqueMes || 0);
+    const lucroMes = receitaMes + taxasSaqueMes;
 
     res.render('super/dashboard', renderLocals(req, res, {
       titulo: 'Visão geral',
@@ -121,10 +122,10 @@ const superAdminController = {
       metricas: {
         ...metricas,
         gmvTotalFmt: fmtMoney(metricas.gmvTotal),
-        receitaPlataformaFmt: fmtMoney(metricas.receitaPlataforma),
-        receitaWooviFmt: fmtMoney(metricas.receitaWoovi),
-        totalTaxasSaqueFmt: fmtMoney(totalTaxasSaque),
-        lucroTotalFmt: fmtMoney(lucroTotal)
+        receitaPlataformaFmt: fmtMoney(receitaMes),
+        receitaWooviFmt: fmtMoney(receitaMes),
+        totalTaxasSaqueFmt: fmtMoney(taxasSaqueMes),
+        lucroTotalFmt: fmtMoney(lucroMes)
       },
       recentes: recentes.map((t) => ({
         ...t,
@@ -234,8 +235,7 @@ const superAdminController = {
       SuperAdminService.obterInfoPlataforma(),
       CarteiraService.somarSaldosSacaveisPlataforma().catch(() => ({
         saldoSubcontasEstimado: null,
-        tenantsComSaldo: 0,
-        parteLegadoMpExcluida: 0
+        tenantsComSaldo: 0
       })),
       WooviService.consultarSaldoContaPrincipal().catch(() => null)
     ]);
@@ -245,8 +245,11 @@ const superAdminController = {
     const ticketMedio = reservasConf > 0 ? gmvTotal / reservasConf : 0;
     const totalReservas = reservasConf + (info.reservasPendentes || 0) + (info.reservasExpiradas || 0);
     const taxaConversao = totalReservas > 0 ? ((reservasConf / totalReservas) * 100).toFixed(1) : '0.0';
-    const totalTaxasSaque = Number(info.totalTaxasSaque || 0);
-    const lucroTotal = Number(metricas.receitaPlataforma || 0) + totalTaxasSaque;
+
+    // Receita do painel = mês atual, só Woovi
+    const receitaMes = Number(metricas.receitaMes || 0);
+    const taxasSaqueMes = Number(info.taxasSaqueMes || 0);
+    const lucroMes = receitaMes + taxasSaqueMes;
 
     res.render('super/plataforma', renderLocals(req, res, {
       titulo: 'Plataforma',
@@ -255,21 +258,23 @@ const superAdminController = {
         ...metricas,
         gmvTotalFmt: fmtMoney(gmvTotal),
         gmvWooviFmt: fmtMoney(metricas.gmvWoovi),
-        receitaPlataformaFmt: fmtMoney(metricas.receitaPlataforma),
-        receitaWooviFmt: fmtMoney(metricas.receitaWoovi),
-        totalTaxasSaque,
-        totalTaxasSaqueFmt: fmtMoney(totalTaxasSaque),
-        lucroTotal,
-        lucroTotalFmt: fmtMoney(lucroTotal),
+        receitaPlataformaFmt: fmtMoney(receitaMes),
+        receitaWooviFmt: fmtMoney(receitaMes),
+        receitaMesFmt: fmtMoney(receitaMes),
+        totalTaxasSaque: taxasSaqueMes,
+        totalTaxasSaqueFmt: fmtMoney(taxasSaqueMes),
+        lucroTotal: lucroMes,
+        lucroTotalFmt: fmtMoney(lucroMes),
         ticketMedioFmt: fmtMoney(ticketMedio),
         taxaConversao
       },
       info: {
         ...info,
         totalSacadoFmt: fmtMoney(info.totalSacadoLiquido),
-        totalTaxasSaqueFmt: fmtMoney(totalTaxasSaque),
+        totalTaxasSaqueFmt: fmtMoney(info.totalTaxasSaque),
         saquesPendentesFmt: fmtMoney(info.totalSaquesPendenteValor),
-        gmvMesFmt: fmtMoney(info.gmvMes)
+        gmvMesFmt: fmtMoney(info.gmvMes ?? metricas.gmvMes),
+        vendasMes: info.vendasMes ?? metricas.vendasMes
       },
       wooviSaldos: {
         conta: saldoConta,
@@ -279,8 +284,7 @@ const superAdminController = {
         subcontasEstimadoFmt: saldosCarteira.saldoSubcontasEstimado != null
           ? fmtMoney(saldosCarteira.saldoSubcontasEstimado)
           : '—',
-        tenantsComSaldo: saldosCarteira.tenantsComSaldo || 0,
-        legadoExcluidoFmt: fmtMoney(saldosCarteira.parteLegadoMpExcluida || 0)
+        tenantsComSaldo: saldosCarteira.tenantsComSaldo || 0
       }
     }));
   },
