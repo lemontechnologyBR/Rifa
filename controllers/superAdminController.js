@@ -106,15 +106,18 @@ const superAdminController = {
   },
 
   async dashboard(req, res) {
-    const [metricas, recentes, info] = await Promise.all([
+    const WooviService = require('../services/wooviService');
+    const [metricas, recentes, info, saldoConta] = await Promise.all([
       TenantService.obterMetricasPlataforma(),
       TenantService.obterTenantsRecentes(5),
-      SuperAdminService.obterInfoPlataforma()
+      SuperAdminService.obterInfoPlataforma(),
+      WooviService.consultarSaldoContaPrincipal().catch(() => null)
     ]);
 
     const receitaMes = Number(metricas.receitaMes || 0);
     const taxasSaqueMes = Number(info.taxasSaqueMes || 0);
     const lucroMes = receitaMes + taxasSaqueMes;
+    const caixaDisponivel = saldoConta ? Number(saldoConta.available || 0) : null;
 
     res.render('super/dashboard', renderLocals(req, res, {
       titulo: 'Visão geral',
@@ -125,7 +128,9 @@ const superAdminController = {
         receitaPlataformaFmt: fmtMoney(receitaMes),
         receitaWooviFmt: fmtMoney(receitaMes),
         totalTaxasSaqueFmt: fmtMoney(taxasSaqueMes),
-        lucroTotalFmt: fmtMoney(lucroMes)
+        lucroTotalFmt: fmtMoney(lucroMes),
+        caixaDisponivel,
+        caixaDisponivelFmt: caixaDisponivel != null ? fmtMoney(caixaDisponivel) : '—'
       },
       recentes: recentes.map((t) => ({
         ...t,

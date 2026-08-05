@@ -155,10 +155,10 @@
 <p class="plat-section-title">Saldos Woovi</p>
 <div class="plat-grid">
   <div class="plat-card">
-    <p class="plat-card-label">Conta principal</p>
-    <p class="plat-card-value plat-card-value--blue">R$ <%= wooviSaldos.contaAvailableFmt %></p>
+    <p class="plat-card-label">Caixa da plataforma</p>
+    <p class="plat-card-value plat-card-value--green">R$ <%= wooviSaldos.contaAvailableFmt %></p>
     <p class="plat-card-hint">
-      disponível na conta Lemon
+      saldo disponível · conta Lemon (Woovi)
       <% if (wooviSaldos.conta && wooviSaldos.conta.blocked > 0) { %>
         · bloqueado R$ <%= wooviSaldos.contaBlockedFmt %>
       <% } %>
