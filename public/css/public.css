@@ -878,6 +878,17 @@ html:not(.dark) .public-site .imp-detail [style*="border-top:1px solid rgba(255,
   }
 }
 
+/* Chatwoot — bolinha acima da sticky de compra no mobile */
+.woot-widget-bubble,
+.woot--bubble-holder {
+  z-index: 70 !important;
+}
+@media (max-width: 1023px) {
+  .woot-widget-bubble {
+    bottom: 88px !important;
+  }
+}
+
 .public-footer-social-link {
   display: inline-flex;
   align-items: center;

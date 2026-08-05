@@ -6,6 +6,14 @@
 %>
 <% if (cwToken) { %>
 <script>
+  window.chatwootSettings = Object.assign({}, window.chatwootSettings || {}, {
+    hideMessageBubble: false,
+    position: 'right',
+    locale: 'pt_BR',
+    type: 'standard',
+    launcherTitle: 'Fale conosco'
+  });
+
   (function (d, t) {
     var BASE_URL = <%- JSON.stringify(cwBase) %>;
     var g = d.createElement(t), s = d.getElementsByTagName(t)[0];
@@ -22,11 +30,19 @@
   })(document, 'script');
 
   window.vourifarOpenSupport = function () {
-    if (window.$chatwoot && typeof window.$chatwoot.toggle === 'function') {
-      window.$chatwoot.toggle('open');
+    function openBubble() {
+      if (window.$chatwoot && typeof window.$chatwoot.toggle === 'function') {
+        window.$chatwoot.toggle('open');
+        return true;
+      }
       return false;
     }
-    window.open(<%- JSON.stringify(cwBase) %>, '_blank', 'noopener');
+    if (openBubble()) return false;
+    var tries = 0;
+    var timer = setInterval(function () {
+      tries += 1;
+      if (openBubble() || tries > 20) clearInterval(timer);
+    }, 250);
     return false;
   };
 </script>

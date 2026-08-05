@@ -58,17 +58,19 @@ const GOOGLE_ADS_CSP = {
   ]
 };
 
+const CHATWOOT_ORIGIN = process.env.CHATWOOT_BASE_URL || 'https://chat.vourifar.com.br';
+
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https://cdn.tailwindcss.com', 'https://unpkg.com', 'https://cdn.jsdelivr.net', ...GOOGLE_ADS_CSP.script],
-      styleSrc: ["'self'", "'unsafe-inline'", 'https://cdn.tailwindcss.com', 'https://cdn.jsdelivr.net', 'https://fonts.googleapis.com', ...GOOGLE_ADS_CSP.style],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https://cdn.tailwindcss.com', 'https://unpkg.com', 'https://cdn.jsdelivr.net', CHATWOOT_ORIGIN, ...GOOGLE_ADS_CSP.script],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://cdn.tailwindcss.com', 'https://cdn.jsdelivr.net', 'https://fonts.googleapis.com', CHATWOOT_ORIGIN, ...GOOGLE_ADS_CSP.style],
       imgSrc: ["'self'", 'data:', 'https:', 'http:', 'https://chart.googleapis.com', ...GOOGLE_ADS_CSP.img],
-      fontSrc: ["'self'", 'https://fonts.gstatic.com', 'https://cdn.jsdelivr.net'],
-      connectSrc: ["'self'", 'https://cdn.tailwindcss.com', 'https://unpkg.com', 'https://cdn.jsdelivr.net', ...GOOGLE_ADS_CSP.connect],
-      frameSrc: ["'self'", ...GOOGLE_ADS_CSP.frame],
-      workerSrc: ["'self'"]
+      fontSrc: ["'self'", 'https://fonts.gstatic.com', 'https://cdn.jsdelivr.net', CHATWOOT_ORIGIN],
+      connectSrc: ["'self'", 'https://cdn.tailwindcss.com', 'https://unpkg.com', 'https://cdn.jsdelivr.net', CHATWOOT_ORIGIN, CHATWOOT_ORIGIN.replace(/^https/, 'wss'), ...GOOGLE_ADS_CSP.connect],
+      frameSrc: ["'self'", CHATWOOT_ORIGIN, ...GOOGLE_ADS_CSP.frame],
+      workerSrc: ["'self'", 'blob:']
     }
   },
   crossOriginEmbedderPolicy: false
