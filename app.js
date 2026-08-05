@@ -178,6 +178,8 @@ app.use((req, res, next) => {
   res.locals.pwaScope = '/';
   res.locals.pwaIconUrl = '/img/pwa/icon-192.png';
   res.locals.pwaShortName = brand.PLATFORM_NAME;
+  res.locals.chatwootWebsiteToken = process.env.CHATWOOT_WEBSITE_TOKEN || '';
+  res.locals.chatwootBaseUrl = process.env.CHATWOOT_BASE_URL || 'https://chat.vourifar.com.br';
   next();
 });
 

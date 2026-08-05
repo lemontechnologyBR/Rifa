@@ -1,5 +1,4 @@
 <% const pgTitle = typeof pageTitle !== 'undefined' ? pageTitle : 'Painel'; %>
-<% const supportWhatsappUrl = 'https://wa.me/5511968984898?text=Preciso%20de%20suporte'; %>
 <div class="admin-app" x-data="{ sidebarOpen: false }">
   <div x-show="sidebarOpen" x-cloak @click="sidebarOpen = false" class="admin-sidebar-backdrop lg:hidden"></div>
 
@@ -38,7 +37,7 @@
         <i data-lucide="scroll-text" class="w-[18px] h-[18px]"></i>
         Atividades
       </a>
-      <a href="<%= supportWhatsappUrl %>" target="_blank" rel="noopener noreferrer" class="admin-sidebar-link">
+      <a href="#" onclick="return window.vourifarOpenSupport && window.vourifarOpenSupport()" class="admin-sidebar-link">
         <i data-lucide="message-circle" class="w-[18px] h-[18px]"></i>
         Suporte
       </a>
@@ -80,7 +79,7 @@
         </div>
       </div>
       <div class="admin-topbar-actions">
-        <a href="<%= supportWhatsappUrl %>" target="_blank" rel="noopener noreferrer" class="admin-btn-secondary hidden md:inline-flex">
+        <a href="#" onclick="return window.vourifarOpenSupport && window.vourifarOpenSupport()" class="admin-btn-secondary hidden md:inline-flex">
           <i data-lucide="message-circle" class="w-4 h-4"></i>
           Suporte
         </a>

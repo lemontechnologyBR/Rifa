@@ -84,9 +84,6 @@ const OrganizadorService = {
 
     const descricao = String(dados.descricao || '').trim() || null;
     const logoUrl = String(dados.logo_url || dados.logoUrl || '').trim() || null;
-    const whatsapp = dados.whatsapp !== undefined
-      ? (String(dados.whatsapp || '').replace(/\D/g, '') || null)
-      : tenant.whatsapp;
     const instagram = dados.instagram !== undefined
       ? (String(dados.instagram || '').trim().replace(/^@/, '') || null)
       : tenant.instagram;
@@ -103,7 +100,6 @@ const OrganizadorService = {
           slug: slugFinal,
           descricao,
           logoUrl,
-          whatsapp,
           instagram
         }
       })

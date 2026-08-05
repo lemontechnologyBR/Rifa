@@ -1,5 +1,4 @@
 <%- include('../partials/header') %>
-<% const supportWhatsappUrl = 'https://wa.me/5511968984898?text=Preciso%20de%20suporte'; %>
 
 <style>
 /* ═══════════════════════════════════════════
@@ -421,7 +420,7 @@ input[type=range].imp-range { accent-color: var(--imp-green); width:100%; }
               <i data-lucide="play-circle" class="w-5 h-5" style="color:var(--imp-green);"></i>
               Ver demo ao vivo
             </a>
-            <a href="<%= supportWhatsappUrl %>" target="_blank" rel="noopener noreferrer"
+            <a href="#" onclick="return window.vourifarOpenSupport && window.vourifarOpenSupport()"
                class="inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl font-bold text-lg transition-all hover:-translate-y-1"
                style="border:2px solid rgba(34,197,94,.35);color:#22c55e;background:rgba(34,197,94,.08);font-size:1rem;">
               <i data-lucide="message-circle" class="w-5 h-5"></i>
@@ -780,7 +779,7 @@ input[type=range].imp-range { accent-color: var(--imp-green); width:100%; }
               <i data-lucide="play-circle" class="w-5 h-5" style="color:var(--imp-green);"></i>
               Ver demo
             </a>
-            <a href="<%= supportWhatsappUrl %>" target="_blank" rel="noopener noreferrer"
+            <a href="#" onclick="return window.vourifarOpenSupport && window.vourifarOpenSupport()"
                class="inline-flex items-center justify-center gap-2.5 px-10 py-4 rounded-2xl font-bold transition-all hover:bg-white/5"
                style="border:1px solid rgba(34,197,94,.35);color:#22c55e;background:rgba(34,197,94,.08);font-size:1rem;">
               <i data-lucide="message-circle" class="w-5 h-5"></i>

@@ -89,10 +89,6 @@ const TenantService = {
     if (dados.corPrimaria || dados.cor_primaria) {
       data.corPrimaria = dados.corPrimaria || dados.cor_primaria;
     }
-    if (dados.whatsapp !== undefined) {
-      const w = String(dados.whatsapp || '').replace(/\D/g, '');
-      data.whatsapp = w || null;
-    }
     if (dados.instagram !== undefined) {
       const ig = String(dados.instagram || '').trim().replace(/^@/, '');
       data.instagram = ig || null;

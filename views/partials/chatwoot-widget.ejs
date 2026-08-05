@@ -1,0 +1,40 @@
+<%
+  const cwToken = typeof chatwootWebsiteToken !== 'undefined' ? String(chatwootWebsiteToken || '') : '';
+  const cwBase = (typeof chatwootBaseUrl !== 'undefined' && chatwootBaseUrl)
+    ? String(chatwootBaseUrl)
+    : 'https://chat.vourifar.com.br';
+%>
+<% if (cwToken) { %>
+<script>
+  (function (d, t) {
+    var BASE_URL = <%- JSON.stringify(cwBase) %>;
+    var g = d.createElement(t), s = d.getElementsByTagName(t)[0];
+    g.src = BASE_URL + '/packs/js/sdk.js';
+    g.async = true;
+    g.defer = true;
+    s.parentNode.insertBefore(g, s);
+    g.onload = function () {
+      window.chatwootSDK.run({
+        websiteToken: <%- JSON.stringify(cwToken) %>,
+        baseUrl: BASE_URL
+      });
+    };
+  })(document, 'script');
+
+  window.vourifarOpenSupport = function () {
+    if (window.$chatwoot && typeof window.$chatwoot.toggle === 'function') {
+      window.$chatwoot.toggle('open');
+      return false;
+    }
+    window.open(<%- JSON.stringify(cwBase) %>, '_blank', 'noopener');
+    return false;
+  };
+</script>
+<% } else { %>
+<script>
+  window.vourifarOpenSupport = function () {
+    window.open(<%- JSON.stringify(cwBase) %>, '_blank', 'noopener');
+    return false;
+  };
+</script>
+<% } %>

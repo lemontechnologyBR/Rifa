@@ -1,0 +1,83 @@
+# Chatwoot — chat.vourifar.com.br
+# Rede Traefik compartilhada: pix-tips_proxy
+services:
+  rails:
+    image: chatwoot/chatwoot:latest
+    depends_on:
+      - postgres
+      - redis
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      RAILS_ENV: production
+      INSTALLATION_ENV: docker
+    entrypoint: docker/entrypoints/rails.sh
+    command: ["bundle", "exec", "rails", "s", "-p", "3000", "-b", "0.0.0.0"]
+    volumes:
+      - storage_data:/app/storage
+    restart: unless-stopped
+    networks:
+      - chatwoot_internal
+      - pix-tips_proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=pix-tips_proxy"
+      - "traefik.http.routers.chatwoot.rule=Host(`chat.vourifar.com.br`)"
+      - "traefik.http.routers.chatwoot.entrypoints=websecure"
+      - "traefik.http.routers.chatwoot.tls.certresolver=letsencrypt"
+      - "traefik.http.services.chatwoot.loadbalancer.server.port=3000"
+
+  sidekiq:
+    image: chatwoot/chatwoot:latest
+    depends_on:
+      - postgres
+      - redis
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      RAILS_ENV: production
+      INSTALLATION_ENV: docker
+    command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
+    volumes:
+      - storage_data:/app/storage
+    restart: unless-stopped
+    networks:
+      - chatwoot_internal
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${POSTGRES_DATABASE:-chatwoot}
+      POSTGRES_USER: ${POSTGRES_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    networks:
+      - chatwoot_internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USERNAME:-postgres} -d $${POSTGRES_DATABASE:-chatwoot}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:alpine
+    restart: unless-stopped
+    command: ["sh", "-c", "redis-server --requirepass \"$$REDIS_PASSWORD\" --appendonly yes"]
+    env_file: .env
+    volumes:
+      - redis_data:/data
+    networks:
+      - chatwoot_internal
+
+networks:
+  chatwoot_internal:
+    driver: bridge
+  pix-tips_proxy:
+    external: true
+
+volumes:
+  storage_data:
+  postgres_data:
+  redis_data:
