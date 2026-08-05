@@ -24,9 +24,6 @@ function fmtDateTime(d) {
 
 function pixRecebimentoInfo(tenant) {
   if (!tenant) return { tipo: null, valor: null };
-  if (tenant.mpAccessToken) {
-    return { tipo: 'Mercado Pago', valor: tenant.mpNickname || 'Conta conectada' };
-  }
   if (tenant.pixChave) {
     const { detectarTipoChavePix, labelTipoPix } = require('../lib/pixKey');
     const tipoPix = detectarTipoChavePix(tenant.pixChave);
@@ -35,13 +32,43 @@ function pixRecebimentoInfo(tenant) {
   return { tipo: null, valor: null };
 }
 
-function mapTenants(rows) {
-  return rows.map((t) => ({
-    ...t,
-    createdAtFmt: fmtDate(t.createdAt),
-    pixOk: !!(t.pixChave || t.wooviAtivo || t.mpAccessToken),
-    pixInfo: pixRecebimentoInfo(t),
-    org: t.organizadores?.[0] || null
+function mapOrganizadorConta(o) {
+  return {
+    ...o,
+    createdAtFmt: fmtDate(o.createdAt),
+    tenantCreatedAtFmt: fmtDate(o.tenant?.createdAt),
+    viaGoogle: !!o.googleId,
+    nurtureD1: !!o.nurtureD1SentAt,
+    nurtureD3: !!o.nurtureD3SentAt,
+    campanhaLeads: !!o.campanhaLeadsSentAt,
+    pixInfo: pixRecebimentoInfo(o.tenant),
+    totalSacadoFmt: fmtMoney(o.totalSacado)
+  };
+}
+
+async function renderContas(req, res) {
+  const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+  const busca = String(req.query.q || '').trim();
+  const filtro = ['sem_rifa', 'leads_quentes', 'sem_carteira'].includes(req.query.filtro) ? req.query.filtro : '';
+  const status = ['todos', 'ativo', 'suspenso'].includes(req.query.status) ? req.query.status : 'todos';
+  const OnboardingEmailService = require('../services/onboardingEmailService');
+
+  const [listagem, leadsQuentesPendentes] = await Promise.all([
+    SuperAdminService.listarOrganizadores({ page, busca, filtro, status }),
+    OnboardingEmailService.listarLeadsQuentes()
+  ]);
+
+  res.render('super/sistemas', renderLocals(req, res, {
+    titulo: 'Contas',
+    active: 'sistemas',
+    organizadores: listagem.organizadores.map(mapOrganizadorConta),
+    paginas: listagem.paginas,
+    page: listagem.page,
+    total: listagem.total,
+    busca,
+    filtro: filtro || '',
+    statusFiltro: status,
+    leadsQuentesPendentes: leadsQuentesPendentes.length
   }));
 }
 
@@ -95,7 +122,6 @@ const superAdminController = {
         ...metricas,
         gmvTotalFmt: fmtMoney(metricas.gmvTotal),
         receitaPlataformaFmt: fmtMoney(metricas.receitaPlataforma),
-        receitaMpFmt: fmtMoney(metricas.receitaMp),
         receitaWooviFmt: fmtMoney(metricas.receitaWoovi),
         totalTaxasSaqueFmt: fmtMoney(totalTaxasSaque),
         lucroTotalFmt: fmtMoney(lucroTotal)
@@ -109,21 +135,17 @@ const superAdminController = {
   },
 
   async sistemas(req, res) {
-    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
-    const busca = String(req.query.q || '').trim();
-    const status = ['todos', 'ativo', 'suspenso'].includes(req.query.status) ? req.query.status : 'todos';
-    const listagem = await TenantService.listar({ page, busca, status });
+    try {
+      await renderContas(req, res);
+    } catch (err) {
+      console.error('[Super] /sistemas:', err);
+      if (!res.headersSent) res.status(500).send('Erro interno do servidor.');
+    }
+  },
 
-    res.render('super/sistemas', renderLocals(req, res, {
-      titulo: 'Sistemas',
-      active: 'sistemas',
-      tenants: mapTenants(listagem.tenants),
-      paginas: listagem.paginas,
-      page: listagem.page,
-      total: listagem.total,
-      busca,
-      statusFiltro: status
-    }));
+  async organizadores(req, res) {
+    const qs = new URLSearchParams(req.query).toString();
+    return res.redirect(`/super/sistemas${qs ? `?${qs}` : ''}`);
   },
 
   async rifas(req, res) {
@@ -177,54 +199,22 @@ const superAdminController = {
     }));
   },
 
-  async organizadores(req, res) {
-    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
-    const busca = String(req.query.q || '').trim();
-    const filtro = ['sem_rifa', 'leads_quentes'].includes(req.query.filtro) ? req.query.filtro : '';
-    const OnboardingEmailService = require('../services/onboardingEmailService');
-
-    const [listagem, leadsQuentesPendentes] = await Promise.all([
-      SuperAdminService.listarOrganizadores({ page, busca, filtro }),
-      OnboardingEmailService.listarLeadsQuentes()
-    ]);
-
-    res.render('super/organizadores', renderLocals(req, res, {
-      titulo: 'Organizadores',
-      active: 'organizadores',
-      organizadores: listagem.organizadores.map((o) => ({
-        ...o,
-        createdAtFmt: fmtDate(o.createdAt),
-        viaGoogle: !!o.googleId,
-        nurtureD1: !!o.nurtureD1SentAt,
-        nurtureD3: !!o.nurtureD3SentAt,
-        campanhaLeads: !!o.campanhaLeadsSentAt,
-        pixInfo: pixRecebimentoInfo(o.tenant)
-      })),
-      paginas: listagem.paginas,
-      page: listagem.page,
-      total: listagem.total,
-      busca,
-      filtro,
-      leadsQuentesPendentes: leadsQuentesPendentes.length
-    }));
-  },
-
   async campanhaLeadsQuentes(req, res) {
     const OnboardingEmailService = require('../services/onboardingEmailService');
     try {
       const { enviados, total, erros } = await OnboardingEmailService.enviarCampanhaLeadsQuentes();
       let msg = `Campanha enviada para ${enviados} de ${total} lead(s) quente(s).`;
       if (erros.length) msg += ` ${erros.length} falha(s).`;
-      res.redirect(`/super/organizadores?filtro=leads_quentes&msg=${encodeURIComponent(msg)}`);
+      res.redirect(`/super/sistemas?filtro=leads_quentes&msg=${encodeURIComponent(msg)}`);
     } catch (err) {
-      res.redirect(`/super/organizadores?erro=${encodeURIComponent(err.message)}`);
+      res.redirect(`/super/sistemas?erro=${encodeURIComponent(err.message)}`);
     }
   },
 
   async enviarNurtureOrganizador(req, res) {
     const OnboardingEmailService = require('../services/onboardingEmailService');
     const tipo = req.body.tipo === 'd3' ? 'd3' : 'd1';
-    const redirect = req.body.redirect || '/super/organizadores';
+    const redirect = req.body.redirect || '/super/sistemas';
     try {
       await OnboardingEmailService.enviarNurtureManual(req.params.id, tipo);
       const sep = redirect.includes('?') ? '&' : '?';
@@ -255,10 +245,8 @@ const superAdminController = {
       metricas: {
         ...metricas,
         gmvTotalFmt: fmtMoney(gmvTotal),
-        gmvMpFmt: fmtMoney(metricas.gmvMp),
         gmvWooviFmt: fmtMoney(metricas.gmvWoovi),
         receitaPlataformaFmt: fmtMoney(metricas.receitaPlataforma),
-        receitaMpFmt: fmtMoney(metricas.receitaMp),
         receitaWooviFmt: fmtMoney(metricas.receitaWoovi),
         totalTaxasSaque,
         totalTaxasSaqueFmt: fmtMoney(totalTaxasSaque),

@@ -1,5 +1,6 @@
 /**
- * Modelo de Rifas — operações CRUD e sorteio.
+ * Modelo legado SQLite (deprecated). A aplicação usa services/rifaService.js (Prisma).
+ * Mantido apenas para CRUD legado; sorteio e fluxos ativos estão no serviço.
  */
 
 const { getDb, withTransaction } = require('./db');
@@ -74,41 +75,6 @@ const Rifa = {
   excluir(id) {
     const db = getDb();
     return db.prepare('DELETE FROM rifas WHERE id = ?').run(id);
-  },
-
-  /** Realiza sorteio entre números vendidos (pagamento confirmado) */
-  realizarSorteio(id) {
-    const db = getDb();
-    const rifa = this.buscarPorId(id);
-
-    if (!rifa) throw new Error('Rifa não encontrada.');
-    if (rifa.status !== 'ativa') throw new Error('Esta rifa não está ativa.');
-    if (new Date() < new Date(rifa.data_sorteio)) {
-      throw new Error('O sorteio só pode ser realizado após a data definida.');
-    }
-
-    const numerosVendidos = db.prepare(`
-      SELECT n.*, u.nome as usuario_nome
-      FROM numeros n
-      LEFT JOIN usuarios u ON n.usuario_id = u.id
-      WHERE n.rifa_id = ? AND n.status = 'vendido'
-    `).all(id);
-
-    if (numerosVendidos.length === 0) {
-      throw new Error('Não há números vendidos (pagamento confirmado) para sortear.');
-    }
-
-    const sorteado = numerosVendidos[Math.floor(Math.random() * numerosVendidos.length)];
-
-    db.prepare(`
-      UPDATE rifas SET status = 'finalizada', numero_sorteado = ?, ganhador_nome = ?
-      WHERE id = ?
-    `).run(sorteado.numero, sorteado.usuario_nome, id);
-
-    return {
-      numero: sorteado.numero,
-      ganhador: sorteado.usuario_nome
-    };
   },
 
   /** Estatísticas para o dashboard */

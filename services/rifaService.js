@@ -3,6 +3,10 @@
  */
 
 const prisma = require('../lib/prisma');
+const { calcularValorComFaixas } = require('../lib/rifaPricing');
+const { parseImagensUrls } = require('../lib/rifaFormParse');
+const { serializePacotesRapidos, parsePacotesRapidosFromBody } = require('../lib/rifaPacotes');
+const { sortearPremiosDistinctos } = require('../lib/sorteioUtil');
 
 const RifaService = {
   /** Lista rifas com paginação e filtros */
@@ -15,7 +19,11 @@ const RifaService = {
     const [rifas, total] = await Promise.all([
       prisma.rifa.findMany({
         where,
-        include: { premios: { orderBy: { ordem: 'asc' } }, faixasDesconto: { orderBy: { quantidadeMin: 'asc' } } },
+        include: {
+          premios: { orderBy: { ordem: 'asc' } },
+          faixasDesconto: { orderBy: { quantidadeMin: 'asc' } },
+          imagens: { orderBy: { ordem: 'asc' } }
+        },
         orderBy: status === 'ativa' ? { dataSorteio: 'asc' } : { createdAt: 'desc' },
         skip: (page - 1) * limite,
         take: limite
@@ -39,6 +47,7 @@ const RifaService = {
       include: {
         premios: { orderBy: { ordem: 'asc' } },
         faixasDesconto: { orderBy: { quantidadeMin: 'asc' } },
+        imagens: { orderBy: { ordem: 'asc' } },
         comentarios: {
           include: { usuario: { select: { nome: true } } },
           orderBy: { createdAt: 'desc' },
@@ -68,38 +77,59 @@ const RifaService = {
 
   /** Calcula valor total com faixas de desconto */
   calcularValor(faixas, valorCota, quantidade, bonusCotas = 0) {
-    const qtdCobrada = Math.max(0, quantidade - bonusCotas);
-    if (qtdCobrada === 0) return 0;
+    return calcularValorComFaixas(faixas, valorCota, quantidade, bonusCotas);
+  },
 
-    const faixasOrdenadas = [...faixas].sort((a, b) => b.quantidadeMin - a.quantidadeMin);
-    for (const faixa of faixasOrdenadas) {
-      if (qtdCobrada >= faixa.quantidadeMin) return faixa.valorTotal;
+  async _syncImagens(tx, rifaId, urls) {
+    const list = (urls || []).filter(Boolean).slice(0, 12);
+    await tx.rifaImagem.deleteMany({ where: { rifaId: Number(rifaId) } });
+    if (list.length) {
+      await tx.rifaImagem.createMany({
+        data: list.map((url, ordem) => ({ rifaId: Number(rifaId), url, ordem }))
+      });
     }
-    return valorCota * qtdCobrada;
+    return list[0] || '';
+  },
+
+  async _syncFaixas(tx, rifaId, faixas) {
+    await tx.faixaDesconto.deleteMany({ where: { rifaId: Number(rifaId) } });
+    if (!faixas?.length) return;
+    await tx.faixaDesconto.createMany({
+      data: faixas.map((f) => ({
+        rifaId: Number(rifaId),
+        quantidadeMin: parseInt(f.quantidade_min, 10),
+        valorTotal: f.percentual_desconto != null ? 0 : parseFloat(f.valor_total || 0),
+        percentualDesconto: f.percentual_desconto != null ? parseFloat(f.percentual_desconto) : null
+      }))
+    });
   },
 
   /** Cria rifa com números, prêmios e faixas de desconto */
   async criar(dados, adminUsuario, tenantId) {
     const {
       titulo, descricao, imagem_url, valor_cota, total_numeros,
-      data_sorteio, chave_pix, meta_minima_pct, premios = [], faixas = [],
+      data_sorteio, chave_pix, meta_minima_pct,       premios = [], faixas = [], imagens_urls,
+      pacotes_rapidos,
       cor_primaria, modalidade
     } = dados;
 
+    const imagensLista = Array.isArray(imagens_urls) && imagens_urls.length
+      ? imagens_urls
+      : parseImagensUrls(dados);
+    const capaUrl = imagensLista[0] || imagem_url || '';
+    const pacotesJson = pacotes_rapidos != null
+      ? (typeof pacotes_rapidos === 'string' ? pacotes_rapidos : serializePacotesRapidos(pacotes_rapidos))
+      : serializePacotesRapidos(parsePacotesRapidosFromBody(dados));
+
     const tenant = await prisma.tenant.findUnique({ where: { id: Number(tenantId) } });
     const PaymentService = require('./paymentService');
-    const MercadoPagoOAuthService = require('./mercadoPagoOAuthService');
-    const splitAtivo = MercadoPagoOAuthService.isSplitConfigured() && MercadoPagoOAuthService.isTenantConnected(tenant);
 
     if (!PaymentService.isConfigured(tenant)) {
-      const msg = MercadoPagoOAuthService.isSplitConfigured()
-        ? 'Conecte sua conta Mercado Pago na Carteira antes de criar rifas.'
-        : 'Configure sua chave PIX na Carteira antes de criar rifas.';
-      throw new Error(msg);
+      throw new Error('Configure sua chave PIX na Carteira antes de criar rifas.');
     }
 
-    const pixFinal = chave_pix || tenant?.pixChave || (splitAtivo ? 'mercadopago' : null);
-    if (!splitAtivo && !pixFinal) {
+    const pixFinal = chave_pix || tenant?.pixChave;
+    if (!pixFinal) {
       throw new Error('Configure sua chave PIX na Carteira antes de criar rifas.');
     }
 
@@ -109,14 +139,15 @@ const RifaService = {
           tenant: { connect: { id: Number(tenantId) } },
           titulo,
           descricao: descricao || '',
-          imagemUrl: imagem_url || '',
+          imagemUrl: capaUrl,
           corPrimaria: cor_primaria || null,
           valorCota: parseFloat(valor_cota),
           totalNumeros: parseInt(total_numeros),
           modalidade: (modalidade === 'numeros' && parseInt(total_numeros) <= 100) ? 'numeros' : 'cotas',
           dataSorteio: new Date(data_sorteio),
           chavePix: pixFinal,
-          metaMinimaPct: meta_minima_pct ? parseFloat(meta_minima_pct) : null
+          metaMinimaPct: meta_minima_pct ? parseFloat(meta_minima_pct) : null,
+          pacotesRapidos: pacotesJson
         }
       });
 
@@ -144,15 +175,8 @@ const RifaService = {
         });
       }
 
-      if (faixas.length > 0) {
-        await tx.faixaDesconto.createMany({
-          data: faixas.map((f) => ({
-            rifaId: nova.id,
-            quantidadeMin: parseInt(f.quantidade_min),
-            valorTotal: parseFloat(f.valor_total)
-          }))
-        });
-      }
+      await this._syncImagens(tx, nova.id, imagensLista.length ? imagensLista : (capaUrl ? [capaUrl] : []));
+      await this._syncFaixas(tx, nova.id, faixas);
 
       return nova;
     });
@@ -190,21 +214,64 @@ const RifaService = {
     const rifa = await this.buscarPorId(id, tenantId);
     if (!rifa) throw new Error('Rifa não encontrada.');
 
-    const atualizada = await prisma.rifa.update({
-      where: { id: Number(id) },
-      data: {
-        titulo: dados.titulo,
-        descricao: dados.descricao || '',
-        imagemUrl: dados.imagem_url || '',
-        corPrimaria: dados.cor_primaria || null,
-        valorCota: parseFloat(dados.valor_cota),
-        dataSorteio: new Date(dados.data_sorteio),
-        chavePix: dados.chave_pix,
-        metaMinimaPct: dados.meta_minima_pct ? parseFloat(dados.meta_minima_pct) : null,
-        ...(dados.modalidade ? {
-          modalidade: (dados.modalidade === 'numeros' && rifa.totalNumeros <= 100) ? 'numeros' : 'cotas'
-        } : {})
+    const imagensLista = Array.isArray(dados.imagens_urls) && dados.imagens_urls.length
+      ? dados.imagens_urls
+      : parseImagensUrls(dados);
+    const capaUrl = imagensLista[0] || dados.imagem_url || '';
+    const pacotesJson = dados.pacotes_rapidos != null
+      ? (typeof dados.pacotes_rapidos === 'string'
+        ? dados.pacotes_rapidos
+        : serializePacotesRapidos(dados.pacotes_rapidos))
+      : rifa.pacotesRapidos;
+
+    const atualizada = await prisma.$transaction(async (tx) => {
+      const updated = await tx.rifa.update({
+        where: { id: Number(id) },
+        data: {
+          titulo: dados.titulo,
+          descricao: dados.descricao || '',
+          imagemUrl: capaUrl,
+          corPrimaria: dados.cor_primaria || null,
+          valorCota: parseFloat(dados.valor_cota),
+          dataSorteio: new Date(dados.data_sorteio),
+          chavePix: dados.chave_pix || rifa.chavePix,
+          metaMinimaPct: dados.meta_minima_pct ? parseFloat(dados.meta_minima_pct) : null,
+          ...(rifa.status === 'ativa' ? { pacotesRapidos: pacotesJson } : {}),
+          ...(dados.modalidade ? {
+            modalidade: (dados.modalidade === 'numeros' && rifa.totalNumeros <= 100) ? 'numeros' : 'cotas'
+          } : {})
+        }
+      });
+
+      // Premios so podem ser redefinidos enquanto a rifa esta ativa
+      if (rifa.status === 'ativa' && Array.isArray(dados.premios)) {
+        await tx.premio.deleteMany({ where: { rifaId: Number(id) } });
+        const lista = dados.premios.length > 0
+          ? dados.premios
+          : [{ titulo: 'Prêmio Principal', descricao: '', ordem: 0, principal: true }];
+        await tx.premio.createMany({
+          data: lista.map((p, i) => ({
+            rifaId: Number(id),
+            titulo: p.titulo,
+            descricao: p.descricao || '',
+            imagemUrl: p.imagem_url || '',
+            ordem: typeof p.ordem === 'number' ? p.ordem : i,
+            principal: p.principal === true || i === 0
+          }))
+        });
       }
+
+      if (rifa.status === 'ativa') {
+        const capaSync = await this._syncImagens(tx, id, imagensLista);
+        if (capaSync && capaSync !== capaUrl) {
+          await tx.rifa.update({ where: { id: Number(id) }, data: { imagemUrl: capaSync } });
+        }
+        if (Array.isArray(dados.faixas) && dados.faixa_descontos_configured === '1') {
+          await this._syncFaixas(tx, id, dados.faixas);
+        }
+      }
+
+      return updated;
     });
 
     const LogService = require('./logService');
@@ -231,11 +298,10 @@ const RifaService = {
     const stats = await this.obterEstatisticas(id);
     const pctVendido = (stats.vendidos / stats.total) * 100;
 
-    // Verifica meta mínima — cancela e reembolsa se não atingiu
+    // Meta mínima: só permite sortear após atingir % vendido (sem cancelamento nem reembolso)
     if (rifa.metaMinimaPct && pctVendido < rifa.metaMinimaPct) {
-      await this.cancelarPorMeta(id, adminUsuario, tenantId);
       throw new Error(
-        `Meta mínima de ${rifa.metaMinimaPct}% não atingida (${pctVendido.toFixed(1)}% vendido). Rifa cancelada e pagamentos marcados para reembolso.`
+        `Meta mínima de ${rifa.metaMinimaPct}% não atingida (${pctVendido.toFixed(1)}% vendido). Continue vendendo até bater a meta para realizar o sorteio.`
       );
     }
 
@@ -248,13 +314,18 @@ const RifaService = {
       throw new Error('Não há números vendidos para sortear.');
     }
 
-    const embaralhados = [...numerosVendidos].sort(() => Math.random() - 0.5);
     const premios = rifa.premios.length > 0 ? rifa.premios : [{ id: null, titulo: 'Prêmio Principal' }];
+    if (premios.length > numerosVendidos.length) {
+      throw new Error(
+        `Há ${premios.length} prêmio(s) cadastrado(s), mas apenas ${numerosVendidos.length} número(s) vendido(s). Não é possível sortear.`
+      );
+    }
+
+    const embaralhados = sortearPremiosDistinctos(numerosVendidos, premios.length);
     const resultados = [];
 
     await prisma.$transaction(async (tx) => {
       for (let i = 0; i < premios.length; i++) {
-        if (i >= embaralhados.length) break;
         const sorteado = embaralhados[i];
 
         if (premios[i].id) {
@@ -272,14 +343,18 @@ const RifaService = {
       }
 
       const principal = resultados[0];
-      await tx.rifa.update({
-        where: { id: Number(id) },
+      const finalized = await tx.rifa.updateMany({
+        where: { id: Number(id), status: 'ativa' },
         data: {
           status: 'finalizada',
           numeroSorteado: principal.numero,
-          ganhadorNome: principal.ganhador
+          ganhadorNome: principal.ganhador,
+          sorteadoEm: new Date()
         }
       });
+      if (finalized.count === 0) {
+        throw new Error('Sorteio já realizado ou rifa não está ativa.');
+      }
     });
 
     const LogService = require('./logService');
@@ -338,24 +413,6 @@ const RifaService = {
     return resultados;
   },
 
-  /** Cancela rifa por meta não atingida e marca reembolsos */
-  async cancelarPorMeta(id, adminUsuario, tenantId) {
-    await prisma.$transaction(async (tx) => {
-      await tx.rifa.update({ where: { id: Number(id) }, data: { status: 'cancelada' } });
-      await tx.reserva.updateMany({
-        where: { rifaId: Number(id), statusPagamento: { in: ['pendente', 'confirmado'] } },
-        data: { statusPagamento: 'reembolsado' }
-      });
-      await tx.numero.updateMany({
-        where: { rifaId: Number(id) },
-        data: { status: 'disponivel', usuarioId: null, reservadoAte: null }
-      });
-    });
-
-    const LogService = require('./logService');
-    await LogService.registrar(adminUsuario, 'cancelar_meta', `Rifa #${id} cancelada — meta não atingida`, tenantId);
-  },
-
   async listarEncerradas(tenantId, page = 1, limite = 12) {
     return this.listar({ tenantId, status: 'finalizada', page, limite });
   },
@@ -364,7 +421,7 @@ const RifaService = {
     const tenantFilter = tenantId ? { rifa: { tenantId: Number(tenantId) } } : {};
     const tid = tenantId ? Number(tenantId) : null;
 
-    const [receita, reservasPorDia, rifasPopulares, reservas, rifasAtivas, cotasVendidas, ultimosCompradores] = await Promise.all([
+    const [receita, reservasPorDia, rifasPopulares, reservas, rifasAtivas, cotasVendidas, ultimosCompradores, topCompradoresGrupos, topIndicacoes, compradoresUnicos] = await Promise.all([
       prisma.reserva.aggregate({
         where: { statusPagamento: 'confirmado', ...tenantFilter },
         _sum: { valorTotal: true }
@@ -407,7 +464,36 @@ const RifaService = {
             orderBy: { createdAt: 'desc' },
             take: 6
           })
-        : []
+        : [],
+      tid
+        ? prisma.reserva.groupBy({
+            by: ['usuarioId'],
+            where: { statusPagamento: 'confirmado', rifa: { tenantId: tid } },
+            _sum: { valorTotal: true },
+            _count: { id: true },
+            orderBy: { _sum: { valorTotal: 'desc' } },
+            take: 8
+          })
+        : [],
+      tid
+        ? prisma.reserva.groupBy({
+            by: ['codigoIndicacaoUsado'],
+            where: {
+              statusPagamento: 'confirmado',
+              rifa: { tenantId: tid },
+              codigoIndicacaoUsado: { not: null }
+            },
+            _count: { id: true },
+            orderBy: { _count: { id: 'desc' } },
+            take: 5
+          })
+        : [],
+      tid
+        ? prisma.reserva.groupBy({
+            by: ['usuarioId'],
+            where: { statusPagamento: 'confirmado', rifa: { tenantId: tid } }
+          }).then((r) => r.length)
+        : 0
     ]);
 
     const rifaIds = rifasPopulares.map((r) => r.rifaId);
@@ -421,11 +507,47 @@ const RifaService = {
 
     const pendentes = reservas.find((r) => r.statusPagamento === 'pendente')?._count || 0;
     const confirmados = reservas.find((r) => r.statusPagamento === 'confirmado')?._count || 0;
+    const expirados = reservas.find((r) => r.statusPagamento === 'expirado')?._count || 0;
     const taxaConversao = pendentes + confirmados > 0
       ? ((confirmados / (pendentes + confirmados)) * 100).toFixed(1)
       : 0;
 
     const faturamentoBruto = Number(receita._sum.valorTotal || 0);
+    const ticketMedio = confirmados > 0 ? faturamentoBruto / confirmados : 0;
+
+    let topCompradores = [];
+    if (tid && topCompradoresGrupos.length) {
+      const userIds = topCompradoresGrupos.map((g) => g.usuarioId);
+      const [usuarios, reservasCotas] = await Promise.all([
+        prisma.usuario.findMany({
+          where: { id: { in: userIds } },
+          select: { id: true, nome: true, telefone: true }
+        }),
+        prisma.reserva.findMany({
+          where: {
+            statusPagamento: 'confirmado',
+            rifa: { tenantId: tid },
+            usuarioId: { in: userIds }
+          },
+          select: { usuarioId: true, _count: { select: { reservaNumeros: true } } }
+        })
+      ]);
+      const usuarioMap = Object.fromEntries(usuarios.map((u) => [u.id, u]));
+      const cotasMap = {};
+      for (const r of reservasCotas) {
+        cotasMap[r.usuarioId] = (cotasMap[r.usuarioId] || 0) + r._count.reservaNumeros;
+      }
+      topCompradores = topCompradoresGrupos.map((g) => {
+        const u = usuarioMap[g.usuarioId] || {};
+        return {
+          nome: u.nome || 'Comprador',
+          telefone: u.telefone || '—',
+          compras: g._count.id,
+          cotas: cotasMap[g.usuarioId] || 0,
+          total: Number(g._sum.valorTotal || 0)
+        };
+      });
+    }
     const { TAXA_PLATAFORMA } = require('../lib/config');
     const taxaPlataformaCompradores = faturamentoBruto * TAXA_PLATAFORMA;
     const vendasPorDia = reservasPorDia.reverse().map((v) => ({
@@ -468,6 +590,16 @@ const RifaService = {
         rifa: r.rifa.titulo,
         data: r.createdAt
       })),
+      topCompradores,
+      topIndicacoes: (topIndicacoes || []).map((i) => ({
+        codigo: i.codigoIndicacaoUsado,
+        vendas: i._count.id
+      })),
+      reservasPendentes: pendentes,
+      reservasConfirmadas: confirmados,
+      reservasExpiradas: expirados,
+      ticketMedio,
+      compradoresUnicos,
       taxaConversao
     };
   },

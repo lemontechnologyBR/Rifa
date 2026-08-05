@@ -809,6 +809,63 @@
   border-style: dashed;
 }
 
+.admin-rifa-galeria-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: flex-start;
+  max-width: 100%;
+}
+
+.admin-rifa-galeria-item {
+  position: relative;
+  flex: 0 0 auto;
+  width: 88px;
+  max-width: 88px;
+}
+
+.admin-rifa-galeria-thumb {
+  width: 88px !important;
+  height: 88px !important;
+  max-width: 88px !important;
+  max-height: 88px !important;
+  object-fit: cover;
+  border-radius: 0.75rem;
+  border: 2px solid var(--admin-border);
+  display: block;
+  vertical-align: top;
+}
+
+.admin-rifa-galeria-badge {
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  z-index: 2;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  background: #059669;
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 999px;
+}
+
+.admin-rifa-galeria-remove {
+  position: absolute;
+  right: 2px;
+  top: 2px;
+  z-index: 2;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
 .admin-upload-btn {
   display: inline-flex;
   align-items: center;
@@ -1186,4 +1243,57 @@
 
 .admin-sim-total {
   padding-top: 0.25rem;
+}
+
+.admin-analytics-bars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.admin-analytics-bar-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  margin-bottom: 0.25rem;
+}
+.admin-analytics-bar-head span:first-child {
+  font-weight: 600;
+  color: var(--admin-text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.admin-analytics-bar-head span:last-child {
+  color: var(--admin-muted);
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+.admin-analytics-bar-track {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+.dark .admin-analytics-bar-track {
+  background: rgba(255, 255, 255, 0.08);
+}
+.admin-analytics-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #10b981, #059669);
+}
+.admin-analytics-bar-fill--violet {
+  background: linear-gradient(90deg, #8b5cf6, #6366f1);
+}
+.admin-metric-card--compact .admin-metric-value {
+  font-size: 1.35rem;
+}
+.admin-metric-card--compact .admin-metric-label {
+  font-size: 0.6875rem;
 }

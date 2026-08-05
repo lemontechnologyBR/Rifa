@@ -1,0 +1,64 @@
+<% const FAIXA_PCT_OPCOES = [10, 15, 20, 25, 30, 40, 50]; %>
+<% const faixasRifa = (typeof rifa !== 'undefined' && rifa && rifa.faixasDesconto) ? rifa.faixasDesconto : []; %>
+<% const podeEditar = !rifa || !rifa.id || rifa.status === 'ativa'; %>
+<% const legado = faixasRifa.length && faixasRifa.every(function(f) { return f.percentualDesconto == null; }); %>
+
+<fieldset class="border border-gray-200 dark:border-gray-700 rounded-xl p-4 space-y-3">
+  <legend class="text-sm font-semibold px-2">Descontos na compra (opcional)</legend>
+  <p class="text-xs text-gray-500 dark:text-gray-400">Marque os percentuais e informe a quantidade mínima de cotas para cada um.</p>
+
+  <% if (podeEditar) { %>
+  <input type="hidden" name="faixa_descontos_configured" value="1">
+<% const sugestaoQtd = { 10: 5, 15: 8, 20: 10, 25: 15, 30: 20, 40: 30, 50: 50 }; %>
+  <p class="text-xs text-amber-600 dark:text-amber-400 font-medium">Marque o desconto que deseja ativar (e ajuste a quantidade mínima).</p>
+  <div class="space-y-2">
+    <% FAIXA_PCT_OPCOES.forEach(function(pct) {
+      const existente = faixasRifa.find(function(f) { return f.percentualDesconto != null && Number(f.percentualDesconto) === pct; });
+      const checked = !!existente;
+      const qtdVal = existente ? existente.quantidadeMin : (sugestaoQtd[pct] || '');
+    %>
+    <label class="flex flex-wrap items-center gap-3 p-2 rounded-lg border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/40 cursor-pointer">
+      <input type="checkbox" name="faixa_pct_ativo" value="<%= pct %>" class="accent-emerald-500" <%= checked ? 'checked' : '' %>>
+      <span class="font-semibold text-sm w-14"><%= pct %>% OFF</span>
+      <span class="text-xs text-gray-500">a partir de</span>
+      <input type="number" name="faixa_pct_qtd_<%= pct %>" min="2" placeholder="<%= sugestaoQtd[pct] || 'Qtd' %>"
+        value="<%= checked ? qtdVal : '' %>"
+        class="admin-input w-24 py-1.5 text-sm">
+      <span class="text-xs text-gray-500">cotas</span>
+    </label>
+    <% }); %>
+  </div>
+  <script>
+  (function () {
+    document.querySelectorAll('input[name^="faixa_pct_qtd_"]').forEach(function (inp) {
+      inp.addEventListener('input', function () {
+        var cb = inp.closest('label')?.querySelector('input[name="faixa_pct_ativo"]');
+        if (cb && String(inp.value || '').trim()) cb.checked = true;
+      });
+    });
+  })();
+  </script>
+  <% if (legado && faixasRifa.length) { %>
+    <p class="text-xs text-amber-600 dark:text-amber-400">Esta rifa usa faixas antigas (valor fixo). Ao salvar com descontos % marcados, as faixas antigas serão substituídas.</p>
+    <ul class="text-xs text-gray-500 space-y-1">
+      <% faixasRifa.forEach(function(f) { %>
+        <li><%= f.quantidadeMin %>+ cotas → R$ <%= f.valorTotal.toFixed(2).replace('.', ',') %></li>
+      <% }); %>
+    </ul>
+  <% } %>
+  <% } else if (faixasRifa.length) { %>
+  <ul class="space-y-1 text-sm">
+    <% faixasRifa.forEach(function(f) { %>
+      <li>
+        <% if (f.percentualDesconto != null && f.percentualDesconto > 0) { %>
+          <%= f.quantidadeMin %>+ cotas · <strong><%= f.percentualDesconto %>%</strong> de desconto
+        <% } else { %>
+          <%= f.quantidadeMin %>+ cotas → R$ <%= f.valorTotal.toFixed(2).replace('.', ',') %>
+        <% } %>
+      </li>
+    <% }); %>
+  </ul>
+  <% } else { %>
+  <p class="text-xs text-gray-400">Nenhum desconto configurado.</p>
+  <% } %>
+</fieldset>

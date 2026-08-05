@@ -1,5 +1,11 @@
 <%- include('../partials/header') %>
 
+<%
+  const listaPremios = (rifa.premios || []).slice().sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+  const multiPremio = listaPremios.length > 1;
+  const dataSorteioExib = rifa.sorteadoEm || rifa.dataSorteio;
+%>
+
 <div class="max-w-3xl mx-auto px-4 py-12">
   <div class="bg-white dark:bg-gray-800/80 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700/60 overflow-hidden animate-fade-up">
     <div class="bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-500 py-12 text-center relative overflow-hidden">
@@ -11,18 +17,60 @@
       <h1 class="text-3xl font-extrabold dark:text-white mb-2">Resultado do Sorteio</h1>
       <p class="text-gray-500 dark:text-gray-400 mb-8"><%= rifa.titulo %></p>
 
-      <div class="bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-indigo-900/30 dark:to-violet-900/30 border-2 border-indigo-200 dark:border-indigo-800 rounded-2xl p-8 mb-6">
-        <p class="text-sm text-indigo-600 dark:text-indigo-400 font-semibold uppercase tracking-wide mb-2">Número Sorteado</p>
-        <p class="text-6xl sm:text-7xl font-black bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent"><%= rifa.numeroSorteado %></p>
-      </div>
+      <% if (multiPremio) { %>
+        <div class="space-y-4 text-left mb-6">
+          <% listaPremios.forEach(function(p, i) {
+            const medalBg = i === 0
+              ? 'bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/10 border-amber-200 dark:border-amber-700/60 ring-1 ring-amber-300/40'
+              : i === 1
+                ? 'bg-gradient-to-br from-slate-50 to-gray-50 dark:from-slate-800/40 dark:to-gray-900/40 border-slate-200 dark:border-slate-600'
+                : 'bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/10 border-orange-200 dark:border-orange-800/50';
+            const badgeBg = i === 0
+              ? 'bg-gradient-to-br from-yellow-300 to-amber-500 text-amber-950'
+              : i === 1
+                ? 'bg-gradient-to-br from-slate-200 to-slate-400 text-slate-800'
+                : 'bg-gradient-to-br from-orange-300 to-orange-600 text-orange-950';
+          %>
+            <div class="rounded-2xl border p-5 <%= medalBg %>">
+              <div class="flex items-start gap-4">
+                <div class="w-12 h-12 rounded-full flex flex-col items-center justify-center font-black shadow-md flex-shrink-0 leading-none <%= badgeBg %>">
+                  <span class="text-sm leading-none"><%= i === 0 ? '1º' : i === 1 ? '2º' : '3º' %></span>
+                  <span class="text-[8px] uppercase opacity-80 leading-none mt-0.5 tracking-wide">lugar</span>
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="font-bold text-gray-900 dark:text-white mb-3 text-lg leading-snug"><%= p.titulo %></p>
+                  <div class="flex flex-wrap gap-5 items-end">
+                    <div>
+                      <p class="text-xs text-gray-500 mb-0.5">Número</p>
+                      <p class="text-3xl font-black text-indigo-600 dark:text-indigo-300"><%= p.numeroSorteado != null ? p.numeroSorteado : '—' %></p>
+                    </div>
+                    <div>
+                      <p class="text-xs text-gray-500 mb-0.5">Ganhador(a)</p>
+                      <p class="text-lg font-bold text-emerald-700 dark:text-emerald-300"><%= p.ganhadorNome || 'Não informado' %></p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      <% } else { %>
+        <div class="bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-indigo-900/30 dark:to-violet-900/30 border-2 border-indigo-200 dark:border-indigo-800 rounded-2xl p-8 mb-6">
+          <p class="text-sm text-indigo-600 dark:text-indigo-400 font-semibold uppercase tracking-wide mb-2">Número Sorteado</p>
+          <p class="text-6xl sm:text-7xl font-black bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent"><%= (listaPremios[0] && listaPremios[0].numeroSorteado != null) ? listaPremios[0].numeroSorteado : rifa.numeroSorteado %></p>
+        </div>
 
-      <div class="bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/30 dark:to-green-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-6">
-        <p class="text-sm text-emerald-600 dark:text-emerald-400 font-semibold mb-1">🎉 Ganhador(a)</p>
-        <p class="text-2xl font-bold text-emerald-700 dark:text-emerald-300"><%= rifa.ganhadorNome || 'Não informado' %></p>
-      </div>
+        <div class="bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/30 dark:to-green-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-6 mb-2">
+          <p class="text-sm text-emerald-600 dark:text-emerald-400 font-semibold mb-1">🎉 Ganhador(a)</p>
+          <p class="text-2xl font-bold text-emerald-700 dark:text-emerald-300"><%= (listaPremios[0] && listaPremios[0].ganhadorNome) || rifa.ganhadorNome || 'Não informado' %></p>
+          <% if (listaPremios[0] && listaPremios[0].titulo) { %>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2"><%= listaPremios[0].titulo %></p>
+          <% } %>
+        </div>
+      <% } %>
 
       <p class="text-gray-400 text-sm mt-6">
-        Sorteio realizado em <%= rifa.dataSorteio ? new Date(rifa.dataSorteio).toLocaleString('pt-BR') : '—' %>
+        Sorteio realizado em <%= dataSorteioExib ? new Date(dataSorteioExib).toLocaleString('pt-BR') : '—' %>
       </p>
 
       <a href="<%= tenantBase %>/encerradas" class="inline-flex items-center gap-2 mt-8 btn-brand font-semibold px-6 py-3 rounded-xl shadow-md">

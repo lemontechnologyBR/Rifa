@@ -10,14 +10,55 @@ const OrganizadorService = {
     const [organizador, tenant, totalRifas] = await Promise.all([
       prisma.organizador.findFirst({
         where: { id: Number(organizadorId), tenantId: Number(tenantId) },
-        select: { id: true, nome: true, email: true, googleId: true, createdAt: true }
+        select: {
+          id: true,
+          nome: true,
+          email: true,
+          googleId: true,
+          createdAt: true,
+          senhaHash: true,
+          pinHash: true
+        }
       }),
       prisma.tenant.findUnique({ where: { id: Number(tenantId) } }),
       prisma.rifa.count({ where: { tenantId: Number(tenantId) } })
     ]);
 
     if (!organizador || !tenant) throw new Error('Conta não encontrada.');
-    return { organizador, tenant, totalRifas };
+    const { senhaHash, pinHash, ...rest } = organizador;
+    return {
+      organizador: {
+        ...rest,
+        temSenha: !!senhaHash,
+        temPin: !!pinHash
+      },
+      tenant,
+      totalRifas
+    };
+  },
+
+  async alterarSenha(organizadorId, tenantId, { senhaAtual, senhaNova, senhaConfirmar } = {}) {
+    const bcrypt = require('bcrypt');
+    const org = await prisma.organizador.findFirst({
+      where: { id: Number(organizadorId), tenantId: Number(tenantId) }
+    });
+    if (!org) throw new Error('Conta não encontrada.');
+
+    const nova = String(senhaNova || '');
+    const conf = String(senhaConfirmar || '');
+    if (nova.length < 6) throw new Error('A nova senha deve ter no mínimo 6 caracteres.');
+    if (nova !== conf) throw new Error('As senhas não coincidem.');
+
+    if (org.senhaHash) {
+      const ok = await bcrypt.compare(String(senhaAtual || ''), org.senhaHash);
+      if (!ok) throw new Error('Senha atual incorreta.');
+    }
+
+    await prisma.organizador.update({
+      where: { id: org.id },
+      data: { senhaHash: bcrypt.hashSync(nova, 10) }
+    });
+    return true;
   },
 
   async atualizarConta(organizadorId, tenantId, dados, adminUsuario) {

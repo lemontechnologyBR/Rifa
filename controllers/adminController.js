@@ -6,6 +6,8 @@ const RifaService = require('../services/rifaService');
 const ReservaService = require('../services/reservaService');
 const AuthService = require('../services/authService');
 const LogService = require('../services/logService');
+const { parseFaixas, parseImagensUrls } = require('../lib/rifaFormParse');
+const { parsePacotesRapidosFromBody, serializePacotesRapidos } = require('../lib/rifaPacotes');
 
 const adminController = {
   loginForm(req, res) {
@@ -60,8 +62,15 @@ const adminController = {
     try {
       const premios = parsePremios(req.body);
       const faixas = parseFaixas(req.body);
+      const imagens_urls = parseImagensUrls(req.body);
 
-      await RifaService.criar({ ...req.body, premios, faixas }, req.session.adminUsuario);
+      await RifaService.criar({
+        ...req.body,
+        premios,
+        faixas,
+        imagens_urls,
+        pacotes_rapidos: serializePacotesRapidos(parsePacotesRapidosFromBody(req.body))
+      }, req.session.adminUsuario);
       res.redirect('/admin?msg=Rifa criada com sucesso!');
     } catch (err) {
       res.render('admin/rifa-form', { titulo: 'Nova Rifa', rifa: req.body, erro: err.message, csrfToken: res.locals.csrfToken });
@@ -76,7 +85,13 @@ const adminController = {
 
   async atualizarRifa(req, res) {
     try {
-      await RifaService.atualizar(req.params.id, req.body, req.session.adminUsuario);
+      await RifaService.atualizar(req.params.id, {
+        ...req.body,
+        premios: parsePremios(req.body),
+        faixas: parseFaixas(req.body),
+        imagens_urls: parseImagensUrls(req.body),
+        pacotes_rapidos: serializePacotesRapidos(parsePacotesRapidosFromBody(req.body))
+      }, req.session.adminUsuario);
       res.redirect('/admin?msg=Rifa atualizada!');
     } catch (err) {
       const rifa = await RifaService.buscarPorId(req.params.id);
@@ -120,7 +135,9 @@ const adminController = {
 
   async sortear(req, res) {
     try {
-      const resultados = await RifaService.realizarSorteio(req.params.id, req.session.adminUsuario);
+      const rifa = await RifaService.buscarPorId(req.params.id);
+      if (!rifa) throw new Error('Rifa não encontrada.');
+      const resultados = await RifaService.realizarSorteio(req.params.id, req.session.adminUsuario, rifa.tenantId);
       const msg = resultados.map((r) => `${r.premio}: nº${r.numero} (${r.ganhador})`).join(' | ');
       res.redirect(`/admin/rifas/${req.params.id}/participantes?msg=${encodeURIComponent('Sorteio: ' + msg)}`);
     } catch (err) {
@@ -150,29 +167,10 @@ const adminController = {
   }
 };
 
-/** Parse prêmios do formulário dinâmico */
-function parsePremios(body) {
-  const premios = [];
-  if (body.premio_titulo) {
-    const titulos = Array.isArray(body.premio_titulo) ? body.premio_titulo : [body.premio_titulo];
-    const descs = Array.isArray(body.premio_descricao) ? body.premio_descricao : [body.premio_descricao || ''];
-    titulos.forEach((t, i) => {
-      if (t) premios.push({ titulo: t, descricao: descs[i] || '' });
-    });
-  }
-  return premios;
-}
+const { parsePremiosFromBody } = require('../lib/rifaPremiosParse');
 
-function parseFaixas(body) {
-  const faixas = [];
-  if (body.faixa_qtd) {
-    const qtds = Array.isArray(body.faixa_qtd) ? body.faixa_qtd : [body.faixa_qtd];
-    const vals = Array.isArray(body.faixa_valor) ? body.faixa_valor : [body.faixa_valor];
-    qtds.forEach((q, i) => {
-      if (q && vals[i]) faixas.push({ quantidade_min: q, valor_total: vals[i] });
-    });
-  }
-  return faixas;
+function parsePremios(body) {
+  return parsePremiosFromBody(body);
 }
 
 module.exports = adminController;

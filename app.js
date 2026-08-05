@@ -16,7 +16,6 @@ const { csrfToken, validarCSRF } = require('./middleware/csrf');
 const platformRoutes = require('./routes/platform');
 const superAdminRoutes = require('./routes/superAdmin');
 const authGoogleRoutes = require('./routes/authGoogle');
-const authMercadoPagoRoutes = require('./routes/authMercadoPago');
 const tenantRoutes = require('./routes/tenant');
 const pwaController = require('./controllers/pwaController');
 const app = express();
@@ -211,7 +210,6 @@ app.use(['/super', '/:slug/admin'], (req, res, next) => {
 
 // Rotas fixas antes do slug dinâmico
 app.use('/auth', authGoogleRoutes);
-app.use('/auth', authMercadoPagoRoutes);
 app.use('/', platformRoutes);
 app.use('/super', superAdminRoutes);
 app.use('/:slug', tenantRoutes);

@@ -80,7 +80,28 @@ const validarSaque = [
       const n = Number(String(val).replace(',', '.'));
       if (!Number.isFinite(n) || n <= 0) throw new Error('Valor de saque inválido.');
       return true;
+    }),
+  body('pin')
+    .matches(/^\d{6}$/).withMessage('Informe o PIN de 6 dígitos para confirmar o saque.')
+];
+
+const validarPinSaque = [
+  body('pin')
+    .matches(/^\d{6}$/).withMessage('O PIN deve ter 6 dígitos.'),
+  body('confirmar_pin')
+    .matches(/^\d{6}$/).withMessage('Confirme o PIN com 6 dígitos.')
+    .custom((val, { req }) => {
+      if (String(val) !== String(req.body.pin)) throw new Error('Os PINs não coincidem.');
+      return true;
     })
+];
+
+const validarAlterarSenha = [
+  body('senha_nova').isLength({ min: 6 }).withMessage('A nova senha deve ter no mínimo 6 caracteres.'),
+  body('senha_confirmar').custom((val, { req }) => {
+    if (val !== req.body.senha_nova) throw new Error('As senhas não coincidem.');
+    return true;
+  })
 ];
 
 const validarBuscaRifas = [
@@ -101,5 +122,7 @@ module.exports = {
   validarComentario,
   validarWebhook,
   validarSaque,
+  validarPinSaque,
+  validarAlterarSenha,
   validarBuscaRifas
 };

@@ -25,7 +25,7 @@
 (function () {
   var tunnel = /ngrok-free\.(app|dev)|\.ngrok\.io|\.ngrok-free\.app/i.test(location.hostname);
   if (!tunnel) return;
-  var sheets = ['/css/custom.css'<% if (typeof tenant !== 'undefined' && tenant) { %>, '/css/public.css'<% } %>];
+  var sheets = ['/css/custom.css', '/css/public.css'];
   sheets.forEach(function (href) {
     fetch(href, {
       credentials: 'same-origin',

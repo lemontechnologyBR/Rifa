@@ -37,7 +37,7 @@
             <td><%= t._count.rifas %></td>
             <td class="super-pix-cell">
               <% if (t.pixInfo && t.pixInfo.valor) { %>
-                <span class="super-badge <%= t.mpAccessToken ? 'super-badge--modalidade-mp' : 'super-badge--pix-ok' %> text-[10px]"><%= t.pixInfo.tipo %></span>
+                <span class="super-badge super-badge--pix-ok text-[10px]"><%= t.pixInfo.tipo %></span>
                 <span class="super-pix-key" title="<%= t.pixInfo.valor %>"><%= t.pixInfo.valor %></span>
               <% } else { %>
                 <span class="super-badge super-badge--pix-no">Pendente</span>

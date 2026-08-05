@@ -11,9 +11,12 @@
   totalCotas: 100,
   dataSorteio: '',
   modalidade: 'cotas',
+  premioModo: 'unico',
+  premio1: '',
+  premio2: '',
+  premio3: '',
   get podeGrade() { return this.totalCotas >= 1 && this.totalCotas <= 100; },
   carteiraOk: <%= typeof carteiraOk !== 'undefined' ? carteiraOk : 'false' %>,
-  mpSplit: <%= typeof mpSplitConfigured !== 'undefined' && mpSplitConfigured ? 'true' : 'false' %>,
   organizadorPercentual: <%= typeof organizadorPercentual !== 'undefined' ? organizadorPercentual : 0.95 %>,
   taxaFixaCota: <%= typeof taxaFixaCota !== 'undefined' ? taxaFixaCota : 0 %>,
   get taxaCota() { return Math.max(0, this.valorCota) * (1 - this.organizadorPercentual) + this.taxaFixaCota; },
@@ -30,22 +33,40 @@
     this.totalCotas = 100;
     this.dataSorteio = '';
     this.modalidade = 'cotas';
+    this.premioModo = 'unico';
+    this.premio1 = '';
+    this.premio2 = '';
+    this.premio3 = '';
   },
   openWizard() {
     if (!this.carteiraOk) {
-      alert(this.mpSplit
-        ? 'Conecte sua conta Mercado Pago na Carteira antes de criar sorteios.'
-        : 'Configure sua chave PIX na Carteira antes de criar sorteios.');
+      alert('Configure sua chave PIX na Carteira antes de criar sorteios.');
       window.location.href = '<%= adminBase %>/carteira';
       return;
     }
     this.resetWizard();
     this.modalNovaRifa = true;
   },
-  validStep1() { return this.titulo.trim().length >= 3 && this.valorCota > 0 && this.totalCotas >= 1; },
+  validStep1() {
+    if (!(this.titulo.trim().length >= 3 && this.valorCota > 0 && this.totalCotas >= 1)) return false;
+    if (this.premioModo === 'podio') {
+      return this.premio1.trim() && this.premio2.trim() && this.premio3.trim();
+    }
+    if (this.premioModo === 'duplo') {
+      return this.premio1.trim() && this.premio2.trim();
+    }
+    return !!this.premio1.trim();
+  },
   validStep2() { return !!this.dataSorteio; },
   nextStep() {
-    if (this.wizardStep === 1 && !this.validStep1()) return alert('Preencha nome, valor e total de cotas.');
+    if (this.wizardStep === 1 && !this.validStep1()) {
+      const msg = this.premioModo === 'podio'
+        ? 'Preencha nome, valor, cotas e os três prêmios (1º, 2º e 3º).'
+        : this.premioModo === 'duplo'
+          ? 'Preencha nome, valor, cotas e os dois prêmios (1º e 2º).'
+          : 'Preencha nome, valor, cotas e o prêmio.';
+      return alert(msg);
+    }
     if (this.wizardStep === 2 && !this.validStep2()) return alert('Informe a data do sorteio.');
     if (this.wizardStep < 3) this.wizardStep++;
   },

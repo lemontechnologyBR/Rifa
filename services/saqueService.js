@@ -247,14 +247,7 @@ const SaqueService = {
   },
 
   async processarSaque(tenant, saldoDisponivel, adminUsuario, valorBruto = null) {
-    const MercadoPagoOAuthService = require('./mercadoPagoOAuthService');
-    const mpConectado = MercadoPagoOAuthService.isSplitConfigured() && MercadoPagoOAuthService.isTenantConnected(tenant);
-
-    if (mpConectado && !(saldoDisponivel > 0)) {
-      throw new Error('Com Mercado Pago conectado, os pagamentos caem direto na sua conta — não é necessário sacar.');
-    }
-
-    const provider = mpConectado && saldoDisponivel > 0 ? 'woovi' : PaymentService.getProvider(tenant);
+    const provider = PaymentService.getProvider(tenant);
     let saldoEfetivo = Math.max(0, Number(saldoDisponivel) || 0);
     let wooviRefs = [];
     if (provider === 'woovi') {

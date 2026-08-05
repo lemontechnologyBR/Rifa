@@ -1,21 +1,17 @@
 /**
- * Carteira do organizador — Mercado Pago OAuth (split) ou chave PIX legada.
+ * Carteira do organizador — PIX via plataforma (Woovi).
  */
 const prisma = require('../lib/prisma');
 const PaymentService = require('./paymentService');
-const MercadoPagoOAuthService = require('./mercadoPagoOAuthService');
 const { chavesPixEquivalentes, validarChavePixPorTipo } = require('../lib/pixKey');
-const { ORGANIZADOR_PERCENTUAL, ORGANIZADOR_PERCENTUAL_WOOVI, TAXA_FIXA_COTA_WOOVI } = require('../lib/config');
-
-function gatewayReserva(reserva, tenant) {
-  return PaymentService.detectProviderFromRef(reserva?.wooviCorrelationId)
-    || PaymentService.getProvider(tenant)
-    || 'woovi';
-}
+const {
+  ORGANIZADOR_PERCENTUAL_WOOVI,
+  taxaFixaCotaWooviPara
+} = require('../lib/config');
 
 const CarteiraService = {
-  usesSplit(tenant) {
-    return MercadoPagoOAuthService.isSplitConfigured() && MercadoPagoOAuthService.isTenantConnected(tenant);
+  usesSplit() {
+    return false;
   },
 
   async totalSacado(tenantId) {
@@ -29,7 +25,7 @@ const CarteiraService = {
     return agg._sum.valorBruto || 0;
   },
 
-  async obterResumo(tenantId, tenant = null) {
+  async obterResumo(tenantId) {
     const rifas = await prisma.rifa.findMany({
       where: { tenantId: Number(tenantId) },
       select: { id: true }
@@ -51,13 +47,6 @@ const CarteiraService = {
         saldoSubconta: null,
         pendente: 0,
         reservasPendentes: 0
-      },
-      mercadopago: {
-        bruto: 0,
-        cotas: 0,
-        parteOrganizador: 0,
-        pendente: 0,
-        reservasPendentes: 0
       }
     };
     if (!rifaIds.length) return vazio;
@@ -69,66 +58,36 @@ const CarteiraService = {
         where: { ...whereBase, statusPagamento: 'confirmado' },
         select: {
           valorTotal: true,
-          wooviCorrelationId: true,
           createdAt: true,
           _count: { select: { reservaNumeros: true } }
         }
       }),
       prisma.reserva.findMany({
         where: { ...whereBase, statusPagamento: 'pendente' },
-        select: {
-          valorTotal: true,
-          wooviCorrelationId: true,
-          _count: { select: { reservaNumeros: true } }
-        }
+        select: { valorTotal: true }
       }),
       this.totalSacado(tenantId)
     ]);
 
     const woovi = { bruto: 0, cotas: 0, parteOrganizador: 0, pendente: 0, reservasPendentes: 0 };
-    const mercadopago = { bruto: 0, cotas: 0, parteOrganizador: 0, pendente: 0, reservasPendentes: 0 };
 
     for (const r of confirmadasList) {
       const valor = Number(r.valorTotal || 0);
       const cotas = r._count.reservaNumeros || 0;
-      const gw = gatewayReserva(r, tenant);
-      if (gw === 'mercadopago') {
-        mercadopago.bruto += valor;
-        mercadopago.cotas += cotas;
-        mercadopago.parteOrganizador += valor * ORGANIZADOR_PERCENTUAL;
-      } else {
-        woovi.bruto += valor;
-        woovi.cotas += cotas;
-        // Taxa Woovi: 5% do valor + R$ 0,50 por cota vendida (descontado do organizador).
-        woovi.parteOrganizador += Math.max(0, valor * ORGANIZADOR_PERCENTUAL_WOOVI - cotas * TAXA_FIXA_COTA_WOOVI);
-      }
+      woovi.bruto += valor;
+      woovi.cotas += cotas;
+      const taxaFixa = taxaFixaCotaWooviPara(r.createdAt);
+      woovi.parteOrganizador += Math.max(0, valor * ORGANIZADOR_PERCENTUAL_WOOVI - cotas * taxaFixa);
     }
 
     for (const r of pendentesList) {
-      const valor = Number(r.valorTotal || 0);
-      const gw = gatewayReserva(r, tenant);
-      if (gw === 'mercadopago') {
-        mercadopago.pendente += valor;
-        mercadopago.reservasPendentes++;
-      } else {
-        woovi.pendente += valor;
-        woovi.reservasPendentes++;
-      }
+      woovi.pendente += Number(r.valorTotal || 0);
+      woovi.reservasPendentes++;
     }
 
-    const saldoConfirmado = woovi.bruto + mercadopago.bruto;
-    const pendente = woovi.pendente + mercadopago.pendente;
-    const reservasPendentes = woovi.reservasPendentes + mercadopago.reservasPendentes;
-    const cotasConfirmadas = woovi.cotas + mercadopago.cotas;
-
-    // Fonte de verdade: banco (reservas confirmadas − saques). Não usa saldo da subconta Woovi.
     const saldoTeorico = woovi.parteOrganizador - totalSacado;
     let saldoDisponivel = Math.max(0, saldoTeorico);
 
-    // "Disponível para exibição": bruto/cotas que ainda não foram sacados. Enquanto não há saque,
-    // é igual ao total (nada foi retirado ainda). Após o primeiro saque, considera só as vendas
-    // Woovi confirmadas DEPOIS do último saque — evita mostrar valores já sacados como se ainda
-    // estivessem disponíveis (ex.: "R$ 25,00 em vendas" quando R$ 14,25 já foi retirado).
     woovi.brutoDisponivel = woovi.bruto;
     woovi.cotasDisponiveis = woovi.cotas;
 
@@ -139,33 +98,32 @@ const CarteiraService = {
       });
       if (ultimoSaque) {
         const posteriores = confirmadasList.filter(
-          (r) => gatewayReserva(r, tenant) !== 'mercadopago' && new Date(r.createdAt) > ultimoSaque.createdAt
+          (r) => new Date(r.createdAt) > ultimoSaque.createdAt
         );
         woovi.brutoDisponivel = posteriores.reduce((soma, r) => soma + Number(r.valorTotal || 0), 0);
         woovi.cotasDisponiveis = posteriores.reduce((soma, r) => soma + (r._count.reservaNumeros || 0), 0);
 
-        // Caso raro: saque histórico maior que o total Woovi acumulado até então (ex.: saque feito
-        // antes de existir o split Mercado Pago via OAuth, quando fundos de ambos os canais ainda
-        // ficavam sob custódia única da plataforma). Em vez de gerar uma "dívida eterna" contra
-        // vendas futuras, considera apenas as vendas confirmadas depois do último saque.
         if (saldoTeorico < 0) {
           saldoDisponivel = Math.max(
             0,
-            woovi.brutoDisponivel * ORGANIZADOR_PERCENTUAL_WOOVI - woovi.cotasDisponiveis * TAXA_FIXA_COTA_WOOVI
+            posteriores.reduce((soma, r) => {
+              const valor = Number(r.valorTotal || 0);
+              const cotas = r._count.reservaNumeros || 0;
+              return soma + Math.max(0, valor * ORGANIZADOR_PERCENTUAL_WOOVI - cotas * taxaFixaCotaWooviPara(r.createdAt));
+            }, 0)
           );
         }
       }
     }
 
     return {
-      saldoConfirmado,
-      pendente,
-      cotasConfirmadas,
-      reservasPendentes,
+      saldoConfirmado: woovi.bruto,
+      pendente: woovi.pendente,
+      cotasConfirmadas: woovi.cotas,
+      reservasPendentes: woovi.reservasPendentes,
       totalSacado,
       saldoDisponivel,
-      woovi,
-      mercadopago
+      woovi
     };
   },
 
@@ -203,9 +161,7 @@ const CarteiraService = {
       select: { wooviCorrelationId: true }
     });
 
-    return reservas
-      .map((r) => r.wooviCorrelationId)
-      .filter((id) => id && !/^\d+$/.test(String(id)));
+    return reservas.map((r) => r.wooviCorrelationId).filter(Boolean);
   },
 
   async salvarConfig(tenantId, { pix_chave, pix_tipo }) {

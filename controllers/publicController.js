@@ -6,6 +6,7 @@ const NumeroService = require('../services/numeroService');
 const ReservaService = require('../services/reservaService');
 const CarrinhoService = require('../services/carrinhoService');
 const { TEMPO_RESERVA_MIN, obterExpiraEmReserva } = require('../lib/reservaConfig');
+const { detalheCompraPublic } = require('../lib/rifaPricing');
 const { anexarBrandingRifas, brandingEfetivo } = require('../lib/rifaBranding');
 const { tenantIndexMeta, rifaDetalheMeta, truncate, tenantKeywords } = require('../lib/seoMeta');
 
@@ -116,10 +117,15 @@ const publicController = {
       `🎟️ Participe da rifa "${rifa.titulo}"! ${res.locals.baseUrl}/${req.tenant.slug}/rifas/${rifa.id}`
     );
 
+    const valorCotaNum = Number(rifa.valorCota) || 0;
+    const compraDetalheInicial = detalheCompraPublic(rifa.faixasDesconto, valorCotaNum, 1);
+
     res.render('public/rifa-detalhe', {
       titulo: rifa.titulo,
       ...rifaDetalheMeta({ baseUrl: res.locals.baseUrl || '', tenant: req.tenant, rifa }),
       rifa, numeros, stats, carrinhoNumeros,
+      valorCotaNum,
+      compraDetalheInicial,
       comentarios: rifa.comentarios,
       whatsappMsg,
       codigoIndicacao: req.session.codigoIndicacao || '',

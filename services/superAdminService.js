@@ -4,31 +4,23 @@
 const prisma = require('../lib/prisma');
 const PaymentService = require('./paymentService');
 const {
-  ORGANIZADOR_PERCENTUAL,
-  ORGANIZADOR_PERCENTUAL_WOOVI
+  ORGANIZADOR_PERCENTUAL_WOOVI,
+  taxaFixaCotaWooviPara
 } = require('../lib/config');
 
 function paymentInfoForTenant(tenant) {
   const provider = PaymentService.getProvider(tenant);
-  if (provider === 'mercadopago') {
-    return {
-      gateway: 'mercadopago',
-      gatewayLabel: 'MP Direto',
-      organizadorPercentual: ORGANIZADOR_PERCENTUAL,
-      taxaPlataforma: 1 - ORGANIZADOR_PERCENTUAL
-    };
-  }
   if (provider === 'woovi') {
     return {
       gateway: 'woovi',
-      gatewayLabel: 'Plataforma',
+      gatewayLabel: 'PIX plataforma',
       organizadorPercentual: ORGANIZADOR_PERCENTUAL_WOOVI,
       taxaPlataforma: 1 - ORGANIZADOR_PERCENTUAL_WOOVI
     };
   }
   return {
     gateway: null,
-    gatewayLabel: 'Não configurado',
+    gatewayLabel: 'PIX pendente',
     organizadorPercentual: ORGANIZADOR_PERCENTUAL_WOOVI,
     taxaPlataforma: 1 - ORGANIZADOR_PERCENTUAL_WOOVI
   };
@@ -82,8 +74,6 @@ const SuperAdminService = {
                 select: {
                   nome: true,
                   slug: true,
-                  mpUserId: true,
-                  mpAccessToken: true,
                   pixChave: true
                 }
               }
@@ -101,7 +91,7 @@ const SuperAdminService = {
     return { vendas, total, paginas: Math.max(1, Math.ceil(total / limite)), page };
   },
 
-  async listarOrganizadores({ page = 1, limite = 20, busca = '', filtro = '' } = {}) {
+  async listarOrganizadores({ page = 1, limite = 20, busca = '', filtro = '', status = 'todos' } = {}) {
     if (filtro === 'leads_quentes') {
       const OnboardingEmailService = require('./onboardingEmailService');
       const leads = await OnboardingEmailService.listarLeadsQuentes();
@@ -116,6 +106,9 @@ const SuperAdminService = {
           || String(o.tenant.pixChave || '').toLowerCase().includes(q)
         );
       }
+      if (status && status !== 'todos') {
+        filtrados = filtrados.filter((o) => o.tenant.status === status);
+      }
       const total = filtrados.length;
       const slice = filtrados.slice((page - 1) * limite, page * limite);
       const tenantIds = slice.map((o) => o.tenant.id);
@@ -123,13 +116,10 @@ const SuperAdminService = {
       const sacadoMap = await this._sacadoPorTenants(tenantIds);
 
       const organizadores = slice.map((o) => {
-        const saldo = saldoMap[o.tenant.id] || { confirmado: 0, pendente: 0 };
+        const saldo = saldoMap[o.tenant.id] || { confirmado: 0, pendente: 0, parteOrganizadorWoovi: 0 };
         const payment = paymentInfoForTenant(o.tenant);
         const totalSacado = sacadoMap[o.tenant.id] || 0;
-        const parteBruta = saldo.confirmado * payment.organizadorPercentual;
-        const saldoDisponivel = payment.gateway === 'mercadopago'
-          ? parteBruta
-          : Math.max(0, parteBruta - totalSacado);
+        const saldoDisponivel = Math.max(0, saldo.parteOrganizadorWoovi - totalSacado);
         return {
           ...o,
           tenant: { ...o.tenant, _count: { rifas: 0 } },
@@ -152,20 +142,30 @@ const SuperAdminService = {
       };
     }
 
+    const tenantWhere = {};
+    if (status && status !== 'todos') tenantWhere.status = status;
+    if (filtro === 'sem_rifa') tenantWhere.rifas = { none: {} };
+    if (filtro === 'sem_carteira') {
+      tenantWhere.pixChave = null;
+    }
+
     const where = {};
     if (busca && String(busca).trim()) {
       const q = String(busca).trim();
-      where.OR = [
+      const orClause = [
         { nome: { contains: q } },
         { email: { contains: q } },
         { tenant: { nome: { contains: q } } },
         { tenant: { slug: { contains: q.toLowerCase() } } },
         { tenant: { pixChave: { contains: q } } }
       ];
-    }
-
-    if (filtro === 'sem_rifa') {
-      where.tenant = { ...(where.tenant || {}), rifas: { none: {} } };
+      if (Object.keys(tenantWhere).length) {
+        where.AND = [{ tenant: tenantWhere }, { OR: orClause }];
+      } else {
+        where.OR = orClause;
+      }
+    } else if (Object.keys(tenantWhere).length) {
+      where.tenant = tenantWhere;
     }
 
     const [organizadores, total] = await Promise.all([
@@ -178,11 +178,9 @@ const SuperAdminService = {
               nome: true,
               slug: true,
               status: true,
+              createdAt: true,
               pixChave: true,
-              mpUserId: true,
-              mpAccessToken: true,
-              mpNickname: true,
-              mpConnectedAt: true,
+              wooviAtivo: true,
               _count: { select: { rifas: true } }
             }
           }
@@ -200,15 +198,12 @@ const SuperAdminService = {
     const sacadoMap = await this._sacadoPorTenants(tenantIds);
 
     const organizadoresComSaldo = organizadores.map(o => {
-      const saldo = saldoMap[o.tenant.id] || { confirmado: 0, pendente: 0 };
+      const saldo = saldoMap[o.tenant.id] || { confirmado: 0, pendente: 0, parteOrganizadorWoovi: 0 };
       const payment = paymentInfoForTenant(o.tenant);
       const totalSacado = sacadoMap[o.tenant.id] || 0;
-      const parteBruta = saldo.confirmado * payment.organizadorPercentual;
-      const saldoDisponivel = payment.gateway === 'mercadopago'
-        ? parteBruta
-        : Math.max(0, parteBruta - totalSacado);
+      const saldoDisponivel = Math.max(0, saldo.parteOrganizadorWoovi - totalSacado);
       const totalRifas = o.tenant._count?.rifas ?? 0;
-      const carteiraOk = payment.gateway === 'mercadopago' || payment.gateway === 'woovi';
+      const carteiraOk = payment.gateway === 'woovi';
       const diasCadastro = Math.floor((Date.now() - new Date(o.createdAt).getTime()) / 86400000);
       const leadQuente = totalRifas === 0 && carteiraOk && diasCadastro >= 5 && !o.campanhaLeadsSentAt;
 
@@ -237,22 +232,43 @@ const SuperAdminService = {
     const saldoMap = {};
     if (!tenantIds.length) return saldoMap;
 
+    const emptySaldo = () => ({
+      confirmado: 0,
+      pendente: 0,
+      parteOrganizadorWoovi: 0
+    });
+
     const rifas = await prisma.rifa.findMany({
       where: { tenantId: { in: tenantIds } },
       select: {
         tenantId: true,
         reservas: {
           where: { statusPagamento: { in: ['confirmado', 'pendente'] } },
-          select: { valorTotal: true, statusPagamento: true }
+          select: {
+            valorTotal: true,
+            statusPagamento: true,
+            createdAt: true,
+            _count: { select: { reservaNumeros: true } }
+          }
         }
       }
     });
 
     for (const rifa of rifas) {
-      if (!saldoMap[rifa.tenantId]) saldoMap[rifa.tenantId] = { confirmado: 0, pendente: 0 };
+      if (!saldoMap[rifa.tenantId]) saldoMap[rifa.tenantId] = emptySaldo();
       for (const res of rifa.reservas) {
-        if (res.statusPagamento === 'confirmado') saldoMap[rifa.tenantId].confirmado += res.valorTotal;
-        else saldoMap[rifa.tenantId].pendente += res.valorTotal;
+        const valor = Number(res.valorTotal || 0);
+        const cotas = res._count?.reservaNumeros || 0;
+        if (res.statusPagamento === 'confirmado') {
+          saldoMap[rifa.tenantId].confirmado += valor;
+          const taxaFixa = taxaFixaCotaWooviPara(res.createdAt);
+          saldoMap[rifa.tenantId].parteOrganizadorWoovi += Math.max(
+            0,
+            valor * ORGANIZADOR_PERCENTUAL_WOOVI - cotas * taxaFixa
+          );
+        } else {
+          saldoMap[rifa.tenantId].pendente += valor;
+        }
       }
     }
     return saldoMap;
@@ -290,7 +306,6 @@ const SuperAdminService = {
       reservasExpiradas,
       rifasFinalizadas,
       rifasCanceladas,
-      tenantsMP,
       tenantsWoovi,
       saquesResumo,
       gmvMes
@@ -301,8 +316,7 @@ const SuperAdminService = {
       prisma.reserva.count({ where: { statusPagamento: 'expirado' } }),
       prisma.rifa.count({ where: { status: 'finalizada' } }),
       prisma.rifa.count({ where: { status: 'cancelada' } }),
-      prisma.tenant.count({ where: { mpAccessToken: { not: null }, status: 'ativo' } }),
-      prisma.tenant.count({ where: { pixChave: { not: null }, mpAccessToken: null, status: 'ativo' } }),
+      prisma.tenant.count({ where: { pixChave: { not: null }, status: 'ativo' } }),
       prisma.saque.aggregate({
         _sum: { valorLiquido: true, valorBruto: true, taxa: true },
         _count: { id: true },
@@ -335,7 +349,6 @@ const SuperAdminService = {
       reservasExpiradas,
       rifasFinalizadas,
       rifasCanceladas,
-      tenantsMP,
       tenantsWoovi,
       totalSacadoLiquido,
       totalSacadoBruto,

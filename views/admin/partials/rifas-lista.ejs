@@ -13,7 +13,7 @@
         <span class="admin-onboard-step-num">1</span>
         <div>
           <p class="font-semibold text-sm">Configure a Carteira</p>
-          <p class="text-xs text-gray-500 dark:text-gray-400"><%= typeof mpSplitConfigured !== 'undefined' && mpSplitConfigured ? 'Conecte sua conta Mercado Pago' : 'Informe sua chave PIX' %></p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">Informe sua chave PIX na Carteira</p>
         </div>
       </div>
       <div class="admin-onboard-step">
@@ -39,6 +39,13 @@
       const linkPublico = (typeof baseUrl !== 'undefined' ? baseUrl : '') + tenantBase + '/rifas/' + r.id;
       const statusClass = r.status === 'ativa' ? 'admin-badge-ativa' : r.status === 'finalizada' ? 'admin-badge-finalizada' : 'admin-badge-cancelada';
       const statusLabel = r.status === 'finalizada' ? 'encerrada' : r.status;
+      const pctMeta = r.stats.total > 0 ? (r.stats.vendidos / r.stats.total) * 100 : 0;
+      const metaOk = !r.metaMinimaPct || pctMeta >= r.metaMinimaPct;
+      const dataOk = !r.dataSorteio || new Date() >= new Date(r.dataSorteio);
+      const podeSortear = dataOk && metaOk;
+      const sorteioAposLabel = r.dataSorteio
+        ? new Date(r.dataSorteio).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+        : '';
     %>
       <article class="admin-rifa-card">
         <div class="flex flex-col lg:flex-row lg:items-center gap-4">
@@ -78,13 +85,21 @@
               <i data-lucide="share-2" class="w-3.5 h-3.5"></i> Link
             </button>
             <% if (r.status === 'ativa') { %>
-              <form method="POST" action="<%= adminBase %>/rifas/<%= r.id %>/sortear" class="inline"
-                onsubmit="return confirm('Realizar sorteio de <%= r.titulo.replace(/'/g, "\\'") %>? Esta ação não pode ser desfeita.')">
-                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                <button type="submit" class="admin-action-btn border-amber-300 text-amber-700 dark:border-amber-700 dark:text-amber-300">
+              <% if (podeSortear) { %>
+                <form method="POST" action="<%= adminBase %>/rifas/<%= r.id %>/sortear" class="inline"
+                  onsubmit="return confirm('Realizar sorteio de <%= r.titulo.replace(/'/g, "\\'") %>? Esta ação não pode ser desfeita.')">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button type="submit" class="admin-action-btn border-amber-300 text-amber-700 dark:border-amber-700 dark:text-amber-300">
+                    <i data-lucide="trophy" class="w-3.5 h-3.5"></i> Sortear
+                  </button>
+                </form>
+              <% } else { %>
+                <button type="button" disabled
+                  class="admin-action-btn border-amber-300/50 text-amber-700/50 dark:border-amber-700/50 dark:text-amber-300/50 opacity-60 cursor-not-allowed"
+                  title="<%= !dataOk ? 'Sorteio disponível após ' + sorteioAposLabel : '' %><%= !dataOk && !metaOk ? ' · ' : '' %><%= !metaOk ? 'Meta mínima ' + r.metaMinimaPct + '% (atual ' + pctMeta.toFixed(1) + '%)' : '' %>">
                   <i data-lucide="trophy" class="w-3.5 h-3.5"></i> Sortear
                 </button>
-              </form>
+              <% } %>
             <% } %>
           </div>
         </div>

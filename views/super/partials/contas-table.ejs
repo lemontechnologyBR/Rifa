@@ -1,0 +1,196 @@
+<%
+  var _filtroContas = typeof filtro !== 'undefined' ? filtro : '';
+  var _buscaContas = typeof busca !== 'undefined' ? busca : '';
+  var _statusFiltro = typeof statusFiltro !== 'undefined' ? statusFiltro : 'todos';
+  function contaQs(opts) {
+  opts = opts || {};
+  const p = new URLSearchParams();
+  if (opts.page) p.set('page', String(opts.page));
+  if (_buscaContas) p.set('q', _buscaContas);
+  const f = opts.filtro !== undefined ? opts.filtro : _filtroContas;
+  if (f) p.set('filtro', f);
+  if (_statusFiltro && _statusFiltro !== 'todos') p.set('status', _statusFiltro);
+  const s = p.toString();
+  return s ? '?' + s : '';
+} %>
+
+<section class="super-panel">
+  <div class="super-panel-head">
+    <div>
+      <h2 class="super-panel-title">Contas</h2>
+      <p class="super-panel-sub">Loja + organizador em um só lugar · <%= total %> conta<%= total !== 1 ? 's' : '' %> · página <%= page %> de <%= paginas %></p>
+    </div>
+    <form method="GET" action="/super/sistemas" class="super-filters">
+      <input type="hidden" name="filtro" value="<%= _filtroContas %>">
+      <input type="text" name="q" value="<%= _buscaContas %>" placeholder="Buscar loja, slug, e-mail ou PIX…" class="super-input">
+      <select name="status" class="super-select">
+        <option value="todos" <%= _statusFiltro === 'todos' ? 'selected' : '' %>>Todos os status</option>
+        <option value="ativo" <%= _statusFiltro === 'ativo' ? 'selected' : '' %>>Ativos</option>
+        <option value="suspenso" <%= _statusFiltro === 'suspenso' ? 'selected' : '' %>>Suspensos</option>
+      </select>
+      <button type="submit" class="super-btn super-btn--primary"><i data-lucide="search" class="w-4 h-4"></i> Filtrar</button>
+      <% if (_buscaContas || _filtroContas || (_statusFiltro && _statusFiltro !== 'todos')) { %>
+        <a href="/super/sistemas" class="super-btn super-btn--ghost">Limpar</a>
+      <% } %>
+    </form>
+  </div>
+
+  <div class="super-filters mb-4 flex flex-wrap items-center gap-2">
+    <a href="/super/sistemas<%= contaQs({ filtro: '' }) %>" class="super-btn super-btn--ghost <%= !_filtroContas ? 'is-active' : '' %>">Todas</a>
+    <a href="/super/sistemas<%= contaQs({ filtro: 'sem_rifa' }) %>" class="super-btn super-btn--ghost <%= _filtroContas === 'sem_rifa' ? 'is-active' : '' %>">Sem rifa</a>
+    <a href="/super/sistemas<%= contaQs({ filtro: 'sem_carteira' }) %>" class="super-btn super-btn--ghost <%= _filtroContas === 'sem_carteira' ? 'is-active' : '' %>">Sem carteira</a>
+    <a href="/super/sistemas<%= contaQs({ filtro: 'leads_quentes' }) %>" class="super-btn super-btn--ghost <%= _filtroContas === 'leads_quentes' ? 'is-active' : '' %>">
+      Leads quentes<% if (typeof leadsQuentesPendentes !== 'undefined' && leadsQuentesPendentes > 0) { %> (<%= leadsQuentesPendentes %>)<% } %>
+    </a>
+    <% if (typeof leadsQuentesPendentes !== 'undefined' && leadsQuentesPendentes > 0) { %>
+      <form method="POST" action="/super/organizadores/campanha-leads-quentes" class="inline"
+            onsubmit="return confirm('Enviar campanha para <%= leadsQuentesPendentes %> lead(s) com carteira configurada e sem rifa?');">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" class="super-btn super-btn--primary">
+          <i data-lucide="mail" class="w-4 h-4"></i> Campanha (<%= leadsQuentesPendentes %>)
+        </button>
+      </form>
+    <% } %>
+  </div>
+
+  <div class="super-table-wrap">
+    <table class="super-table">
+      <thead>
+        <tr>
+          <th>Loja</th>
+          <th>Organizador</th>
+          <th>Status</th>
+          <th>Recebimento</th>
+          <th>Rifas</th>
+          <th>Confirmado</th>
+          <th>Pendente</th>
+          <th>Disponível</th>
+          <th>Sacado</th>
+          <th>Login</th>
+          <th>Onboarding</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (!organizadores.length) { %>
+          <tr><td colspan="12" class="super-empty">Nenhuma conta encontrada.</td></tr>
+        <% } %>
+        <% organizadores.forEach(function(o) {
+          const saldoConf = o.saldo ? o.saldo.confirmado : 0;
+          const saldoPend = o.saldo ? o.saldo.pendente : 0;
+          const saldoDisp = o.saldoDisponivel != null ? o.saldoDisponivel : 0;
+          const totalRifas = o.totalRifas != null ? o.totalRifas : 0;
+        %>
+          <tr>
+            <td>
+              <a href="/<%= o.tenant.slug %>/" target="_blank" rel="noopener" class="super-tenant-name super-action-link"><%= o.tenant.nome %></a>
+              <span class="super-tenant-email">/<%= o.tenant.slug %></span>
+              <span class="super-tenant-email">Loja · <%= o.tenantCreatedAtFmt %></span>
+            </td>
+            <td>
+              <span class="font-medium text-sm"><%= o.nome %></span>
+              <span class="super-tenant-email block"><%= o.email %></span>
+              <span class="super-tenant-email">Conta · <%= o.createdAtFmt %></span>
+            </td>
+            <td>
+              <span class="super-badge super-badge--<%= o.tenant.status === 'ativo' ? 'ativo' : 'suspenso' %>"><%= o.tenant.status %></span>
+            </td>
+            <td class="super-pix-cell">
+              <% if (o.pixInfo && o.pixInfo.valor) { %>
+                <span class="super-badge super-badge--pix-ok text-[10px]"><%= o.pixInfo.tipo %></span>
+                <span class="super-pix-key" title="<%= o.pixInfo.valor %>"><%= o.pixInfo.valor %></span>
+              <% } else { %>
+                <span class="super-badge super-badge--pix-no">Pendente</span>
+              <% } %>
+            </td>
+            <td>
+              <% if (totalRifas === 0) { %>
+                <span class="super-badge super-badge--pix-no">0</span>
+              <% } else { %>
+                <span class="super-badge super-badge--pix-ok"><%= totalRifas %></span>
+              <% } %>
+            </td>
+            <td>
+              <% if (saldoConf > 0) { %>
+                <span class="font-bold text-emerald-600 dark:text-emerald-400">R$ <%= saldoConf.toFixed(2).replace('.', ',') %></span>
+              <% } else { %>
+                <span class="text-gray-400">R$ 0,00</span>
+              <% } %>
+            </td>
+            <td>
+              <% if (saldoPend > 0) { %>
+                <span class="text-amber-600">R$ <%= saldoPend.toFixed(2).replace('.', ',') %></span>
+              <% } else { %>
+                <span class="text-gray-400">—</span>
+              <% } %>
+            </td>
+            <td>
+              <% if (saldoDisp >= 50) { %>
+                <span class="super-badge <%= saldoDisp >= 500 ? 'super-badge--saldo-ok' : 'super-badge--saldo-medio' %>">
+                  R$ <%= saldoDisp.toFixed(2).replace('.', ',') %>
+                </span>
+              <% } else if (saldoDisp > 0) { %>
+                <span class="super-valor-muted">R$ <%= saldoDisp.toFixed(2).replace('.', ',') %></span>
+              <% } else { %>
+                <span class="super-valor-muted">—</span>
+              <% } %>
+            </td>
+            <td>
+              <% if (o.totalSacado > 0) { %>
+                <span class="text-sm">R$ <%= o.totalSacadoFmt %></span>
+              <% } else { %>
+                <span class="text-gray-400">—</span>
+              <% } %>
+            </td>
+            <td>
+              <span class="super-badge <%= o.viaGoogle ? 'super-badge--pix-ok' : 'super-badge--pix-no' %>">
+                <%= o.viaGoogle ? 'Google' : 'E-mail' %>
+              </span>
+            </td>
+            <td>
+              <div class="flex flex-col gap-1 text-[10px]">
+                <span class="<%= o.nurtureD1 ? 'text-emerald-600' : 'text-gray-400' %>">D+1 <%= o.nurtureD1 ? '✓' : '—' %></span>
+                <span class="<%= o.nurtureD3 ? 'text-emerald-600' : 'text-gray-400' %>">D+3 <%= o.nurtureD3 ? '✓' : '—' %></span>
+                <span class="<%= o.campanhaLeads ? 'text-emerald-600' : 'text-gray-400' %>">Camp. <%= o.campanhaLeads ? '✓' : '—' %></span>
+              </div>
+            </td>
+            <td>
+              <div class="super-actions flex-col items-start">
+                <a href="/<%= o.tenant.slug %>/admin" target="_blank" rel="noopener" class="super-action-link">Painel</a>
+                <form method="POST" action="/super/tenants/<%= o.tenant.id %>/status" class="inline">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <input type="hidden" name="redirect" value="/super/sistemas<%= contaQs({ page: page }) %>">
+                  <input type="hidden" name="status" value="<%= o.tenant.status === 'ativo' ? 'suspenso' : 'ativo' %>">
+                  <button type="submit" class="super-action-btn text-[11px] <%= o.tenant.status === 'ativo' ? '' : 'super-action-btn--ok' %>">
+                    <%= o.tenant.status === 'ativo' ? 'Suspender' : 'Ativar' %>
+                  </button>
+                </form>
+                <% if (totalRifas === 0) { %>
+                  <form method="POST" action="/super/organizadores/<%= o.id %>/nurture-email" class="inline">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <input type="hidden" name="tipo" value="d1">
+                    <input type="hidden" name="redirect" value="/super/sistemas<%= contaQs({ page: page }) %>">
+                    <button type="submit" class="super-action-link text-[11px]" <%= o.nurtureD1 ? 'disabled' : '' %>>E-mail D+1</button>
+                  </form>
+                <% } %>
+              </div>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+
+  <% if (paginas > 1) { %>
+    <div class="super-pagination">
+      <span><%= total %> contas</span>
+      <div class="super-pagination-links">
+        <% if (page > 1) { %><a class="super-page-link" href="/super/sistemas<%= contaQs({ page: page - 1 }) %>">←</a><% } %>
+        <% for (var p = Math.max(1, page - 2); p <= Math.min(paginas, page + 2); p++) { %>
+          <a class="super-page-link <%= p === page ? 'is-active' : '' %>" href="/super/sistemas<%= contaQs({ page: p }) %>"><%= p %></a>
+        <% } %>
+        <% if (page < paginas) { %><a class="super-page-link" href="/super/sistemas<%= contaQs({ page: page + 1 }) %>">→</a><% } %>
+      </div>
+    </div>
+  <% } %>
+</section>

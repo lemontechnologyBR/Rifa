@@ -80,6 +80,55 @@ describe('RifaService.calcularValor', () => {
   test('aplica bônus de cotas grátis', () => {
     expect(RifaService.calcularValor(faixas, valorCota, 5, 2)).toBe(75);
   });
+
+  test('aplica desconto percentual', () => {
+    const faixasPct = [{ quantidadeMin: 10, valorTotal: 0, percentualDesconto: 20 }];
+    expect(RifaService.calcularValor(faixasPct, valorCota, 10)).toBe(200);
+    expect(RifaService.calcularValor(faixasPct, valorCota, 5)).toBe(125);
+  });
+});
+
+describe('rifaPremiosParse', () => {
+  const { parsePremiosFromBody, premioModoFromCount } = require('../lib/rifaPremiosParse');
+
+  test('premioModoFromCount distingue 1, 2 e 3', () => {
+    expect(premioModoFromCount(1)).toBe('unico');
+    expect(premioModoFromCount(2)).toBe('duplo');
+    expect(premioModoFromCount(3)).toBe('podio');
+  });
+
+  test('parsePremiosFromBody modos unico, duplo e podio', () => {
+    expect(parsePremiosFromBody({ premio_modo: 'unico', premio_1: 'Carro' })).toEqual([
+      expect.objectContaining({ titulo: 'Carro', principal: true })
+    ]);
+    expect(parsePremiosFromBody({ premio_modo: 'duplo', premio_1: 'A', premio_2: 'B' })).toHaveLength(2);
+    expect(parsePremiosFromBody({ premio_modo: 'podio', premio_1: 'A', premio_2: 'B', premio_3: 'C' })).toHaveLength(3);
+    expect(() => parsePremiosFromBody({ premio_modo: 'duplo', premio_1: 'A' })).toThrow();
+  });
+});
+
+describe('sorteioUtil', () => {
+  const { embaralharLista, sortearPremiosDistinctos } = require('../lib/sorteioUtil');
+
+  test('embaralharLista retorna permutação com os mesmos elementos', () => {
+    const original = [1, 2, 3, 4, 5, 'a', 'b'];
+    const embaralhado = embaralharLista(original);
+    expect(embaralhado).toHaveLength(original.length);
+    expect([...embaralhado].sort()).toEqual([...original].sort());
+    expect(original).toEqual([1, 2, 3, 4, 5, 'a', 'b']);
+  });
+
+  test('sortearPremiosDistinctos retorna itens distintos com count min(qtd, pool)', () => {
+    const pool = [10, 20, 30, 40, 50];
+    const sorteados = sortearPremiosDistinctos(pool, 3);
+    expect(sorteados).toHaveLength(3);
+    expect(new Set(sorteados).size).toBe(3);
+    sorteados.forEach((item) => expect(pool).toContain(item));
+
+    expect(sortearPremiosDistinctos(pool, 10)).toHaveLength(pool.length);
+    expect(sortearPremiosDistinctos(pool, 0)).toHaveLength(0);
+    expect(sortearPremiosDistinctos([], 5)).toHaveLength(0);
+  });
 });
 
 describe('GoogleAuthService state', () => {

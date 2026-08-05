@@ -28,12 +28,6 @@ model Tenant {
   wooviAppId    String?  @map("woovi_app_id")
   pixChave      String?  @map("pix_chave")
   wooviAtivo    Boolean  @default(false) @map("woovi_ativo")
-  mpUserId      String?  @map("mp_user_id")
-  mpAccessToken String?  @map("mp_access_token")
-  mpRefreshToken String? @map("mp_refresh_token")
-  mpTokenExpiresAt DateTime? @map("mp_token_expires_at")
-  mpNickname    String?  @map("mp_nickname")
-  mpConnectedAt DateTime? @map("mp_connected_at")
   status        String   @default("ativo")
   createdAt     DateTime @default(now()) @map("created_at")
 
@@ -72,6 +66,9 @@ model Organizador {
   googleId         String?   @unique @map("google_id")
   tokenRecuperacao String?   @map("token_recuperacao")
   tokenExpira      DateTime? @map("token_expira")
+  pinHash              String?   @map("pin_hash")
+  pinTokenRecuperacao  String?   @map("pin_token_recuperacao")
+  pinTokenExpira       DateTime? @map("pin_token_expira")
   nurtureD1SentAt  DateTime? @map("nurture_d1_sent_at")
   nurtureD3SentAt  DateTime? @map("nurture_d3_sent_at")
   campanhaLeadsSentAt DateTime? @map("campanha_leads_sent_at")
@@ -121,12 +118,14 @@ model Rifa {
   valorCota      Float    @map("valor_cota")
   totalNumeros   Int      @map("total_numeros")
   dataSorteio    DateTime @map("data_sorteio")
+  sorteadoEm     DateTime? @map("sorteado_em")
   chavePix       String   @map("chave_pix")
   status         String   @default("ativa")
   modalidade     String   @default("cotas") @map("modalidade")
   numeroSorteado Int?     @map("numero_sorteado")
   ganhadorNome   String?  @map("ganhador_nome")
   metaMinimaPct  Float?   @map("meta_minima_pct")
+  pacotesRapidos String?  @map("pacotes_rapidos")
   createdAt      DateTime @default(now()) @map("created_at")
 
   tenant         Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
@@ -134,6 +133,7 @@ model Rifa {
   reservas       Reserva[]
   premios        Premio[]
   faixasDesconto FaixaDesconto[]
+  imagens        RifaImagem[]
   comentarios    Comentario[]
   carrinhos      Carrinho[]
 
@@ -157,14 +157,27 @@ model Premio {
 }
 
 model FaixaDesconto {
-  id            Int   @id @default(autoincrement())
-  rifaId        Int   @map("rifa_id")
-  quantidadeMin Int   @map("quantidade_min")
-  valorTotal    Float @map("valor_total")
+  id                 Int    @id @default(autoincrement())
+  rifaId             Int    @map("rifa_id")
+  quantidadeMin      Int    @map("quantidade_min")
+  valorTotal         Float  @default(0) @map("valor_total")
+  percentualDesconto Float? @map("percentual_desconto")
 
   rifa Rifa @relation(fields: [rifaId], references: [id], onDelete: Cascade)
 
   @@map("faixas_desconto")
+}
+
+model RifaImagem {
+  id     Int    @id @default(autoincrement())
+  rifaId Int    @map("rifa_id")
+  url    String
+  ordem  Int    @default(0)
+
+  rifa Rifa @relation(fields: [rifaId], references: [id], onDelete: Cascade)
+
+  @@index([rifaId])
+  @@map("rifa_imagens")
 }
 
 model Numero {

@@ -261,31 +261,6 @@ const apiController = {
     }
   },
 
-  async webhookMercadoPago(req, res) {
-    res.status(200).send('OK');
-    try {
-      const MercadoPagoService = require('../services/mercadoPagoService');
-      const paymentId = MercadoPagoService.extrairPaymentId(req.body, req.query);
-      console.log(`[Webhook MP] paymentId="${paymentId}" query=${JSON.stringify(req.query).slice(0, 120)}`);
-
-      if (!paymentId) return;
-
-      const payment = await MercadoPagoService.obterPagamento(paymentId);
-      if (!MercadoPagoService.pagamentoConfirmado(payment?.status)) {
-        console.log(`[Webhook MP] Pagamento ${paymentId} status=${payment?.status} — ignorado`);
-        return;
-      }
-
-      const ref = payment.external_reference || paymentId;
-      const reserva = await ReservaService.confirmarViaGateway(ref);
-      console.log(`[Webhook MP] Reserva #${reserva.id} confirmada via payment=${paymentId}`);
-    } catch (err) {
-      if (!err.message.includes('não encontrada') && !err.message.includes('confirmado')) {
-        console.error('[Webhook MP] Erro ao confirmar:', err.message);
-      }
-    }
-  },
-
   /** Verifica pagamentos pendentes no gateway e confirma automaticamente */
   async sincronizarPagamentos(req, res) {
     try {

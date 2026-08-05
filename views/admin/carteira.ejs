@@ -23,47 +23,12 @@
     <% if (typeof onboarding !== 'undefined' && onboarding) { %>
       <div class="admin-alert admin-alert-success mb-4">
         <i data-lucide="party-popper" class="w-4 h-4 shrink-0"></i>
-        <span><strong>Bem-vindo ao VouRifar!</strong>
-          <% if (typeof mpSplitConfigured !== 'undefined' && mpSplitConfigured) { %>
-            Primeiro passo: conecte sua conta Mercado Pago abaixo para começar a vender.
-          <% } else { %>
-            Primeiro passo: cadastre sua chave PIX abaixo para começar a vender.
-          <% } %>
-        </span>
+        <span><strong>Bem-vindo ao VouRifar!</strong> Primeiro passo: cadastre sua chave PIX abaixo para começar a vender.</span>
       </div>
     <% } %>
 
-    <% const splitAtivo = typeof usesSplit !== 'undefined' && usesSplit; %>
-    <% const mpSplit = typeof mpSplitConfigured !== 'undefined' && mpSplitConfigured; %>
-    <% const mpOk = mpSplit && typeof mpConnected !== 'undefined' && mpConnected; %>
-    <% const w = resumo.woovi || { bruto: 0, cotas: 0, parteOrganizador: 0, pendente: 0, reservasPendentes: 0 }; %>
-    <% const mp = resumo.mercadopago || { bruto: 0, cotas: 0, parteOrganizador: 0, pendente: 0, reservasPendentes: 0 }; %>
+    <% const w = resumo.woovi || { bruto: 0, cotas: 0, parteOrganizador: 0, pendente: 0, reservasPendentes: 0, brutoDisponivel: 0, cotasDisponiveis: 0 }; %>
     <% const temWoovi = w.bruto > 0 || w.pendente > 0 || (resumo.saldoDisponivel != null && resumo.saldoDisponivel > 0); %>
-    <% const temMp = mp.bruto > 0 || mp.pendente > 0; %>
-    <% const modoMisto = mpSplit && temWoovi && (temMp || mpOk); %>
-
-    <%# Badges de modalidade %>
-    <div class="flex flex-wrap items-center gap-2 mb-5">
-      <% if (modoMisto) { %>
-        <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300 border border-sky-200 dark:border-sky-700">
-          <i data-lucide="zap" class="w-3.5 h-3.5"></i> Ativa: Mercado Pago
-        </span>
-        <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700">
-          <i data-lucide="building-2" class="w-3.5 h-3.5"></i> Saldo histórico na plataforma
-        </span>
-        <span class="text-xs text-gray-500">Novas vendas caem no MP · saldo antigo da plataforma pode ser sacado</span>
-      <% } else if (mpOk) { %>
-        <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700">
-          <i data-lucide="zap" class="w-3.5 h-3.5"></i> Modalidade: Mercado Pago Direto
-        </span>
-        <span class="text-xs text-gray-500">repassado na hora · comissão <%= Math.round((mpTaxa||0.05)*100) %>%</span>
-      <% } else { %>
-        <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300 border border-sky-200 dark:border-sky-700">
-          <i data-lucide="building-2" class="w-3.5 h-3.5"></i> Modalidade: Plataforma VouRifar
-        </span>
-        <span class="text-xs text-gray-500">Plataforma coleta e você saca quando quiser</span>
-      <% } %>
-    </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       <article class="admin-metric-card border-l-4 border-violet-400">
@@ -85,89 +50,71 @@
       </article>
       <% } %>
 
-      <% if (temMp) { %>
-      <article class="admin-metric-card border-l-4 border-sky-400">
-        <p class="admin-metric-label mb-1 flex items-center gap-1.5">
-          <i data-lucide="zap" class="w-3.5 h-3.5 text-sky-500"></i> Recebido no Mercado Pago
-        </p>
-        <p class="admin-metric-value text-sky-600">R$ <%= mp.parteOrganizador.toFixed(2).replace('.', ',') %></p>
-        <p class="text-xs text-gray-400 mt-1">
-          <%= mp.cotas %> cota(s) · bruto R$ <%= mp.bruto.toFixed(2).replace('.', ',') %> · comissão <%= Math.round((mpTaxa||0.05)*100) %>% · vendas anteriores
-        </p>
-      </article>
-      <% } %>
-
       <article class="admin-metric-card">
         <p class="admin-metric-label mb-1">Aguardando PIX</p>
         <p class="admin-metric-value">R$ <%= resumo.pendente.toFixed(2).replace('.', ',') %></p>
         <p class="text-xs text-gray-400 mt-1">
           <%= resumo.reservasPendentes %> reserva(s)
-          <% if (w.pendente > 0 && mp.pendente > 0) { %>
-            · Plataforma R$ <%= w.pendente.toFixed(2).replace('.', ',') %> · MP R$ <%= mp.pendente.toFixed(2).replace('.', ',') %>
-          <% } else if (w.pendente > 0) { %>
+          <% if (w.pendente > 0) { %>
             · via plataforma
-          <% } else if (mp.pendente > 0) { %>
-            · via Mercado Pago
           <% } %>
         </p>
       </article>
     </div>
 
-    <% if (mpSplitConfigured) { %>
-    <div class="admin-panel-card p-6 mb-6 border-l-4 <%= mpOk ? 'border-emerald-500' : 'border-sky-500' %>">
-      <div class="admin-config-section-head mb-4">
-        <div class="admin-config-section-icon blue"><i data-lucide="link" class="w-5 h-5"></i></div>
-        <div>
-          <h2 class="font-bold text-base">Conta Mercado Pago</h2>
-          <p class="text-sm text-gray-500 dark:text-gray-400">Conecte sua conta para receber automaticamente na hora — sem taxa de saque. A plataforma retém <strong><%= Math.round((mpTaxa||0.05)*100) %>%</strong> de cada venda.</p>
-        </div>
-      </div>
+    <% const pinOk = typeof temPin !== 'undefined' && temPin; %>
 
-      <% if (mpOk) { %>
-      <div class="rounded-xl border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/30 dark:border-emerald-800/50 p-4 mb-4">
-        <div class="flex flex-col sm:flex-row sm:items-center gap-4">
-          <div class="flex items-start gap-3 flex-1">
-            <div class="w-9 h-9 rounded-lg bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center shrink-0">
-              <i data-lucide="badge-check" class="w-5 h-5 text-emerald-600"></i>
-            </div>
-            <div>
-              <p class="font-semibold text-emerald-800 dark:text-emerald-300 text-sm">Conta conectada</p>
-              <p class="text-sm text-emerald-700 dark:text-emerald-400 mt-0.5"><%= tenant.mpNickname || ('Usuário MP #' + tenant.mpUserId) %></p>
-              <% if (tenant.mpConnectedAt) { %>
-              <p class="text-xs text-emerald-600/80 mt-1">Desde <%= new Date(tenant.mpConnectedAt).toLocaleDateString('pt-BR') %></p>
-              <% } %>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Cada PIX pago cai na sua conta MP — sem saque manual, sem espera.</p>
-            </div>
+    <!-- PIN de saque -->
+    <div id="pin-saque" class="admin-panel-card p-5 mb-6 border-l-4 <%= pinOk ? 'border-emerald-400' : 'border-amber-400' %>"
+      x-data="{ abrirForm: <%= pinOk ? 'false' : 'true' %> }">
+      <div class="flex flex-col sm:flex-row sm:items-start gap-4">
+        <div class="flex items-start gap-3 flex-1">
+          <div class="w-10 h-10 rounded-xl <%= pinOk ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-amber-100 dark:bg-amber-900/30' %> flex items-center justify-center shrink-0">
+            <i data-lucide="key-round" class="w-5 h-5 <%= pinOk ? 'text-emerald-600' : 'text-amber-600' %>"></i>
           </div>
-          <form method="POST" action="<%= adminBase %>/carteira/mp/desconectar" onsubmit="return confirm('Desconectar Mercado Pago? Novas vendas ficarão bloqueadas até reconectar.')">
-            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-            <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition shrink-0">
-              <i data-lucide="unlink" class="w-4 h-4"></i>
-              Desconectar
-            </button>
-          </form>
+          <div>
+            <p class="font-bold text-sm <%= pinOk ? 'text-emerald-800 dark:text-emerald-300' : 'text-amber-800 dark:text-amber-300' %>">
+              <%= pinOk ? 'PIN de saque ativo' : 'Defina um PIN de saque' %>
+            </p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <%= pinOk
+                ? 'Seu PIN de 6 dígitos é exigido em todo saque. Guarde-o com segurança.'
+                : 'Antes de sacar, cadastre um PIN de 6 dígitos. Você poderá recuperá-lo por e-mail se esquecer.' %>
+            </p>
+            <% if (pinOk) { %>
+            <a href="<%= adminBase %>/esqueci-pin" class="inline-flex text-xs font-semibold text-violet-600 hover:underline mt-2">Esqueci meu PIN</a>
+            <% } %>
+          </div>
         </div>
+        <button type="button" @click="abrirForm = !abrirForm"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 text-sm font-semibold shrink-0 hover:bg-gray-50 dark:hover:bg-gray-800">
+          <i data-lucide="<%= pinOk ? 'pencil' : 'plus' %>" class="w-4 h-4"></i>
+          <%= pinOk ? 'Alterar PIN' : 'Criar PIN' %>
+        </button>
       </div>
-      <% } else { %>
-      <div class="rounded-xl border border-sky-200 bg-sky-50 dark:bg-sky-950/20 dark:border-sky-800/40 p-4 mb-4">
-        <p class="font-semibold text-sky-800 dark:text-sky-300 text-sm mb-1">Conecte sua conta para vender</p>
-        <p class="text-xs text-sky-700 dark:text-sky-400">Você será redirecionado ao Mercado Pago para autorizar o recebimento dos pagamentos na sua conta.</p>
-      </div>
-      <a href="<%= adminBase %>/carteira/mp/conectar" class="admin-mp-connect-btn">
-        <img src="/img/mercadopago.svg?v=2" alt="Mercado Pago" class="admin-mp-connect-btn__logo">
-        Conectar conta
-      </a>
-      <% } %>
-    </div>
-    <% } %>
 
-    <%# Mostra saque se: sem MP, ou com MP mas há saldo Woovi histórico retido %>
-    <% if (!mpOk || (resumo.saldoDisponivel != null && resumo.saldoDisponivel > 0)) { %>
-    <% if (mpOk && resumo.saldoDisponivel > 0) { %>
-      <div class="mb-4 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 text-sm text-amber-800 dark:text-amber-300">
-        <strong>Saldo na plataforma:</strong> Você conectou o Mercado Pago, mas ainda tem <strong>R$ <%= resumo.saldoDisponivel.toFixed(2).replace('.', ',') %></strong> de vendas anteriores via PIX da plataforma (<%= w.cotasDisponiveis %> cota(s), bruto R$ <%= w.brutoDisponivel.toFixed(2).replace('.', ',') %>). Esse valor precisa ser sacado abaixo — novas vendas já caem direto no MP.
-      </div>
-    <% } %>
+      <form x-show="abrirForm" x-cloak method="POST" action="<%= adminBase %>/carteira/pin" class="mt-5 pt-5 border-t border-gray-100 dark:border-gray-800 space-y-3 max-w-md">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <% if (pinOk) { %>
+        <div>
+          <label class="admin-label" for="pin_atual">PIN atual</label>
+          <input type="password" id="pin_atual" name="pin_atual" required maxlength="6" minlength="6" pattern="\d{6}" inputmode="numeric" autocomplete="off" class="admin-input tracking-widest text-center" placeholder="••••••">
+        </div>
+        <% } %>
+        <div>
+          <label class="admin-label" for="pin_novo"><%= pinOk ? 'Novo PIN' : 'PIN (6 dígitos)' %></label>
+          <input type="password" id="pin_novo" name="pin" required maxlength="6" minlength="6" pattern="\d{6}" inputmode="numeric" autocomplete="off" class="admin-input tracking-widest text-center" placeholder="••••••">
+        </div>
+        <div>
+          <label class="admin-label" for="pin_confirmar">Confirmar PIN</label>
+          <input type="password" id="pin_confirmar" name="confirmar_pin" required maxlength="6" minlength="6" pattern="\d{6}" inputmode="numeric" autocomplete="off" class="admin-input tracking-widest text-center" placeholder="••••••">
+        </div>
+        <button type="submit" class="admin-btn-primary text-sm px-5 py-2.5">
+          <%= pinOk ? 'Salvar novo PIN' : 'Salvar PIN' %>
+        </button>
+      </form>
+    </div>
+
     <%
       const saldoDisp = saque ? saque.saldoDisponivel : (resumo.saldoDisponivel != null ? resumo.saldoDisponivel : resumo.saldoConfirmado * 0.95);
       const podeSacar = saque ? saque.podeSacar : saldoDisp >= 50;
@@ -176,7 +123,7 @@
       const saqueMinimo = saque ? saque.saqueMinimo : 100;
     %>
     <div
-      x-data="carteiraSaqueData(<%= saldoDisp %>, <%= taxaSaqueValor || 5.50 %>, false, <%= saqueMinimo %>, '<%= saldoDisp.toFixed(2) %>')"
+      x-data="carteiraSaqueData(<%= saldoDisp %>, <%= taxaSaqueValor || 5.50 %>, false, <%= saqueMinimo %>, '<%= saldoDisp.toFixed(2) %>', <%= pinOk ? 'true' : 'false' %>)"
       @keydown.escape.window="fecharModal()">
     <div class="admin-panel-card p-5 mb-6 border-l-4 <%= podeSacar ? 'border-violet-400' : 'border-gray-300 dark:border-gray-700' %>">
       <div class="flex flex-col sm:flex-row sm:items-center gap-4">
@@ -194,13 +141,18 @@
             <% } %>
           </div>
         </div>
-        <% if (podeSacar && tenant.pixChave) { %>
+        <% if (podeSacar && tenant.pixChave && pinOk) { %>
         <button type="button" @click="abrirModal()"
           class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold transition shrink-0 shadow">
           <i data-lucide="arrow-down-to-line" class="w-4 h-4"></i>
           Sacar agora
         </button>
-        <% } else if (!tenant.pixChave && !mpOk) { %>
+        <% } else if (podeSacar && tenant.pixChave && !pinOk) { %>
+        <a href="#pin-saque" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold transition shrink-0 shadow">
+          <i data-lucide="key-round" class="w-4 h-4"></i>
+          Criar PIN para sacar
+        </a>
+        <% } else if (!tenant.pixChave) { %>
         <span class="text-xs text-gray-400 shrink-0">Configure a chave PIX para sacar</span>
         <% } %>
       </div>
@@ -293,6 +245,16 @@
             </div>
           </div>
 
+          <div>
+            <label class="admin-label" for="saque_pin">PIN de 6 dígitos</label>
+            <input type="password" id="saque_pin" name="pin" x-model="pin" required maxlength="6" minlength="6" pattern="\d{6}"
+              inputmode="numeric" autocomplete="one-time-code"
+              class="admin-input tracking-widest text-center text-lg" placeholder="••••••">
+            <p class="admin-hint mt-1">
+              <a href="<%= adminBase %>/esqueci-pin" class="text-violet-600 font-semibold hover:underline">Esqueci meu PIN</a>
+            </p>
+          </div>
+
           <p class="text-xs text-gray-500 flex items-start gap-2">
             <i data-lucide="info" class="w-4 h-4 shrink-0 mt-0.5"></i>
             O PIX será enviado pela plataforma VouRifar. Confira se a chave está correta antes de confirmar.
@@ -303,7 +265,7 @@
               class="flex-1 py-3 rounded-xl border border-gray-200 dark:border-gray-600 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50">
               Voltar
             </button>
-            <button type="submit" :disabled="enviando"
+            <button type="submit" :disabled="enviando || !pinValido()"
               class="flex-1 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-bold inline-flex items-center justify-center gap-2">
               <span x-show="!enviando" class="inline-flex items-center gap-2"><i data-lucide="check" class="w-4 h-4"></i> Confirmar saque</span>
               <span x-show="enviando" x-cloak>Processando…</span>
@@ -313,7 +275,6 @@
       </div>
     </div>
     </div>
-    <% } %>
 
     <% if ((temWoovi || resumo.totalSacado > 0) && typeof extratoSaques !== 'undefined' && extratoSaques.length) { %>
     <div class="admin-panel-card p-5 mb-6">
@@ -374,7 +335,6 @@
     <% } %>
 
     <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
-      <% if (!mpOk || temWoovi) { %>
       <form method="POST" action="<%= adminBase %>/carteira" class="admin-panel-card p-6 space-y-5 lg:col-span-3"
         x-data="{
           tipo: '<%= pixTipo %>',
@@ -395,8 +355,8 @@
         <div class="admin-config-section-head">
           <div class="admin-config-section-icon pix"><img src="/img/pix.svg?v=2" alt="PIX" width="40" height="40"></div>
           <div>
-            <h2 class="font-bold text-base"><%= mpOk ? 'Chave PIX para saque da plataforma' : 'Sua chave PIX para saque' %></h2>
-            <p class="text-sm text-gray-500 dark:text-gray-400"><% if (mpOk) { %>Vendas antigas via plataforma são sacadas nesta chave PIX.<% } else { %>A plataforma processa os pagamentos. Informe sua chave PIX para sacar o saldo acumulado.<% } %></p>
+            <h2 class="font-bold text-base">Sua chave PIX para saque</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400">A plataforma processa os pagamentos. Informe sua chave PIX para sacar o saldo acumulado.</p>
           </div>
         </div>
 
@@ -458,32 +418,8 @@
           <span x-text="pixAtiva ? 'Atualizar chave PIX' : 'Salvar chave PIX'"></span>
         </button>
       </form>
-      <% } else if (mpOk) { %>
-      <div class="admin-panel-card p-6 lg:col-span-3">
-        <h2 class="font-bold text-base mb-3">Como funciona o repasse automático</h2>
-        <ol class="text-sm text-gray-500 dark:text-gray-400 space-y-3 list-none">
-          <li class="flex items-start gap-2.5">
-            <span class="w-5 h-5 rounded-full bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-400 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
-            <span>Comprador paga o <strong class="text-gray-700 dark:text-gray-200">valor exato</strong> da cota via PIX</span>
-          </li>
-          <li class="flex items-start gap-2.5">
-            <span class="w-5 h-5 rounded-full bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-400 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">2</span>
-            <span>O Mercado Pago confirma o pagamento e reserva a cota automaticamente</span>
-          </li>
-          <li class="flex items-start gap-2.5">
-            <span class="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
-            <span>O valor cai na sua conta MP na hora — a plataforma retém <strong class="text-gray-700 dark:text-gray-200"><%= Math.round((mpTaxa||0.05)*100) %>%</strong> automaticamente</span>
-          </li>
-          <li class="flex items-start gap-2.5">
-            <span class="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">✓</span>
-            <span>Sem saque manual, sem taxa de saque — o dinheiro já é seu no Mercado Pago</span>
-          </li>
-        </ol>
-      </div>
-      <% } %>
 
       <aside class="lg:col-span-2 space-y-4">
-        <% if (!mpOk || temWoovi) { %>
         <div class="admin-panel-card p-5">
           <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Tipos de chave</p>
           <ul class="text-sm text-gray-500 dark:text-gray-400 space-y-2">
@@ -538,48 +474,30 @@
           <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600 shrink-0"></i>
           <span>Cada conta usa uma chave PIX exclusiva. A mesma chave não pode ser cadastrada em dois sistemas.</span>
         </div>
-        <% } %>
-        <% if (mpOk) { %>
-        <div class="admin-panel-card p-5">
-          <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Mercado Pago</p>
-          <ul class="text-sm text-gray-500 dark:text-gray-400 space-y-2">
-            <li class="flex items-start gap-2">
-              <i data-lucide="zap" class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5"></i>
-              <span>Novas vendas: valor cai direto na sua conta MP (comissão <%= Math.round((mpTaxa||0.05)*100) %>%)</span>
-            </li>
-            <li class="flex items-start gap-2">
-              <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5"></i>
-              <span>O dinheiro não passa pela plataforma — repasse automático</span>
-            </li>
-            <li class="flex items-start gap-2">
-              <i data-lucide="lock" class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5"></i>
-              <span>Autorização OAuth oficial — revogável a qualquer momento</span>
-            </li>
-          </ul>
-        </div>
-
-        <div class="admin-tip !mb-0">
-          <i data-lucide="info" class="w-4 h-4 text-sky-600 shrink-0"></i>
-          <span>Use a mesma conta Mercado Pago onde você já recebe PIX. Contas PJ e PF são aceitas.</span>
-        </div>
-        <% } %>
       </aside>
     </div>
 
   <%- include('partials/layout-end') %>
   <script>
-    function carteiraSaqueData(saldoDisp, taxaFixa, saqueGratis, saqueMinimo, valorInicial) {
+    function carteiraSaqueData(saldoDisp, taxaFixa, saqueGratis, saqueMinimo, valorInicial, temPin) {
       return {
         modalSaque: false,
         step: 1,
         enviando: false,
+        temPin: !!temPin,
+        pin: '',
         saldoDisp: Number(saldoDisp),
         taxaFixa: Number(taxaFixa),
         saqueGratis: !!saqueGratis,
         saqueMinimo: Number(saqueMinimo),
         valor: String(valorInicial || ''),
         abrirModal() {
+          if (!this.temPin) {
+            window.location.hash = 'pin-saque';
+            return;
+          }
           this.valor = this.saldoDisp.toFixed(2);
+          this.pin = '';
           this.step = 1;
           this.enviando = false;
           this.modalSaque = true;
@@ -589,6 +507,7 @@
           if (this.enviando) return;
           this.modalSaque = false;
           this.step = 1;
+          this.pin = '';
         },
         parseValor() {
           var n = parseFloat(String(this.valor).replace(',', '.'));
@@ -606,6 +525,9 @@
             && v <= this.saldoDisp + 0.009
             && (this.taxaAtual() === 0 || v > this.taxaAtual());
         },
+        pinValido() {
+          return /^\d{6}$/.test(String(this.pin || ''));
+        },
         fmt(n) {
           return Number(n).toFixed(2).replace('.', ',');
         },
@@ -615,6 +537,7 @@
         avancar() {
           if (!this.valorValido()) return;
           this.step = 2;
+          this.pin = '';
           this.$nextTick(function () { lucide.createIcons(); });
         }
       };

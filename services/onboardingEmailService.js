@@ -82,7 +82,6 @@ const OnboardingEmailService = {
             slug: true,
             status: true,
             pixChave: true,
-            mpAccessToken: true,
             wooviAtivo: true
           }
         }
@@ -120,15 +119,12 @@ const OnboardingEmailService = {
         tenant: {
           status: 'ativo',
           rifas: { none: {} },
-          OR: [
-            { pixChave: { not: null } },
-            { mpAccessToken: { not: null } }
-          ]
+          pixChave: { not: null }
         }
       },
       include: {
         tenant: {
-          select: { id: true, slug: true, nome: true, pixChave: true, mpAccessToken: true, mpNickname: true }
+          select: { id: true, slug: true, nome: true, pixChave: true }
         }
       },
       orderBy: { createdAt: 'asc' }
@@ -185,7 +181,6 @@ const OnboardingEmailService = {
             slug: true,
             status: true,
             pixChave: true,
-            mpAccessToken: true,
             wooviAtivo: true
           }
         }

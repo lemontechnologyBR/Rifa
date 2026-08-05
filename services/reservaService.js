@@ -133,28 +133,25 @@ const ReservaService = {
     }));
   },
 
-  /** Monta pagamento PIX via gateway ativo (Mercado Pago ou Woovi legado) */
+  /** Monta pagamento PIX via plataforma (Woovi) */
   async montarPagamento(reserva, rifa, tenant, usuario) {
     if (!PaymentService.isConfigured(tenant)) {
-      throw new Error('Pagamentos indisponíveis. O organizador deve conectar a Carteira (Mercado Pago ou PIX).');
+      throw new Error('Pagamentos indisponíveis. O organizador deve configurar a chave PIX na Carteira.');
     }
 
     const correlationID = reserva.codigoPagamento || `reserva-${reserva.id}`;
     const {
       TAXA_PLATAFORMA,
-      ORGANIZADOR_PERCENTUAL,
       ORGANIZADOR_PERCENTUAL_WOOVI,
       TAXA_FIXA_COTA_WOOVI
     } = require('../lib/config');
-    const provider = PaymentService.getProvider(tenant);
 
     const valorCobrado = reserva.valorTotal;
     const cotasReserva = (reserva.numeros || reserva.reservaNumeros || []).length;
-    const orgPct = provider === 'woovi' ? ORGANIZADOR_PERCENTUAL_WOOVI : ORGANIZADOR_PERCENTUAL;
-    // Woovi: 5% do valor + R$ 0,50 por cota (descontado do organizador, comprador paga valor exato).
-    const valorOrganizador = provider === 'woovi'
-      ? Math.max(0, reserva.valorTotal * orgPct - cotasReserva * TAXA_FIXA_COTA_WOOVI)
-      : reserva.valorTotal * orgPct;
+    const valorOrganizador = Math.max(
+      0,
+      reserva.valorTotal * ORGANIZADOR_PERCENTUAL_WOOVI - cotasReserva * TAXA_FIXA_COTA_WOOVI
+    );
 
     const charge = await PaymentService.criarCobranca(tenant, {
       correlationID,
@@ -184,7 +181,7 @@ const ReservaService = {
       || (charge.brCode ? `https://chart.googleapis.com/chart?chs=250x250&cht=qr&chl=${encodeURIComponent(charge.brCode)}` : '');
 
     return {
-      metodo: provider || 'pix',
+      metodo: 'pix',
       valor: valorCobrado,
       valorOrganizador,
       taxaPlataforma: reserva.valorTotal * TAXA_PLATAFORMA,
@@ -285,7 +282,7 @@ const ReservaService = {
     await LogService.registrar(adminUsuario, 'confirmar_pagamento', `Reserva #${reservaId}`, tenantId);
   },
 
-  /** Confirma pagamento via webhook do gateway (Woovi ou Mercado Pago) */
+  /** Confirma pagamento via webhook Woovi */
   async confirmarViaGateway(referencia) {
     if (!referencia) throw new Error('Referência de pagamento ausente.');
 

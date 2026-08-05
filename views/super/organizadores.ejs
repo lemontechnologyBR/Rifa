@@ -59,9 +59,8 @@
           const saldoConf = o.saldo ? o.saldo.confirmado : 0;
           const saldoPend = o.saldo ? o.saldo.pendente : 0;
           const payment = o.payment || {};
-          const isMp = payment.gateway === 'mercadopago';
           const isWoovi = payment.gateway === 'woovi';
-          const taxaLabel = isWoovi ? '5% + R$ 0,50/cota' : (isMp ? '5%' : '—');
+          const taxaLabel = isWoovi ? '5% + R$ 0,50/cota' : '—';
           const saldoDisp = o.saldoDisponivel != null ? o.saldoDisponivel : 0;
           const temPix = !!(o.tenant.pixChave);
           const totalRifas = o.totalRifas != null ? o.totalRifas : 0;
@@ -112,9 +111,7 @@
             </td>
 
             <td>
-              <% if (isMp) { %>
-                <span class="super-badge super-badge--modalidade-mp">MP Direto · <%= taxaLabel %></span>
-              <% } else if (isWoovi) { %>
+              <% if (isWoovi) { %>
                 <span class="super-badge super-badge--modalidade-woovi">Plataforma · <%= taxaLabel %></span>
               <% } else { %>
                 <span class="super-badge super-badge--modalidade-none"><%= payment.gatewayLabel || 'Não configurado' %></span>
@@ -127,9 +124,6 @@
                   <%= saldoDisp >= 500 ? '✓' : '$' %> R$ <%= saldoDisp.toFixed(2).replace('.', ',') %>
                 </span>
                 <span class="super-valor-hint">para saque</span>
-              <% } else if (saldoDisp > 0 && isMp) { %>
-                <span class="super-valor-mp">R$ <%= saldoDisp.toFixed(2).replace('.', ',') %></span>
-                <span class="super-valor-hint">creditado no MP</span>
               <% } else if (saldoDisp > 0) { %>
                 <span class="super-valor-muted">R$ <%= saldoDisp.toFixed(2).replace('.', ',') %></span>
               <% } else { %>

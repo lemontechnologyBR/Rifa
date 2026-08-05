@@ -1,0 +1,82 @@
+/* Cálculo de compra — inline (não fica preso no cache do service worker) */
+(function (root) {
+  function pctFaixa(faixa) {
+    if (faixa.percentualDesconto != null) return Number(faixa.percentualDesconto);
+    if (faixa.percentual_desconto != null) return Number(faixa.percentual_desconto);
+    return null;
+  }
+
+  function valorFaixaAplicado(faixa, quantidade, valorCota) {
+    var qtd = Math.max(0, Number(quantidade) || 0);
+    var valor = Number(valorCota) || 0;
+    var pct = pctFaixa(faixa);
+    if (pct != null && pct > 0) {
+      return Math.max(0, qtd * valor * (1 - pct / 100));
+    }
+    var fixo = Number(faixa.valorTotal != null ? faixa.valorTotal : faixa.valor_total) || 0;
+    return fixo > 0 ? fixo : qtd * valor;
+  }
+
+  function faixaTemDesconto(faixa) {
+    var pct = pctFaixa(faixa);
+    if (pct != null && pct > 0) return true;
+    var fixo = Number(faixa.valorTotal != null ? faixa.valorTotal : faixa.valor_total) || 0;
+    return fixo > 0;
+  }
+
+  function calcularSubtotalFaixas(faixas, valorCota, qtd) {
+    if (!qtd) return 0;
+    if (faixas && faixas.length) {
+      var sorted = faixas.slice().sort(function (a, b) { return b.quantidadeMin - a.quantidadeMin; });
+      for (var i = 0; i < sorted.length; i++) {
+        var f = sorted[i];
+        if (qtd >= f.quantidadeMin && faixaTemDesconto(f)) {
+          return valorFaixaAplicado(f, qtd, valorCota);
+        }
+      }
+    }
+    return qtd * (Number(valorCota) || 0);
+  }
+
+  function faixaAplicada(faixas, qtd) {
+    if (!faixas || !faixas.length) return null;
+    var sorted = faixas.slice().sort(function (a, b) { return b.quantidadeMin - a.quantidadeMin; });
+    for (var i = 0; i < sorted.length; i++) {
+      var f = sorted[i];
+      if (qtd >= f.quantidadeMin && faixaTemDesconto(f)) return f;
+    }
+    return null;
+  }
+
+  function proximaFaixa(faixas, qtd) {
+    if (!faixas || !faixas.length) return null;
+    var sorted = faixas.slice().sort(function (a, b) { return a.quantidadeMin - b.quantidadeMin; });
+    for (var i = 0; i < sorted.length; i++) {
+      var f = sorted[i];
+      if (qtd < f.quantidadeMin && faixaTemDesconto(f)) return f;
+    }
+    return null;
+  }
+
+  function detalheCompra(faixas, valorCota, qtd) {
+    var valor = Number(valorCota) || 0;
+    var cheio = (Number(qtd) || 0) * valor;
+    var subtotal = calcularSubtotalFaixas(faixas, valor, qtd);
+    var economia = Math.max(0, cheio - subtotal);
+    var faixa = faixaAplicada(faixas, qtd);
+    var proxima = proximaFaixa(faixas, qtd);
+    var pct = null;
+    var pctFaixaVal = faixa ? pctFaixa(faixa) : null;
+    if (pctFaixaVal != null && pctFaixaVal > 0) {
+      pct = pctFaixaVal;
+    } else if (economia > 0 && cheio > 0) {
+      pct = Math.round((economia / cheio) * 100);
+    }
+    return { cheio: cheio, subtotal: subtotal, economia: economia, faixa: faixa, pct: pct, proxima: proxima };
+  }
+
+  root.RifaCompraPricing = {
+    calcularSubtotalFaixas: calcularSubtotalFaixas,
+    detalheCompra: detalheCompra
+  };
+})(typeof window !== 'undefined' ? window : globalThis);

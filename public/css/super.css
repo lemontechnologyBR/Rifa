@@ -1169,3 +1169,178 @@
   color: #94a3b8;
   text-align: center;
 }
+
+/* ── Tema escuro (área de conteúdo) ───────────────────── */
+.super-theme-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.super-theme-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.super-theme-icon--dark {
+  display: none;
+}
+
+html.dark .super-theme-icon--light {
+  display: none;
+}
+
+html.dark .super-theme-icon--dark {
+  display: block;
+}
+
+html.dark .super-body {
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+html.dark .super-metric,
+html.dark .super-panel,
+html.dark .super-link-card {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: none;
+}
+
+html.dark .super-panel-head {
+  border-bottom-color: #334155;
+}
+
+html.dark .super-panel-title,
+html.dark .super-metric-value,
+html.dark .super-tenant-name,
+html.dark .super-recent-name,
+html.dark .super-field-label,
+html.dark .super-link-card {
+  color: #f1f5f9;
+}
+
+html.dark .super-panel-sub,
+html.dark .super-metric-label,
+html.dark .super-metric-hint,
+html.dark .super-tenant-email,
+html.dark .super-recent-meta,
+html.dark .super-pagination,
+html.dark .super-empty,
+html.dark .super-field-hint {
+  color: #94a3b8;
+}
+
+html.dark .super-input,
+html.dark .super-select {
+  background: #0f172a;
+  border-color: #475569;
+  color: #f1f5f9;
+}
+
+html.dark .super-btn--ghost {
+  background: #334155;
+  border-color: #475569;
+  color: #e2e8f0;
+}
+
+html.dark .super-table th {
+  background: #0f172a;
+  color: #94a3b8;
+  border-bottom-color: #334155;
+}
+
+html.dark .super-table td {
+  border-bottom-color: #334155;
+}
+
+html.dark .super-table tr:hover td {
+  background: #273449;
+}
+
+html.dark .super-pagination {
+  border-top-color: #334155;
+}
+
+html.dark .super-page-link:hover {
+  background: #334155;
+}
+
+html.dark .super-recent-item {
+  border-bottom-color: #334155;
+}
+
+html.dark .super-shortcut {
+  background: #1e293b;
+  border-color: #334155;
+  color: #cbd5e1;
+}
+
+html.dark .super-dl > div {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+html.dark .super-info-list {
+  color: #cbd5e1;
+}
+
+html.dark .super-info-list code,
+html.dark .super-field-hint code,
+html.dark .super-path {
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+html.dark .super-check-row {
+  color: #cbd5e1;
+}
+
+html.dark .super-analytics-filter {
+  background: #1e293b;
+  border-color: #334155;
+  color: #cbd5e1;
+}
+
+html.dark .super-analytics-bar-head,
+html.dark .super-chart-value {
+  color: #cbd5e1;
+}
+
+html.dark .super-analytics-bar-track {
+  background: #334155;
+}
+
+html.dark .super-alert--ok {
+  background: rgba(6, 78, 59, 0.35);
+  color: #6ee7b7;
+  border-color: #065f46;
+}
+
+html.dark .super-alert--err {
+  background: rgba(127, 29, 29, 0.35);
+  color: #fca5a5;
+  border-color: #991b1b;
+}
+
+html.dark .super-alert--warn {
+  background: rgba(120, 53, 15, 0.35);
+  color: #fcd34d;
+  border-color: #92400e;
+}
+
+html.dark .super-login-page {
+  background: radial-gradient(circle at top, #1e293b 0%, #0f172a 55%, #020617 100%);
+}
+
+html.dark .super-login-card {
+  background: rgba(30, 41, 59, 0.85);
+  border-color: #334155;
+}

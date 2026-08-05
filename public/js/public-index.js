@@ -64,11 +64,22 @@
 
   function calcularSubtotal(qtd) {
     if (!qtd || !rifaAtual) return 0;
+    const valorCota = Number(rifaAtual.valorCota) || 0;
+    if (typeof RifaPricing !== 'undefined') {
+      return RifaPricing.calcularSubtotalFaixas(faixas, valorCota, qtd);
+    }
     if (faixas.length) {
       const sorted = [...faixas].sort((a, b) => b.quantidadeMin - a.quantidadeMin);
-      for (const f of sorted) if (qtd >= f.quantidadeMin) return f.valorTotal;
+      for (const f of sorted) {
+        if (qtd < f.quantidadeMin) continue;
+        const pct = f.percentualDesconto != null ? Number(f.percentualDesconto)
+          : (f.percentual_desconto != null ? Number(f.percentual_desconto) : null);
+        if (pct != null && pct > 0) return qtd * valorCota * (1 - pct / 100);
+        const fixo = Number(f.valorTotal != null ? f.valorTotal : f.valor_total) || 0;
+        if (fixo > 0) return fixo;
+      }
     }
-    return qtd * rifaAtual.valorCota;
+    return qtd * valorCota;
   }
 
   function calcularComTaxa(subtotal) {
@@ -96,7 +107,22 @@
   }
 
   function atualizarResumo() {
-    const { subtotal, taxa, total } = calcularComTaxa(calcularSubtotal(qtdCotas));
+    const valorCota = rifaAtual ? Number(rifaAtual.valorCota) || 0 : 0;
+    let detalhe;
+    if (typeof RifaPricing !== 'undefined' && rifaAtual) {
+      detalhe = RifaPricing.detalheCompra(faixas, valorCota, qtdCotas);
+    } else {
+      const subtotal = calcularSubtotal(qtdCotas);
+      const cheio = qtdCotas * valorCota;
+      detalhe = {
+        cheio,
+        subtotal,
+        economia: Math.max(0, cheio - subtotal),
+        pct: null,
+        proxima: null
+      };
+    }
+    const { subtotal, taxa, total } = calcularComTaxa(detalhe.subtotal);
     if (els.qtd) els.qtd.textContent = String(qtdCotas);
     if (els.subtotal) els.subtotal.textContent = 'R$ ' + fmt(subtotal);
     if (els.taxa) {
@@ -105,6 +131,44 @@
       els.taxa.textContent = 'R$ ' + fmt(taxa);
     }
     if (els.valorTotal) els.valorTotal.textContent = 'R$ ' + fmt(total);
+
+    const temDesc = detalhe.economia > 0.009;
+    const setRow = (id, on) => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = on ? 'flex' : 'none';
+    };
+    setRow('modal-cheio-row', temDesc);
+    setRow('modal-desconto-row', temDesc);
+    if (temDesc) {
+      const cheioEl = document.getElementById('modal-cheio');
+      const descEl = document.getElementById('modal-desconto');
+      const descLbl = document.getElementById('modal-desconto-label');
+      const subLbl = document.getElementById('modal-subtotal-label');
+      if (cheioEl) cheioEl.textContent = 'R$ ' + fmt(detalhe.cheio);
+      if (descEl) descEl.textContent = '− R$ ' + fmt(detalhe.economia);
+      if (descLbl) descLbl.textContent = detalhe.pct ? `Desconto (${detalhe.pct}%)` : 'Desconto';
+      if (subLbl) subLbl.textContent = 'Subtotal com desconto';
+    } else {
+      const subLbl = document.getElementById('modal-subtotal-label');
+      if (subLbl) subLbl.textContent = 'Subtotal';
+    }
+    const hint = document.getElementById('modal-desconto-hint');
+    if (hint) {
+      if (detalhe.proxima) {
+        const falta = detalhe.proxima.quantidadeMin - qtdCotas;
+        const pct = detalhe.proxima.percentualDesconto != null ? Number(detalhe.proxima.percentualDesconto) : null;
+        hint.textContent = pct
+          ? `Faltam ${falta} cota(s) para ${pct}% de desconto`
+          : `Faltam ${falta} cota(s) para o próximo pacote`;
+        hint.classList.remove('hidden');
+      } else if (temDesc && detalhe.pct) {
+        hint.textContent = `Desconto de ${detalhe.pct}% aplicado`;
+        hint.classList.remove('hidden');
+      } else {
+        hint.classList.add('hidden');
+      }
+    }
+
     const min = qtdMinima();
     if (els.btnMenos) els.btnMenos.disabled = qtdCotas <= min;
     if (els.btnMais) els.btnMais.disabled = qtdCotas >= maxQtd;
@@ -123,10 +187,18 @@
     }
   }
 
+  function normalizarFaixas(list) {
+    return (list || []).map((f) => ({
+      quantidadeMin: f.quantidadeMin != null ? f.quantidadeMin : f.quantidade_min,
+      valorTotal: f.valorTotal != null ? f.valorTotal : f.valor_total,
+      percentualDesconto: f.percentualDesconto != null ? f.percentualDesconto : f.percentual_desconto
+    }));
+  }
+
   function parseFaixas(raw) {
     if (!raw) return [];
     try {
-      return JSON.parse(decodeURIComponent(raw));
+      return normalizarFaixas(JSON.parse(decodeURIComponent(raw)));
     } catch (e) {
       return [];
     }
@@ -146,7 +218,7 @@
 
   async function abrirModal(dados) {
     rifaAtual = dados;
-    faixas = dados.faixas || [];
+    faixas = normalizarFaixas(dados.faixas || []);
     maxQtd = Math.min(5000, dados.disponiveis || 0);
     qtdCotas = maxQtd > 0 ? 1 : 0;
     numerosReservados = [];

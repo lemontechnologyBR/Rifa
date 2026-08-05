@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html lang="pt-BR" x-data="{ dark: localStorage.getItem('darkMode') === 'true', menuOpen: false }" :class="{ 'dark': dark }">
+<html lang="pt-BR" x-data="{ dark: false, menuOpen: false }" x-init="dark = window.VouRifarTheme && window.VouRifarTheme.isDark(); window.addEventListener('vourifar-theme-change', function (e) { dark = !!(e.detail && e.detail.dark); })" :class="{ 'dark': dark }">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <script src="/js/theme.js"></script>
   <% if (typeof googleAdsTagId !== 'undefined' && googleAdsTagId && !(typeof seoNoIndex !== 'undefined' && seoNoIndex)) { %>
   <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -43,15 +44,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/custom.css" id="css-custom">
-  <% if (typeof tenant !== 'undefined' && tenant) { %><link rel="stylesheet" href="/css/public.css?v=10" id="css-public"><% } %>
+  <link rel="stylesheet" href="/css/public.css?v=20" id="css-public">
   <%- include('ngrok-assets') %>
-  <script>
-    (function () {
-      if (localStorage.getItem('darkMode') === 'true') {
-        document.documentElement.classList.add('dark');
-      }
-    })();
-  </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -126,7 +120,7 @@
   </style>
   <% } %>
 </head>
-<body class="mesh-bg min-h-screen flex flex-col transition-colors text-gray-900 dark:text-gray-100 <%= (typeof tenant !== 'undefined' && tenant) ? 'public-site' : '' %>">
+<body class="mesh-bg min-h-screen flex flex-col transition-colors text-gray-900 dark:text-gray-100 <%= (typeof tenant !== 'undefined' && tenant) ? 'public-site' : '' %><%= (typeof bodyClass !== 'undefined' && bodyClass) ? ' ' + bodyClass : '' %>">
 
   <nav class="glass-nav border-b border-gray-200/60 dark:border-gray-700/60 sticky top-0 z-50 pt-safe">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -158,14 +152,14 @@
             <a href="/acessar" class="px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition">Painel</a>
             <a href="/cadastro" class="px-3 py-2 rounded-lg text-sm font-semibold landing-btn-primary shadow-sm">Criar Sistema</a>
           <% } %>
-          <button @click="dark=!dark;localStorage.setItem('darkMode',dark)" class="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition" title="Tema">
+          <button @click="dark=!dark; window.VouRifarTheme && window.VouRifarTheme.set(dark)" class="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition" title="Tema">
             <i data-lucide="moon" class="w-5 h-5" x-show="!dark"></i>
             <i data-lucide="sun" class="w-5 h-5" x-show="dark"></i>
           </button>
         </div>
 
         <div class="flex md:hidden items-center gap-1 shrink-0">
-          <button @click="dark=!dark;localStorage.setItem('darkMode',dark)" class="p-2.5 rounded-lg text-gray-500 public-touch-target" aria-label="Alternar tema">
+          <button @click="dark=!dark; window.VouRifarTheme && window.VouRifarTheme.set(dark)" class="p-2.5 rounded-lg text-gray-500 public-touch-target" aria-label="Alternar tema">
             <i data-lucide="moon" class="w-5 h-5" x-show="!dark"></i>
             <i data-lucide="sun" class="w-5 h-5" x-show="dark"></i>
           </button>

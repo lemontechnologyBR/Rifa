@@ -1,0 +1,341 @@
+{
+  "version": "6",
+  "name": "Saudação Lead — VouPremiar",
+  "icon": "👋",
+  "events": [
+    {
+      "id": "evt_start_saudacao",
+      "type": "start",
+      "graphCoordinates": { "x": 0, "y": 0 },
+      "outgoingEdgeId": "edge_start_to_saudacao"
+    }
+  ],
+  "groups": [
+    {
+      "id": "grp_saudacao",
+      "title": "Mensagem 1 — Saudação",
+      "graphCoordinates": { "x": 280, "y": -20 },
+      "blocks": [
+        {
+          "id": "blk_ola",
+          "type": "text",
+          "content": {
+            "richText": [
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "Olá! 👋 Seja bem-vindo(a) à VouPremiar!"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "blk_como_funciona",
+          "type": "text",
+          "content": {
+            "richText": [
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "Que bom ter você aqui. Nossa plataforma ajuda a criar campanhas de arrecadação (incluindo campanhas beneficentes), vaquinhas online e promoções comerciais com PIX automático — sem mensalidade e com confirmação na hora."
+                  }
+                ]
+              },
+              {
+                "type": "p",
+                "children": [{ "text": "" }]
+              },
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "Como funciona, em poucas palavras:"
+                  }
+                ]
+              },
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "1) Você cria sua campanha na plataforma"
+                  }
+                ]
+              },
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "2) Seus apoiadores pagam via PIX e a confirmação é automática"
+                  }
+                ]
+              },
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "3) O valor fica na carteira e você pode sacar a partir de R$ 50"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "blk_cadastro",
+          "type": "text",
+          "content": {
+            "richText": [
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "Para começar agora, use o link oficial de cadastro:"
+                  }
+                ]
+              },
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "https://vourifar.com.br/cadastro"
+                  }
+                ]
+              },
+              {
+                "type": "p",
+                "children": [{ "text": "" }]
+              },
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "Assim que criar a conta, me avise por aqui que eu te ajudo nos próximos passos. 💚"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "blk_escolha",
+          "type": "choice input",
+          "items": [
+            {
+              "id": "item_cadastrar",
+              "content": "Quero o link de cadastro",
+              "outgoingEdgeId": "edge_escolha_link"
+            },
+            {
+              "id": "item_ja_cadastrei",
+              "content": "Já me cadastrei",
+              "outgoingEdgeId": "edge_escolha_pronto"
+            },
+            {
+              "id": "item_duvida",
+              "content": "Tenho uma dúvida",
+              "outgoingEdgeId": "edge_escolha_duvida"
+            }
+          ],
+          "options": {
+            "buttonLabel": "Enviar",
+            "isMultipleChoice": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "grp_reenvia_link",
+      "title": "Reenvia cadastro",
+      "graphCoordinates": { "x": 700, "y": -120 },
+      "blocks": [
+        {
+          "id": "blk_link_de_novo",
+          "type": "text",
+          "content": {
+            "richText": [
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "Perfeito! Aqui está novamente o cadastro oficial:"
+                  }
+                ]
+              },
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "https://vourifar.com.br/cadastro"
+                  }
+                ]
+              },
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "Abra o link, finalize o cadastro e volte aqui quando estiver pronto. 🙂"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "grp_ja_cadastrou",
+      "title": "Já cadastrou",
+      "graphCoordinates": { "x": 700, "y": 80 },
+      "blocks": [
+        {
+          "id": "blk_parabens",
+          "type": "text",
+          "content": {
+            "richText": [
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "Ótimo! 🎉 Conta criada."
+                  }
+                ]
+              },
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "Próximos passos sugeridos: configurar o recebimento (carteira/PIX) e criar sua primeira campanha de arrecadação."
+                  }
+                ]
+              },
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "Se quiser, me diga qual o objetivo da sua campanha (beneficente, vaquinha ou promoção comercial) que eu te oriento."
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "grp_duvida",
+      "title": "Dúvida",
+      "graphCoordinates": { "x": 700, "y": 280 },
+      "blocks": [
+        {
+          "id": "blk_pede_duvida",
+          "type": "text",
+          "content": {
+            "richText": [
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "Pode mandar sua dúvida por aqui. Enquanto isso, o cadastro oficial continua disponível em:"
+                  }
+                ]
+              },
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "https://vourifar.com.br/cadastro"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "blk_input_duvida",
+          "type": "text input",
+          "options": {
+            "labels": {
+              "placeholder": "Escreva sua dúvida...",
+              "button": "Enviar"
+            },
+            "isLong": true
+          }
+        },
+        {
+          "id": "blk_recebeu_duvida",
+          "type": "text",
+          "content": {
+            "richText": [
+              {
+                "type": "p",
+                "children": [
+                  {
+                    "text": "Recebi sua mensagem! Em instantes um consultor pode complementar o atendimento. Se preferir já criar a conta, use o link acima. 💚"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge_start_to_saudacao",
+      "from": { "eventId": "evt_start_saudacao" },
+      "to": { "groupId": "grp_saudacao" }
+    },
+    {
+      "id": "edge_escolha_link",
+      "from": { "blockId": "blk_escolha", "itemId": "item_cadastrar" },
+      "to": { "groupId": "grp_reenvia_link" }
+    },
+    {
+      "id": "edge_escolha_pronto",
+      "from": { "blockId": "blk_escolha", "itemId": "item_ja_cadastrei" },
+      "to": { "groupId": "grp_ja_cadastrou" }
+    },
+    {
+      "id": "edge_escolha_duvida",
+      "from": { "blockId": "blk_escolha", "itemId": "item_duvida" },
+      "to": { "groupId": "grp_duvida" }
+    }
+  ],
+  "variables": [],
+  "theme": {
+    "general": {
+      "font": "Open Sans",
+      "background": { "type": "Color", "content": "#f7fbf8" }
+    },
+    "chat": {
+      "hostBubbles": {
+        "backgroundColor": "#0f9f6e",
+        "color": "#ffffff"
+      },
+      "guestBubbles": {
+        "backgroundColor": "#e8f7ef",
+        "color": "#0c1f17"
+      },
+      "buttons": {
+        "backgroundColor": "#0f9f6e",
+        "color": "#ffffff"
+      }
+    }
+  },
+  "settings": {
+    "general": {
+      "isBrandingEnabled": false,
+      "isInputPrefillEnabled": false
+    },
+    "typingEmulation": {
+      "enabled": true,
+      "speed": 350,
+      "maxDelay": 2
+    }
+  }
+}

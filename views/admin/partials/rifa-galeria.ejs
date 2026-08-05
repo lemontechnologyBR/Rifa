@@ -1,0 +1,287 @@
+<%
+  let urlsIniciais = [];
+  if (typeof imagensUrls !== 'undefined' && imagensUrls && imagensUrls.length) {
+    urlsIniciais = imagensUrls;
+  } else if (typeof rifa !== 'undefined' && rifa) {
+    if (rifa.imagens && rifa.imagens.length) urlsIniciais = rifa.imagens.map(function(i) { return i.url; });
+    else if (rifa.imagemUrl) urlsIniciais = [rifa.imagemUrl];
+  } else {
+    const u = typeof imagemUrl !== 'undefined' ? imagemUrl : '';
+    if (u) urlsIniciais = [u];
+  }
+%>
+<style>
+  .admin-rifa-galeria .admin-rifa-galeria-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 88px);
+    gap: 10px;
+    margin-bottom: 12px;
+    min-height: 0;
+  }
+  .admin-rifa-galeria .admin-rifa-galeria-item {
+    position: relative;
+    width: 88px;
+    height: 88px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    background: var(--admin-surface-2, #f1f5f9);
+  }
+  .admin-rifa-galeria .admin-rifa-galeria-thumb {
+    width: 88px !important;
+    height: 88px !important;
+    max-width: 88px !important;
+    max-height: 88px !important;
+    object-fit: cover !important;
+    display: block !important;
+    margin: 0 !important;
+  }
+  .admin-rifa-galeria .admin-rifa-galeria-badge {
+    position: absolute;
+    left: 4px;
+    bottom: 4px;
+    top: auto;
+    z-index: 2;
+    font-size: 8px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    background: #059669;
+    color: #fff;
+    padding: 2px 5px;
+    border-radius: 4px;
+    line-height: 1.2;
+    pointer-events: none;
+  }
+  .admin-rifa-galeria .admin-rifa-galeria-remove {
+    position: absolute;
+    right: 4px;
+    top: 4px;
+    z-index: 3;
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    border: none;
+    background: rgba(0, 0, 0, 0.72);
+    color: #fff;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+  .admin-rifa-galeria .admin-rifa-galeria-remove:hover {
+    background: #dc2626;
+  }
+  .admin-rifa-galeria .admin-rifa-galeria-empty {
+    grid-column: 1 / -1;
+    padding: 20px 16px;
+    text-align: center;
+    font-size: 12px;
+    color: #94a3b8;
+    border: 2px dashed var(--admin-border, #e2e8f0);
+    border-radius: 12px;
+  }
+</style>
+<div class="admin-rifa-galeria" data-upload-url="<%= adminBase %>/upload/imagem-rifa" data-max="12" data-initial="<%= encodeURIComponent(JSON.stringify(urlsIniciais)) %>">
+  <label class="admin-label">Fotos do sorteio</label>
+  <p class="admin-hint mb-2">Até 12 imagens. A primeira é a capa e aparece no carrossel da página pública.</p>
+
+  <div class="admin-rifa-galeria-strip" data-galeria-strip></div>
+
+  <div class="flex flex-wrap gap-2">
+    <label class="admin-upload-btn cursor-pointer">
+      <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" class="hidden" data-galeria-file multiple>
+      <i data-lucide="upload" class="w-4 h-4"></i>
+      <span data-galeria-btn-label>Adicionar fotos</span>
+    </label>
+    <button type="button" class="admin-action-btn hidden" data-galeria-clear>
+      <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Limpar todas
+    </button>
+  </div>
+  <p class="admin-hint" data-galeria-status>JPG, PNG, WebP ou GIF · até 5 MB cada</p>
+
+  <div data-galeria-hidden-wrap></div>
+  <input type="hidden" name="imagem_url" value="" data-galeria-capa>
+  <input type="hidden" name="imagens_urls_json" value="[]" data-galeria-json>
+
+  <div class="mt-3">
+    <label class="admin-label text-xs">Ou cole uma URL externa</label>
+    <div class="flex gap-2 mt-1">
+      <input type="text" inputmode="url" placeholder="https://..." class="admin-input text-sm flex-1" data-galeria-url autocomplete="off">
+      <button type="button" class="admin-action-btn shrink-0" data-galeria-url-add>Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  if (window.__rifaGaleriaInit) return;
+  window.__rifaGaleriaInit = true;
+
+  function csrfToken() {
+    return document.querySelector('meta[name="csrf-token"]')?.content || '';
+  }
+
+  function getUrls(wrap) {
+    try {
+      return JSON.parse(wrap.querySelector('[data-galeria-json]')?.value || '[]');
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function setUrls(wrap, urls) {
+    const max = parseInt(wrap.dataset.max, 10) || 12;
+    const list = urls.filter(Boolean).slice(0, max);
+    const jsonEl = wrap.querySelector('[data-galeria-json]');
+    const capaEl = wrap.querySelector('[data-galeria-capa]');
+    const hiddenWrap = wrap.querySelector('[data-galeria-hidden-wrap]');
+    if (jsonEl) jsonEl.value = JSON.stringify(list);
+    if (capaEl) capaEl.value = list[0] || '';
+    if (hiddenWrap) {
+      hiddenWrap.innerHTML = list.map(function (u) {
+        return '<input type="hidden" name="imagens_urls" value="' + u.replace(/"/g, '&quot;') + '">';
+      }).join('');
+    }
+    renderStrip(wrap, list);
+    var clearBtn = wrap.querySelector('[data-galeria-clear]');
+    if (clearBtn) clearBtn.classList.toggle('hidden', !list.length);
+  }
+
+  function renderStrip(wrap, list) {
+    var strip = wrap.querySelector('[data-galeria-strip]');
+    if (!strip) return;
+    strip.innerHTML = '';
+    if (!list.length) {
+      var empty = document.createElement('p');
+      empty.className = 'admin-rifa-galeria-empty';
+      empty.textContent = 'Nenhuma foto ainda — use “Adicionar fotos”.';
+      strip.appendChild(empty);
+      return;
+    }
+    list.forEach(function (url, idx) {
+      var item = document.createElement('div');
+      item.className = 'admin-rifa-galeria-item';
+
+      var img = document.createElement('img');
+      img.className = 'admin-rifa-galeria-thumb';
+      img.src = url;
+      img.alt = 'Foto ' + (idx + 1);
+      img.width = 88;
+      img.height = 88;
+      img.loading = 'lazy';
+      item.appendChild(img);
+
+      if (idx === 0) {
+        var badge = document.createElement('span');
+        badge.className = 'admin-rifa-galeria-badge';
+        badge.textContent = 'Capa';
+        item.appendChild(badge);
+      }
+
+      var rm = document.createElement('button');
+      rm.type = 'button';
+      rm.className = 'admin-rifa-galeria-remove';
+      rm.dataset.idx = String(idx);
+      rm.title = 'Remover foto';
+      rm.setAttribute('aria-label', 'Remover foto');
+      rm.textContent = '×';
+      item.appendChild(rm);
+
+      strip.appendChild(item);
+    });
+  }
+
+  function addUrl(wrap, url) {
+    var u = String(url || '').trim();
+    if (!u) return;
+    var list = getUrls(wrap);
+    if (list.includes(u)) return;
+    list.push(u);
+    setUrls(wrap, list);
+  }
+
+  function uploadFile(wrap, file) {
+    var status = wrap.querySelector('[data-galeria-status]');
+    var label = wrap.querySelector('[data-galeria-btn-label]');
+    var uploadUrl = wrap.dataset.uploadUrl;
+    if (status) status.textContent = 'Enviando…';
+    if (label) label.textContent = 'Enviando…';
+
+    var fd = new FormData();
+    fd.append('imagem', file);
+    fd.append('_csrf', csrfToken());
+
+    return fetch(uploadUrl, {
+      method: 'POST',
+      body: fd,
+      credentials: 'same-origin',
+      headers: {
+        'X-CSRF-Token': csrfToken(),
+        'X-Requested-With': 'XMLHttpRequest',
+        'ngrok-skip-browser-warning': 'true'
+      }
+    })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (_ref) {
+        if (!_ref.ok) throw new Error(_ref.d.erro || 'Falha no upload');
+        addUrl(wrap, _ref.d.url);
+      })
+      .finally(function () {
+        if (status) status.textContent = 'JPG, PNG, WebP ou GIF · até 5 MB cada';
+        if (label) label.textContent = 'Adicionar fotos';
+      });
+  }
+
+  document.addEventListener('change', function (e) {
+    var input = e.target.closest('[data-galeria-file]');
+    if (!input || !input.files || !input.files.length) return;
+    var wrap = input.closest('.admin-rifa-galeria');
+    var files = Array.from(input.files);
+    var max = parseInt(wrap.dataset.max, 10) || 12;
+    var list = getUrls(wrap);
+    var room = max - list.length;
+    Promise.all(files.slice(0, room).map(function (f) { return uploadFile(wrap, f); }))
+      .catch(function (err) {
+        var status = wrap.querySelector('[data-galeria-status]');
+        if (status) status.textContent = err.message;
+      })
+      .finally(function () { input.value = ''; });
+  });
+
+  document.addEventListener('click', function (e) {
+    var addBtn = e.target.closest('[data-galeria-url-add]');
+    if (addBtn) {
+      var wrap = addBtn.closest('.admin-rifa-galeria');
+      var urlInput = wrap.querySelector('[data-galeria-url]');
+      addUrl(wrap, urlInput?.value);
+      if (urlInput) urlInput.value = '';
+      return;
+    }
+    var rm = e.target.closest('.admin-rifa-galeria-remove');
+    if (rm) {
+      var wrap2 = rm.closest('.admin-rifa-galeria');
+      var idx = parseInt(rm.dataset.idx, 10);
+      var list = getUrls(wrap2);
+      list.splice(idx, 1);
+      setUrls(wrap2, list);
+      return;
+    }
+    var clear = e.target.closest('[data-galeria-clear]');
+    if (clear) {
+      setUrls(clear.closest('.admin-rifa-galeria'), []);
+    }
+  });
+
+  document.querySelectorAll('.admin-rifa-galeria').forEach(function (wrap) {
+    var initial = [];
+    if (wrap.dataset.initial) {
+      try { initial = JSON.parse(decodeURIComponent(wrap.dataset.initial)); } catch (e) { /* ignore */ }
+    }
+    setUrls(wrap, initial.length ? initial : getUrls(wrap));
+  });
+})();
+</script>

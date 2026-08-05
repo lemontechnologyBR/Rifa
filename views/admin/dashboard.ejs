@@ -31,9 +31,10 @@
     <%- include('partials/primeira-rifa-cta', {
       totalRifas,
       carteiraOk,
-      mpSplitConfigured,
       adminBase
     }) %>
+
+    <% const traf = typeof trafego !== 'undefined' && trafego ? trafego : { periodo: 30, resumo: {}, topFontes: [], dispositivos: [], topCampanhas: [], visitasUltimos7Dias: [] }; %>
 
     <div class="admin-metrics">
       <article class="admin-metric-card">
@@ -56,6 +57,34 @@
         </div>
         <p class="admin-metric-value">R$ <%= (metricas.faturamentoBruto || 0).toFixed(2).replace('.', ',') %></p>
         <p class="admin-metric-label">Seu faturamento</p>
+      </article>
+      <article class="admin-metric-card admin-metric-card--compact">
+        <div class="admin-metric-head">
+          <div class="admin-metric-icon blue"><i data-lucide="eye" class="w-4 h-4"></i></div>
+        </div>
+        <p class="admin-metric-value"><%= (traf.resumo.viewsPeriodo || 0).toLocaleString('pt-BR') %></p>
+        <p class="admin-metric-label">Visitas (<%= traf.periodo || 30 %> dias)</p>
+      </article>
+      <article class="admin-metric-card admin-metric-card--compact">
+        <div class="admin-metric-head">
+          <div class="admin-metric-icon violet"><i data-lucide="users" class="w-4 h-4"></i></div>
+        </div>
+        <p class="admin-metric-value"><%= (traf.resumo.unicosPeriodo || 0).toLocaleString('pt-BR') %></p>
+        <p class="admin-metric-label">Visitantes únicos</p>
+      </article>
+      <article class="admin-metric-card admin-metric-card--compact">
+        <div class="admin-metric-head">
+          <div class="admin-metric-icon emerald"><i data-lucide="percent" class="w-4 h-4"></i></div>
+        </div>
+        <p class="admin-metric-value"><%= metricas.taxaConversao || 0 %>%</p>
+        <p class="admin-metric-label">PIX confirmados</p>
+      </article>
+      <article class="admin-metric-card admin-metric-card--compact">
+        <div class="admin-metric-head">
+          <div class="admin-metric-icon blue"><i data-lucide="receipt" class="w-4 h-4"></i></div>
+        </div>
+        <p class="admin-metric-value">R$ <%= (metricas.ticketMedio || 0).toFixed(2).replace('.', ',') %></p>
+        <p class="admin-metric-label">Ticket médio</p>
       </article>
     </div>
 
@@ -81,14 +110,169 @@
 
       <div class="admin-panel-card p-5">
         <h2 class="admin-section-title mb-4">
+          <i data-lucide="clock" class="w-4 h-4 text-amber-500"></i>
+          Funil de reservas
+        </h2>
+        <ul class="space-y-3 text-sm">
+          <li class="flex justify-between gap-2">
+            <span class="text-gray-500 dark:text-gray-400">Confirmadas</span>
+            <span class="font-bold text-emerald-600"><%= metricas.reservasConfirmadas || 0 %></span>
+          </li>
+          <li class="flex justify-between gap-2">
+            <span class="text-gray-500 dark:text-gray-400">Aguardando PIX</span>
+            <span class="font-bold text-amber-600"><%= metricas.reservasPendentes || 0 %></span>
+          </li>
+          <li class="flex justify-between gap-2">
+            <span class="text-gray-500 dark:text-gray-400">Expiradas</span>
+            <span class="font-bold text-gray-500"><%= metricas.reservasExpiradas || 0 %></span>
+          </li>
+          <li class="flex justify-between gap-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+            <span class="text-gray-500 dark:text-gray-400">Compradores únicos</span>
+            <span class="font-bold"><%= metricas.compradoresUnicos || 0 %></span>
+          </li>
+        </ul>
+        <p class="text-[11px] text-gray-400 mt-4 leading-relaxed">Visitas hoje: <strong class="text-gray-600 dark:text-gray-300"><%= traf.resumo.viewsHoje || 0 %></strong> · únicos <strong><%= traf.resumo.unicosHoje || 0 %></strong></p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+      <div class="admin-panel-card p-5">
+        <h2 class="admin-section-title mb-4">
+          <i data-lucide="globe" class="w-4 h-4 text-blue-600"></i>
+          Origem do tráfego <span class="text-xs font-normal text-gray-400">(<%= traf.periodo || 30 %> dias)</span>
+        </h2>
+        <% if (!traf.topFontes || !traf.topFontes.length) { %>
+          <div class="admin-empty-chart h-40">
+            <i data-lucide="link" class="w-8 h-8 opacity-30"></i>
+            <p class="text-sm text-center px-4">Ainda sem visitas na loja. Use links com <code class="text-xs">?utm_source=instagram</code> para rastrear campanhas.</p>
+          </div>
+        <% } else { %>
+          <ul class="admin-analytics-bars">
+            <% traf.topFontes.forEach(function(f) { %>
+              <li>
+                <div class="admin-analytics-bar-head">
+                  <span title="<%= f.source %>"><%= f.label %></span>
+                  <span><%= f.views %> visita<%= f.views !== 1 ? 's' : '' %></span>
+                </div>
+                <div class="admin-analytics-bar-track">
+                  <div class="admin-analytics-bar-fill" style="width:<%= f.pct %>%"></div>
+                </div>
+              </li>
+            <% }); %>
+          </ul>
+        <% } %>
+      </div>
+
+      <div class="admin-panel-card p-5">
+        <h2 class="admin-section-title mb-4">
+          <i data-lucide="smartphone" class="w-4 h-4 text-violet-600"></i>
+          Dispositivos
+        </h2>
+        <% if (!traf.dispositivos || !traf.dispositivos.length) { %>
+          <div class="admin-empty-chart h-40">
+            <p class="text-sm text-gray-400">Sem dados no período</p>
+          </div>
+        <% } else { %>
+          <ul class="admin-analytics-bars">
+            <% traf.dispositivos.forEach(function(d) { %>
+              <li>
+                <div class="admin-analytics-bar-head">
+                  <span><%= d.label %></span>
+                  <span><%= d.pct %>%</span>
+                </div>
+                <div class="admin-analytics-bar-track">
+                  <div class="admin-analytics-bar-fill admin-analytics-bar-fill--violet" style="width:<%= d.pct %>%"></div>
+                </div>
+              </li>
+            <% }); %>
+          </ul>
+        <% } %>
+        <% if (traf.topCampanhas && traf.topCampanhas.length) { %>
+          <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mt-5 mb-2">Campanhas UTM</p>
+          <ul class="space-y-1.5 text-sm">
+            <% traf.topCampanhas.forEach(function(c) { %>
+              <li class="flex justify-between gap-2">
+                <span class="truncate text-gray-600 dark:text-gray-300" title="<%= c.campaign %>"><%= c.campaign %></span>
+                <span class="text-gray-400 shrink-0"><%= c.views %></span>
+              </li>
+            <% }); %>
+          </ul>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+      <div class="admin-panel-card p-5">
+        <h2 class="admin-section-title mb-4">
+          <i data-lucide="trophy" class="w-4 h-4 text-amber-500"></i>
+          Top compradores
+        </h2>
+        <div class="space-y-3 max-h-72 overflow-y-auto">
+          <% if (!metricas.topCompradores || metricas.topCompradores.length === 0) { %>
+            <div class="admin-empty-chart h-40">
+              <i data-lucide="user-plus" class="w-8 h-8 opacity-30"></i>
+              <p class="text-sm">Nenhuma venda confirmada ainda</p>
+            </div>
+          <% } else { metricas.topCompradores.forEach(function(c, idx) { %>
+            <div class="flex items-start gap-3 pb-3 border-b border-gray-100 dark:border-gray-700 last:border-0">
+              <div class="w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center shrink-0 text-xs font-black text-violet-700 dark:text-violet-300">
+                <%= idx + 1 %>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="font-semibold text-sm truncate"><%= c.nome %></p>
+                <p class="text-xs text-gray-500 dark:text-gray-400"><%= c.telefone %> · <%= c.cotas %> cota<%= c.cotas !== 1 ? 's' : '' %> · <%= c.compras %> compra<%= c.compras !== 1 ? 's' : '' %></p>
+              </div>
+              <p class="text-sm font-bold text-emerald-600 shrink-0">R$ <%= c.total.toFixed(2).replace('.', ',') %></p>
+            </div>
+          <% }); } %>
+        </div>
+      </div>
+
+      <div class="admin-panel-card p-5">
+        <h2 class="admin-section-title mb-4">
+          <i data-lucide="flame" class="w-4 h-4 text-orange-500"></i>
+          Sorteios que mais vendem
+        </h2>
+        <div class="space-y-3 max-h-72 overflow-y-auto">
+          <% if (!metricas.rifasPopulares || metricas.rifasPopulares.length === 0) { %>
+            <div class="admin-empty-chart h-40">
+              <p class="text-sm text-gray-400">Publique um sorteio para ver o ranking</p>
+            </div>
+          <% } else { metricas.rifasPopulares.forEach(function(r, idx) { %>
+            <div class="flex items-start gap-3 pb-3 border-b border-gray-100 dark:border-gray-700 last:border-0">
+              <span class="text-xs font-black text-gray-400 w-5 pt-0.5"><%= idx + 1 %>.</span>
+              <div class="min-w-0 flex-1">
+                <p class="font-semibold text-sm truncate"><%= r.titulo %></p>
+                <p class="text-xs text-gray-500"><%= r.vendas %> reserva<%= r.vendas !== 1 ? 's' : '' %> confirmada<%= r.vendas !== 1 ? 's' : '' %></p>
+              </div>
+              <p class="text-sm font-bold shrink-0">R$ <%= Number(r.receita || 0).toFixed(2).replace('.', ',') %></p>
+            </div>
+          <% }); } %>
+        </div>
+        <% if (metricas.topIndicacoes && metricas.topIndicacoes.length) { %>
+          <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mt-4 mb-2">Indicações que converteram</p>
+          <ul class="space-y-1.5 text-sm">
+            <% metricas.topIndicacoes.forEach(function(ind) { %>
+              <li class="flex justify-between gap-2">
+                <span class="font-mono text-xs text-gray-600 dark:text-gray-300"><%= ind.codigo %></span>
+                <span class="text-emerald-600 font-semibold"><%= ind.vendas %> venda<%= ind.vendas !== 1 ? 's' : '' %></span>
+              </li>
+            <% }); %>
+          </ul>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+      <div class="admin-panel-card p-5">
+        <h2 class="admin-section-title mb-4">
           <i data-lucide="users" class="w-4 h-4 text-blue-600"></i>
           Últimos compradores
         </h2>
         <div class="space-y-3 max-h-56 overflow-y-auto">
           <% if (!metricas.ultimosCompradores || metricas.ultimosCompradores.length === 0) { %>
             <div class="admin-empty-chart h-40">
-              <i data-lucide="user-plus" class="w-8 h-8 opacity-30"></i>
-              <p class="text-sm">Nenhuma venda confirmada</p>
+              <p class="text-sm text-gray-400">Nenhuma venda recente</p>
             </div>
           <% } else { metricas.ultimosCompradores.forEach(function(c) { %>
             <div class="flex items-start gap-3 pb-3 border-b border-gray-100 dark:border-gray-700 last:border-0">
@@ -103,6 +287,23 @@
             </div>
           <% }); } %>
         </div>
+      </div>
+
+      <div class="admin-panel-card p-5">
+        <div class="admin-section-head mb-3">
+          <h2 class="admin-section-title">
+            <i data-lucide="activity" class="w-4 h-4 text-gray-400"></i>
+            Visitas na loja — 7 dias
+          </h2>
+        </div>
+        <% const totalVisitas7d = (traf.visitasUltimos7Dias || []).reduce(function (s, v) { return s + (v.views || 0); }, 0); %>
+        <% if (totalVisitas7d === 0) { %>
+          <div class="admin-empty-chart h-40">
+            <p class="text-sm text-gray-400">Compartilhe sua loja para gerar estatísticas</p>
+          </div>
+        <% } else { %>
+          <div class="h-40"><canvas id="chartVisitas7d"></canvas></div>
+        <% } %>
       </div>
     </div>
 
@@ -132,12 +333,12 @@
   <script>
     lucide.createIcons();
 
-    <% if (totalVendas7d > 0) { %>
-    const vendas7d = <%- JSON.stringify(metricas.vendasUltimos7Dias || []) %>;
     const isDark = document.documentElement.classList.contains('dark');
     const gridColor = isDark ? 'rgba(148,163,184,0.15)' : 'rgba(0,0,0,0.06)';
     const labelColor = isDark ? '#94a3b8' : '#64748b';
 
+    <% if (totalVendas7d > 0) { %>
+    const vendas7d = <%- JSON.stringify(metricas.vendasUltimos7Dias || []) %>;
     new Chart(document.getElementById('chartVendas7d'), {
       type: 'bar',
       data: {
@@ -166,6 +367,46 @@
         },
         scales: {
           x: { grid: { display: false }, ticks: { color: labelColor, font: { size: 11 } } },
+          y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: labelColor, stepSize: 1 } }
+        }
+      }
+    });
+    <% } %>
+
+    <% if (totalVisitas7d > 0) { %>
+    const visitas7d = <%- JSON.stringify(traf.visitasUltimos7Dias || []) %>;
+    new Chart(document.getElementById('chartVisitas7d'), {
+      type: 'line',
+      data: {
+        labels: visitas7d.map(function (v) { return v.dia; }),
+        datasets: [
+          {
+            label: 'Visitas',
+            data: visitas7d.map(function (v) { return v.views; }),
+            borderColor: '#6366f1',
+            backgroundColor: 'rgba(99, 102, 241, 0.15)',
+            fill: true,
+            tension: 0.35,
+            pointRadius: 3
+          },
+          {
+            label: 'Únicos',
+            data: visitas7d.map(function (v) { return v.unicos; }),
+            borderColor: '#10b981',
+            backgroundColor: 'transparent',
+            tension: 0.35,
+            pointRadius: 3
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: labelColor, boxWidth: 10, font: { size: 11 } } }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: labelColor, font: { size: 10 } } },
           y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: labelColor, stepSize: 1 } }
         }
       }

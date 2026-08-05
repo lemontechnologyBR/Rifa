@@ -106,13 +106,94 @@
 
   const fmt = (v) => v.toFixed(2).replace('.', ',');
 
-  function calcularSubtotal(qtd) {
-    if (!qtd) return 0;
-    if (typeof FAIXAS !== 'undefined' && FAIXAS.length) {
-      const sorted = [...FAIXAS].sort((a, b) => b.quantidadeMin - a.quantidadeMin);
-      for (const f of sorted) if (qtd >= f.quantidadeMin) return f.valorTotal;
+  const valorCotaNum = Number(typeof VALOR_COTA !== 'undefined' ? VALOR_COTA : 0) || 0;
+
+  /** Cálculo de faixas (não depende de rifa-pricing.js carregar via fetch). */
+  const pricingLocal = (function () {
+    function pctFaixa(faixa) {
+      if (faixa.percentualDesconto != null) return Number(faixa.percentualDesconto);
+      if (faixa.percentual_desconto != null) return Number(faixa.percentual_desconto);
+      return null;
     }
-    return qtd * VALOR_COTA;
+
+    function valorFaixaAplicado(faixa, quantidade, valorCota) {
+      const qtd = Math.max(0, Number(quantidade) || 0);
+      const valor = Number(valorCota) || 0;
+      const pct = pctFaixa(faixa);
+      if (pct != null && pct > 0) {
+        return Math.max(0, qtd * valor * (1 - pct / 100));
+      }
+      const fixo = Number(faixa.valorTotal != null ? faixa.valorTotal : faixa.valor_total) || 0;
+      return fixo > 0 ? fixo : qtd * valor;
+    }
+
+    function faixaTemDesconto(faixa) {
+      const pct = pctFaixa(faixa);
+      if (pct != null && pct > 0) return true;
+      const fixo = Number(faixa.valorTotal != null ? faixa.valorTotal : faixa.valor_total) || 0;
+      return fixo > 0;
+    }
+
+    function calcularSubtotalFaixas(faixas, valorCota, qtd) {
+      if (!qtd) return 0;
+      if (faixas && faixas.length) {
+        const sorted = [...faixas].sort((a, b) => b.quantidadeMin - a.quantidadeMin);
+        for (const f of sorted) {
+          if (qtd >= f.quantidadeMin && faixaTemDesconto(f)) {
+            return valorFaixaAplicado(f, qtd, valorCota);
+          }
+        }
+      }
+      return qtd * (Number(valorCota) || 0);
+    }
+
+    function faixaAplicada(faixas, qtd) {
+      if (!faixas?.length) return null;
+      const sorted = [...faixas].sort((a, b) => b.quantidadeMin - a.quantidadeMin);
+      for (const f of sorted) {
+        if (qtd >= f.quantidadeMin && faixaTemDesconto(f)) return f;
+      }
+      return null;
+    }
+
+    function proximaFaixa(faixas, qtd) {
+      if (!faixas?.length) return null;
+      const sorted = [...faixas].sort((a, b) => a.quantidadeMin - b.quantidadeMin);
+      return sorted.find((f) => qtd < f.quantidadeMin && faixaTemDesconto(f)) || null;
+    }
+
+    function detalheCompra(faixas, valorCota, qtd) {
+      const valor = Number(valorCota) || 0;
+      const cheio = (Number(qtd) || 0) * valor;
+      const subtotal = calcularSubtotalFaixas(faixas, valor, qtd);
+      const economia = Math.max(0, cheio - subtotal);
+      const faixa = faixaAplicada(faixas, qtd);
+      const proxima = proximaFaixa(faixas, qtd);
+      let pct = null;
+      const pctFaixaVal = faixa ? pctFaixa(faixa) : null;
+      if (pctFaixaVal != null && pctFaixaVal > 0) {
+        pct = pctFaixaVal;
+      } else if (economia > 0 && cheio > 0) {
+        pct = Math.round((economia / cheio) * 100);
+      }
+      return { cheio, subtotal, economia, faixa, pct, proxima };
+    }
+
+    return { calcularSubtotalFaixas, detalheCompra };
+  })();
+
+  function pricingEngine() {
+    if (typeof window !== 'undefined' && window.RifaCompraPricing) return window.RifaCompraPricing;
+    if (typeof RifaPricing !== 'undefined') return RifaPricing;
+    return pricingLocal;
+  }
+
+  function listaFaixas() {
+    return typeof FAIXAS !== 'undefined' ? FAIXAS : [];
+  }
+
+  function calcularSubtotal(qtd) {
+    return pricingEngine().calcularSubtotalFaixas(listaFaixas(), valorCotaNum, qtd);
   }
 
   function calcularComTaxa(subtotal) {
@@ -120,7 +201,7 @@
   }
 
   const COMPRA_MIN_REAIS = 5.00;
-  const QTD_MIN_COMPRA = VALOR_COTA > 0 ? Math.ceil(COMPRA_MIN_REAIS / VALOR_COTA) : 1;
+  const QTD_MIN_COMPRA = valorCotaNum > 0 ? Math.ceil(COMPRA_MIN_REAIS / valorCotaNum) : 1;
 
   function clampQtd(val) {
     const n = parseInt(val, 10);
@@ -134,13 +215,46 @@
     atualizarResumoPagina();
   }
 
+  function detalheQtd(qtd) {
+    return pricingEngine().detalheCompra(listaFaixas(), valorCotaNum, qtd);
+  }
+
+  function aplicarLinhasDesconto(detalhe, ids) {
+    const tem = detalhe.economia > 0.009;
+    const setRow = (id, on) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.style.display = on ? 'flex' : 'none';
+    };
+    setRow(ids.cheioRow, tem);
+    setRow(ids.descontoRow, tem);
+    if (ids.economiaBadge) {
+      const badge = document.getElementById(ids.economiaBadge);
+      if (badge) badge.style.display = tem ? 'block' : 'none';
+    }
+
+    const set = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+    if (tem) {
+      set(ids.cheio, `R$ ${fmt(detalhe.cheio)}`);
+      const labelPct = detalhe.pct ? `Desconto (${detalhe.pct}%)` : 'Desconto';
+      if (ids.descontoLabel) set(ids.descontoLabel, labelPct);
+      set(ids.desconto, `− R$ ${fmt(detalhe.economia)}`);
+      if (ids.economiaBadge) {
+        set(ids.economiaBadge, `Você economiza R$ ${fmt(detalhe.economia)} nesta compra`);
+      }
+    }
+    if (ids.subtotalLabel) {
+      set(ids.subtotalLabel, tem ? 'Subtotal com desconto' : 'Subtotal');
+    }
+  }
+
   function atualizarResumoPagina() {
-    const { subtotal, taxa, total } = calcularComTaxa(calcularSubtotal(qtdCotas));
+    const detalhe = detalheQtd(qtdCotas);
+    const { subtotal, taxa, total } = calcularComTaxa(detalhe.subtotal);
 
     const avisoMin = document.getElementById('aviso-compra-minima');
     if (avisoMin) avisoMin.classList.toggle('hidden', subtotal >= COMPRA_MIN_REAIS);
-    if (btnIniciar) btnIniciar.disabled = subtotal < COMPRA_MIN_REAIS;
-    if (btnMobile) btnMobile.disabled = subtotal < COMPRA_MIN_REAIS;
+    const abaixoMinimo = subtotal < COMPRA_MIN_REAIS;
 
     const set = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
     set('label-qtd-cotas', String(qtdCotas));
@@ -148,15 +262,47 @@
     set('page-res-subtotal', `R$ ${fmt(subtotal)}`);
     set('page-res-taxa', `R$ ${fmt(taxa)}`);
     set('page-res-total', `R$ ${fmt(total)}`);
+    set('btn-total-label', `R$ ${fmt(total)}`);
     set('sticky-qtd', String(qtdCotas));
     set('sticky-total', `R$ ${fmt(total)}`);
+
+    aplicarLinhasDesconto(detalhe, {
+      cheioRow: 'page-res-cheio-row',
+      cheio: 'page-res-cheio',
+      descontoRow: 'page-res-desconto-row',
+      descontoLabel: 'page-res-desconto-label',
+      desconto: 'page-res-desconto',
+      subtotalLabel: 'page-res-subtotal-label',
+      economiaBadge: 'page-res-economia-badge'
+    });
+
+    const temDesconto = detalhe.economia > 0.009;
+    const hint = document.getElementById('page-desconto-hint');
+    if (hint) {
+      if (detalhe.proxima) {
+        const falta = detalhe.proxima.quantidadeMin - qtdCotas;
+        const pctProx = detalhe.proxima.percentualDesconto != null
+          ? Number(detalhe.proxima.percentualDesconto)
+          : (detalhe.proxima.percentual_desconto != null ? Number(detalhe.proxima.percentual_desconto) : null);
+        hint.textContent = pctProx
+          ? `Faltam ${falta} cota(s) para ${pctProx}% de desconto (${detalhe.proxima.quantidadeMin}+ cotas)`
+          : `Faltam ${falta} cota(s) para o próximo pacote (${detalhe.proxima.quantidadeMin}+ cotas)`;
+        hint.style.display = 'block';
+      } else if (temDesconto && detalhe.pct) {
+        hint.textContent = `Desconto de ${detalhe.pct}% aplicado nesta quantidade`;
+        hint.style.display = 'block';
+      } else {
+        hint.style.display = 'none';
+      }
+    }
 
     const btnMenos = document.getElementById('qtd-menos');
     const btnMais = document.getElementById('qtd-mais');
     if (btnMenos) btnMenos.disabled = qtdCotas <= 1;
     if (btnMais) btnMais.disabled = qtdCotas >= maxQtd;
-    if (btnIniciar) btnIniciar.disabled = maxQtd === 0 || compraEmAndamento;
-    if (btnMobile) btnMobile.disabled = maxQtd === 0 || compraEmAndamento;
+    const bloqueadoCompra = maxQtd === 0 || compraEmAndamento || abaixoMinimo;
+    if (btnIniciar) btnIniciar.disabled = bloqueadoCompra;
+    if (btnMobile) btnMobile.disabled = bloqueadoCompra;
 
     if (avisoLimite) {
       if (maxQtd === 0) {
@@ -197,11 +343,20 @@
     if (btn) btn.disabled = false;
 
     const subtotal = calcularSubtotal(numerosSelecionados.length);
+    const detalhe = detalheQtd(numerosSelecionados.length);
     const { taxa, total } = calcularComTaxa(subtotal);
     const set = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
     set('checkout-subtotal', `R$ ${fmt(subtotal)}`);
     set('checkout-taxa', `R$ ${fmt(taxa)}`);
     set('valor-total', `R$ ${fmt(total)}`);
+    aplicarLinhasDesconto(detalhe, {
+      cheioRow: 'checkout-cheio-row',
+      cheio: 'checkout-cheio',
+      descontoRow: 'checkout-desconto-row',
+      descontoLabel: 'checkout-desconto-label',
+      desconto: 'checkout-desconto',
+      subtotalLabel: 'checkout-subtotal-label'
+    });
   }
 
   document.getElementById('qtd-menos')?.addEventListener('click', () => setQtd(qtdCotas - 1));
@@ -212,6 +367,9 @@
 
   document.querySelectorAll('[data-add-qtd]').forEach((btn) => {
     btn.addEventListener('click', () => setQtd(qtdCotas + parseInt(btn.dataset.addQtd, 10)));
+  });
+  document.querySelectorAll('[data-set-qtd]').forEach((btn) => {
+    btn.addEventListener('click', () => setQtd(parseInt(btn.dataset.setQtd, 10)));
   });
 
   async function iniciarCompra() {
@@ -552,10 +710,15 @@
 
     function atualizarBotaoGrade() {
       const qtd   = selecionadosGrade.size;
-      const total = qtd * VALOR_COTA;
+      const detalhe = detalheQtd(qtd);
+      const total = detalhe.subtotal;
       const set   = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
       set('grade-selecionados-qtd', String(qtd));
-      set('grade-total-label',      `R$ ${fmt(total)}`);
+      if (detalhe.economia > 0.009) {
+        set('grade-total-label', `R$ ${fmt(total)} (−${detalhe.pct || Math.round((detalhe.economia / detalhe.cheio) * 100)}%)`);
+      } else {
+        set('grade-total-label', `R$ ${fmt(total)}`);
+      }
       set('btn-grade-total-label',  `R$ ${fmt(total)}`);
       set('sticky-qtd',             `${qtd} número(s)`);
       set('sticky-total',           `R$ ${fmt(total)}`);

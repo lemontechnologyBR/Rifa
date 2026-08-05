@@ -1,4 +1,4 @@
-const CACHE = 'vourifar-pwa-v4';
+const CACHE = 'vourifar-pwa-v5';
 const OFFLINE_URL = '/offline.html';
 const PRECACHE = [
   OFFLINE_URL,
@@ -42,18 +42,27 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (isStaticAsset(url)) {
+    const networkFirstJs = url.pathname.startsWith('/js/');
     event.respondWith(
-      caches.match(event.request).then((cached) => {
-        if (cached) return cached;
-        return fetch(event.request).then((response) => {
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
+      (networkFirstJs
+        ? fetch(event.request).then((response) => {
+          if (response && response.status === 200 && response.type === 'basic') {
+            const copy = response.clone();
+            caches.open(CACHE).then((cache) => cache.put(event.request, copy));
           }
-          const copy = response.clone();
-          caches.open(CACHE).then((cache) => cache.put(event.request, copy));
           return response;
-        });
-      })
+        }).catch(() => caches.match(event.request))
+        : caches.match(event.request).then((cached) => {
+          if (cached) return cached;
+          return fetch(event.request).then((response) => {
+            if (!response || response.status !== 200 || response.type !== 'basic') {
+              return response;
+            }
+            const copy = response.clone();
+            caches.open(CACHE).then((cache) => cache.put(event.request, copy));
+            return response;
+          });
+        }))
     );
   }
 });

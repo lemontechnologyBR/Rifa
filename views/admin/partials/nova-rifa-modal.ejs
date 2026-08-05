@@ -28,8 +28,8 @@
 
     <form method="POST" action="<%= adminBase %>/rifas/nova" class="flex flex-col flex-1 min-h-0 overflow-y-auto">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <input type="hidden" name="premio_titulo" value="Prêmio principal">
       <input type="hidden" name="modalidade" :value="modalidade">
+      <input type="hidden" name="premio_modo" :value="premioModo">
 
       <div x-show="wizardStep === 1" class="p-6 space-y-4">
         <p class="text-sm text-gray-500 dark:text-gray-400">Defina o prêmio e quantas cotas serão vendidas.</p>
@@ -37,7 +37,54 @@
           <label class="admin-label">Nome do sorteio *</label>
           <input type="text" name="titulo" required x-model="titulo" placeholder="Ex: iPhone 15 Pro Max 256GB" class="admin-input">
         </div>
-        <%- include('rifa-imagem', { adminBase, imagemUrl: '' }) %>
+        <div>
+          <label class="admin-label">Descrição / Regulamento</label>
+          <textarea name="descricao" rows="3" class="admin-input" placeholder="Conte as regras, o prêmio e o que o participante precisa saber"></textarea>
+        </div>
+
+        <!-- Modalidade de prêmio -->
+        <div>
+          <label class="admin-label">Prêmios *</label>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-1">
+            <label class="flex items-start gap-3 border rounded-xl p-3 cursor-pointer transition"
+              :class="premioModo === 'unico' ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'border-gray-200 dark:border-gray-700'">
+              <input type="radio" x-model="premioModo" value="unico" class="mt-0.5 accent-emerald-500">
+              <div>
+                <p class="font-semibold text-sm">1 prêmio</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Um único ganhador</p>
+              </div>
+            </label>
+            <label class="flex items-start gap-3 border rounded-xl p-3 cursor-pointer transition"
+              :class="premioModo === 'duplo' ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'border-gray-200 dark:border-gray-700'">
+              <input type="radio" x-model="premioModo" value="duplo" class="mt-0.5 accent-emerald-500">
+              <div>
+                <p class="font-semibold text-sm">2 prêmios</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">1º e 2º lugar</p>
+              </div>
+            </label>
+            <label class="flex items-start gap-3 border rounded-xl p-3 cursor-pointer transition"
+              :class="premioModo === 'podio' ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'border-gray-200 dark:border-gray-700'">
+              <input type="radio" x-model="premioModo" value="podio" class="mt-0.5 accent-emerald-500">
+              <div>
+                <p class="font-semibold text-sm">3 prêmios</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">1º, 2º e 3º lugar</p>
+              </div>
+            </label>
+          </div>
+
+          <div class="space-y-2 mt-3">
+            <input type="text" name="premio_1" x-model="premio1" required
+              :placeholder="premioModo === 'unico' ? 'Qual o prêmio? *' : '1º lugar *'" class="admin-input">
+            <template x-if="premioModo === 'duplo' || premioModo === 'podio'">
+              <input type="text" name="premio_2" x-model="premio2" required placeholder="2º lugar *" class="admin-input">
+            </template>
+            <template x-if="premioModo === 'podio'">
+              <input type="text" name="premio_3" x-model="premio3" required placeholder="3º lugar *" class="admin-input">
+            </template>
+          </div>
+        </div>
+
+        <%- include('rifa-galeria', { adminBase, imagensUrls: [] }) %>
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="admin-label">Valor da cota (R$) *</label>
@@ -87,16 +134,30 @@
           <input type="datetime-local" name="data_sorteio" required x-model="dataSorteio" class="admin-input">
         </div>
         <%- include('recebimento-carteira-info') %>
+        <%- include('rifa-descontos-pct', { rifa: null }) %>
+        <%- include('rifa-pacotes-rapidos', { rifa: null }) %>
       </div>
 
       <div x-show="wizardStep === 3" x-cloak class="p-6 space-y-4">
         <p class="text-sm text-gray-500 dark:text-gray-400">Confira os dados antes de publicar o sorteio.</p>
         <dl class="admin-config-dl">
           <div><dt>Nome</dt><dd x-text="titulo"></dd></div>
+          <div><dt>Prêmios</dt>
+            <dd x-show="premioModo === 'unico'" x-text="premio1 || '—'"></dd>
+            <dd x-show="premioModo === 'duplo'" x-cloak>
+              <span x-text="'1º ' + (premio1 || '—')"></span> ·
+              <span x-text="'2º ' + (premio2 || '—')"></span>
+            </dd>
+            <dd x-show="premioModo === 'podio'" x-cloak>
+              <span x-text="'1º ' + (premio1 || '—')"></span> ·
+              <span x-text="'2º ' + (premio2 || '—')"></span> ·
+              <span x-text="'3º ' + (premio3 || '—')"></span>
+            </dd>
+          </div>
           <div><dt>Cota</dt><dd>R$ <span x-text="fmt(valorCota)"></span> · <span x-text="fmtInt(totalCotas)"></span> cotas</dd></div>
           <div><dt>Sorteio</dt><dd x-text="dataSorteio ? new Date(dataSorteio).toLocaleString('pt-BR') : '—'"></dd></div>
           <% const taxaFixaRecebimento = typeof taxaFixaCota !== 'undefined' ? taxaFixaCota : 0; %>
-          <div><dt>Recebimento</dt><dd><% if (typeof mpSplitConfigured !== 'undefined' && mpSplitConfigured) { %><%= typeof mpConnected !== 'undefined' && mpConnected ? 'Mercado Pago — repasse automático' : 'Mercado Pago (conectar na Carteira)' %><% } else { %>Chave PIX da Carteira — comissão 5%<% if (taxaFixaRecebimento > 0) { %> + R$ <%= taxaFixaRecebimento.toFixed(2).replace('.', ',') %>/cota<% } %><% } %></dd></div>
+          <div><dt>Recebimento</dt><dd>Chave PIX da Carteira — comissão 5%<% if (taxaFixaRecebimento > 0) { %> + R$ <%= taxaFixaRecebimento.toFixed(2).replace('.', ',') %>/cota<% } %></dd></div>
         </dl>
         <%- include('rifa-simulacao', { full: true }) %>
       </div>

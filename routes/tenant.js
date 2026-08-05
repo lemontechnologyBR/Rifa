@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router({ mergeParams: true });
 const publicController = require('../controllers/publicController');
-const mercadoPagoOAuthController = require('../controllers/mercadoPagoOAuthController');
 const organizadorController = require('../controllers/organizadorController');
 const apiController = require('../controllers/apiController');
 const googleAuthController = require('../controllers/googleAuthController');
@@ -11,6 +10,7 @@ const { authLimiter } = require('../middleware/rateLimit');
 const { handleUploadRifaImagem } = require('../middleware/uploadRifaImagem');
 const { validarRifa, validarReservar, validarCompra, validarWebhook, validarComentario, validarSaque } = require('../middleware/validators');
 const { handleValidation } = require('../middleware/validate');
+
 
 router.use(resolveTenant);
 
@@ -66,15 +66,19 @@ admin.get('/esqueci-senha', organizadorController.esqueciSenhaForm);
 admin.post('/esqueci-senha', authLimiter, organizadorController.esqueciSenha);
 admin.get('/resetar-senha', organizadorController.resetarSenhaForm);
 admin.post('/resetar-senha', authLimiter, organizadorController.resetarSenha);
+admin.get('/esqueci-pin', organizadorController.esqueciPinForm);
+admin.post('/esqueci-pin', authLimiter, organizadorController.esqueciPin);
+admin.get('/resetar-pin', organizadorController.resetarPinForm);
+admin.post('/resetar-pin', authLimiter, organizadorController.resetarPin);
 admin.get('/', requireOrganizador, organizadorController.dashboard);
 admin.get('/rifas', requireOrganizador, organizadorController.listarRifas);
-admin.get('/carteira/mp/conectar', requireOrganizador, mercadoPagoOAuthController.conectar);
-admin.post('/carteira/mp/desconectar', requireOrganizador, mercadoPagoOAuthController.desconectar);
 admin.get('/carteira', requireOrganizador, organizadorController.carteiraForm);
 admin.post('/carteira', requireOrganizador, organizadorController.salvarCarteira);
+admin.post('/carteira/pin', requireOrganizador, organizadorController.salvarPin);
 admin.post('/carteira/saque', requireOrganizador, validarSaque, handleValidation, organizadorController.solicitarSaque);
 admin.get('/config', requireOrganizador, organizadorController.configForm);
 admin.post('/config', requireOrganizador, organizadorController.salvarConfig);
+admin.post('/config/senha', requireOrganizador, organizadorController.alterarSenhaConta);
 admin.get('/logs', requireOrganizador, organizadorController.logs);
 admin.post('/upload/imagem-rifa', requireOrganizador, handleUploadRifaImagem, organizadorController.uploadImagemRifa);
 admin.get('/rifas/nova', requireOrganizador, organizadorController.novaRifaForm);

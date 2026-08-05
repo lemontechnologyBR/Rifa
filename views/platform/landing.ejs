@@ -1,5 +1,5 @@
 <%- include('../partials/header') %>
-<% const supportWhatsappUrl = 'https://wa.me/5515981879187?text=Preciso%20de%20suporte'; %>
+<% const supportWhatsappUrl = 'https://wa.me/5511968984898?text=Preciso%20de%20suporte'; %>
 
 <style>
 /* ═══════════════════════════════════════════
@@ -17,12 +17,174 @@
   --imp-muted: #6b7280;
 }
 
-.imp-page { background: var(--imp-bg); color: #fff; }
+body.platform-landing {
+  --imp-bg: #0d0d0d;
+  --imp-border: #1f1f1f;
+}
 
-/* Navbar desta página — override para preto total */
-.imp-page ~ * .glass-nav,
-body.landing-body .glass-nav {
+html:not(.dark) body.platform-landing {
+  --imp-bg: #f8fafc;
+  --imp-border: #e2e8f0;
+}
+
+html:not(.dark) .imp-page {
+  --imp-bg: #f8fafc;
+  --imp-card: #ffffff;
+  --imp-border: #e2e8f0;
+  --imp-muted: #64748b;
+  color: #0f172a;
+}
+
+html:not(.dark) body.platform-landing.mesh-bg {
+  background-color: #f8fafc;
+  background-image: radial-gradient(at 40% 20%, rgba(34,197,94,.1) 0, transparent 50%),
+    radial-gradient(at 80% 0%, rgba(16,185,129,.08) 0, transparent 50%),
+    radial-gradient(at 0 50%, rgba(99,102,241,.06) 0, transparent 50%);
+}
+
+html.dark body.platform-landing.mesh-bg {
+  background-color: var(--imp-bg);
+  background-image: none;
+}
+
+.imp-page { background: var(--imp-bg); color: #fff; }
+html:not(.dark) .imp-page { color: #0f172a; }
+
+/* Navbar — nav fica acima do .imp-page no DOM */
+html.dark body.platform-landing .glass-nav {
   background: rgba(13,13,13,.95) !important;
+  border-color: var(--imp-border) !important;
+}
+
+html.dark body.platform-landing .platform-footer {
+  background: var(--imp-bg) !important;
+  border-color: var(--imp-border) !important;
+}
+
+html.dark body.platform-landing .platform-footer .public-footer-disclaimer,
+html.dark body.platform-landing .platform-footer .public-footer-copy,
+html.dark body.platform-landing .platform-footer .public-footer-powered {
+  color: #9ca3af;
+}
+
+html:not(.dark) .imp-page h1,
+html:not(.dark) .imp-page h2,
+html:not(.dark) .imp-page h3,
+html:not(.dark) .imp-page summary {
+  color: #0f172a !important;
+}
+
+html:not(.dark) .imp-page p {
+  color: #475569;
+}
+
+html:not(.dark) .imp-page .imp-muted-text {
+  color: #64748b !important;
+}
+
+.imp-hero-bg {
+  background: radial-gradient(ellipse 80% 60% at 60% 20%, rgba(34,197,94,.12) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 40% at 10% 80%, rgba(245,158,11,.06) 0%, transparent 60%),
+    var(--imp-bg);
+}
+
+html:not(.dark) .imp-hero-bg {
+  background: radial-gradient(ellipse 80% 60% at 60% 20%, rgba(34,197,94,.14) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 40% at 10% 80%, rgba(245,158,11,.08) 0%, transparent 60%),
+    #f1f5f9;
+}
+
+html:not(.dark) .imp-page .imp-outline-btn {
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+html:not(.dark) .imp-page .imp-card-dark {
+  background: var(--imp-card) !important;
+}
+
+html:not(.dark) body.platform-landing .glass-nav {
+  background: rgba(255, 255, 255, 0.94) !important;
+  border-color: #e2e8f0 !important;
+}
+
+html:not(.dark) .imp-page .imp-hero-h1 {
+  color: #0f172a !important;
+}
+
+html:not(.dark) .imp-page .imp-hero-line-soft {
+  color: #334155 !important;
+}
+
+html:not(.dark) .imp-page .imp-hero-lead {
+  color: #475569 !important;
+}
+
+html:not(.dark) .imp-page .imp-hero-lead strong {
+  color: #0f172a !important;
+}
+
+html:not(.dark) .imp-page .imp-btn-demo {
+  border: 2px solid #cbd5e1 !important;
+  color: #0f172a !important;
+  background: #ffffff !important;
+}
+
+html:not(.dark) .imp-page .imp-tag {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #334155;
+}
+
+html:not(.dark) .imp-page h2[style*="color:#fff"],
+html:not(.dark) .imp-page h3[style*="color:#fff"],
+html:not(.dark) .imp-page div[style*="font-weight:800;color:#fff"],
+html:not(.dark) .imp-page div[style*="font-weight:900;color:#fff"],
+html:not(.dark) .imp-page summary[style*="color:#fff"],
+html:not(.dark) .imp-page span[style*="color:#fff"]:not(.text-imp-green) {
+  color: #0f172a !important;
+}
+
+html:not(.dark) .imp-page .imp-field {
+  background: #fff;
+  color: #0f172a;
+  border-color: #e2e8f0;
+}
+
+html:not(.dark) .imp-page a.text-white {
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+  background: #fff !important;
+}
+
+html.dark .imp-page .imp-hero-h1,
+html.dark .imp-page .imp-hero-line-soft {
+  color: #fff !important;
+}
+
+html.dark .imp-page .imp-hero-lead {
+  color: #9ca3af !important;
+}
+
+html.dark .imp-page .imp-hero-lead strong {
+  color: #fff !important;
+}
+
+html.dark .imp-page .imp-btn-demo {
+  border: 2px solid rgba(255, 255, 255, 0.15) !important;
+  color: #fff !important;
+  background: transparent !important;
+}
+
+.imp-sim-inner {
+  background: var(--imp-bg);
+  border: 1px solid var(--imp-border);
+}
+
+/* Navbar escura só no modo dark */
+html.dark .imp-page ~ * .glass-nav,
+html.dark body.landing-body .glass-nav {
+  background: rgba(13, 13, 13, 0.95) !important;
   border-color: var(--imp-border) !important;
 }
 
@@ -174,6 +336,11 @@ input[type=range].imp-range { accent-color: var(--imp-green); width:100%; }
   border-radius: 14px;
   padding: 10px 16px;
 }
+.imp-notify-ico {
+  width: 32px; height: 32px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
 
 .prize-card {
   background: var(--imp-card);
@@ -220,42 +387,37 @@ input[type=range].imp-range { accent-color: var(--imp-green); width:100%; }
   ══════════════════════════════════════════════ -->
   <section class="relative overflow-hidden" style="min-height:100vh;display:flex;align-items:center;">
     <!-- Background -->
-    <div class="absolute inset-0" style="background: radial-gradient(ellipse 80% 60% at 60% 20%, rgba(34,197,94,.12) 0%, transparent 70%), radial-gradient(ellipse 50% 40% at 10% 80%, rgba(245,158,11,.06) 0%, transparent 60%), #0d0d0d;"></div>
+    <div class="absolute inset-0 imp-hero-bg"></div>
     <!-- Grid decorativo -->
     <div class="absolute inset-0 opacity-[.04]" style="background-image: linear-gradient(rgba(255,255,255,.3) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.3) 1px, transparent 1px); background-size: 40px 40px;"></div>
 
     <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32 w-full">
-      <div class="grid lg:grid-cols-2 gap-16 items-center">
+      <div class="max-w-2xl">
 
-        <!-- Esquerda -->
         <div>
-          <div class="imp-badge mb-6 imp-slide-up imp-slide-up-1">
-            <span class="live-dot mr-2" style="vertical-align:middle;"></span>
-            Plataforma 100% Gratuita
-          </div>
-
-          <h1 class="font-black leading-[1.06] tracking-tight mb-6 imp-slide-up imp-slide-up-2"
-              style="font-size:clamp(2.4rem,5.5vw,4rem);color:#fff;">
+          <h1 class="font-black leading-[1.06] tracking-tight mb-6 imp-slide-up imp-slide-up-1 imp-hero-h1"
+              style="font-size:clamp(2.4rem,5.5vw,4rem);">
             Crie seu sistema de<br>
             <span class="text-gold">rifas online</span><br>
-            <span style="color:#e5e7eb;">e arrecade no PIX</span>
+            <span class="imp-hero-line-soft">e arrecade no PIX</span>
           </h1>
 
-          <p class="mb-10 leading-relaxed imp-slide-up imp-slide-up-3"
-             style="font-size:1.1rem;color:#9ca3af;max-width:480px;">
-            Plataforma grátis para organizadores. Monte sua rifa online em <strong style="color:#fff;">minutos</strong>,
-            com link exclusivo, cotas ilimitadas e <strong style="color:var(--imp-green);">PIX automático</strong> — sem mensalidade.
+          <p class="mb-10 leading-relaxed imp-slide-up imp-slide-up-2 imp-hero-lead"
+             style="font-size:1.1rem;max-width:480px;">
+            Plataforma grátis para organizadores. Monte sua rifa online em <strong>minutos</strong>,
+            com link exclusivo, cotas ilimitadas e <strong style="color:var(--imp-green);">pagamento automático</strong> — sem mensalidade.
           </p>
 
-          <div class="flex flex-col sm:flex-row gap-4 mb-10 imp-slide-up imp-slide-up-3">
+          <div class="flex flex-col sm:flex-row gap-4 mb-10 imp-slide-up imp-slide-up-2">
             <a href="/cadastro"
                class="imp-glow-btn inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl font-black text-lg text-black transition-all hover:-translate-y-1"
                style="background:var(--imp-green);font-size:1rem;">
-              🚀 Criar grátis agora
+              <i data-lucide="rocket" class="w-5 h-5"></i>
+              Criar grátis agora
             </a>
             <a href="/demo"
-               class="inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl font-bold text-lg transition-all hover:-translate-y-1"
-               style="border:2px solid rgba(255,255,255,.15);color:#fff;font-size:1rem;">
+               class="imp-btn-demo inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl font-bold text-lg transition-all hover:-translate-y-1"
+               style="font-size:1rem;">
               <i data-lucide="play-circle" class="w-5 h-5" style="color:var(--imp-green);"></i>
               Ver demo ao vivo
             </a>
@@ -267,90 +429,11 @@ input[type=range].imp-range { accent-color: var(--imp-green); width:100%; }
             </a>
           </div>
 
-          <div class="flex flex-wrap gap-3 imp-slide-up imp-slide-up-4">
-            <span class="imp-tag">✅ Sem cartão</span>
-            <span class="imp-tag">✅ Rifas ilimitadas</span>
-            <span class="imp-tag">✅ PIX automático</span>
-            <span class="imp-tag">✅ Grátis para criar</span>
-          </div>
-        </div>
-
-        <!-- Direita: card mockup + badges flutuantes -->
-        <div class="relative flex items-center justify-center" style="min-height:460px;">
-
-          <!-- Card central mockup -->
-          <div class="imp-float relative z-10" style="width:260px;">
-            <div class="imp-card p-0 overflow-hidden shadow-2xl" style="box-shadow:0 0 60px rgba(34,197,94,.2);">
-              <!-- Header do card -->
-              <div style="background:linear-gradient(135deg,#1a1a1a,#0d0d0d);padding:20px 20px 16px;">
-                <div class="flex items-center gap-2 mb-3">
-                  <span class="live-dot"></span>
-                  <span style="font-size:11px;color:var(--imp-green);font-weight:800;letter-spacing:.06em;">SORTEIO ATIVO</span>
-                </div>
-                <div style="background:#222;border-radius:10px;padding:12px;font-size:13px;font-weight:700;color:#fff;margin-bottom:8px;">
-                  🏍️ Moto 0km Honda
-                </div>
-                <!-- Barra de progresso -->
-                <div style="background:#222;border-radius:9999px;height:8px;overflow:hidden;margin-bottom:6px;">
-                  <div style="background:linear-gradient(90deg,var(--imp-green),#16a34a);width:73%;height:100%;border-radius:9999px;"></div>
-                </div>
-                <div style="display:flex;justify-content:space-between;font-size:11px;color:#6b7280;">
-                  <span>730 vendidas</span><span style="color:var(--imp-green);font-weight:700;">73%</span>
-                </div>
-              </div>
-              <!-- Footer do card -->
-              <div style="background:#111;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;">
-                <div>
-                  <div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;">Valor por cota</div>
-                  <div style="font-size:18px;font-weight:900;color:#fff;">R$ 10,00</div>
-                </div>
-                <div style="background:var(--imp-green);color:#000;font-weight:900;font-size:12px;padding:8px 14px;border-radius:10px;">Participar</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Badge: PIX confirmado -->
-          <div class="imp-notify absolute" style="top:20px;left:-10px;animation:imp-float 4s ease-in-out infinite;">
-            <div style="display:flex;align-items:center;gap:10px;">
-              <span style="font-size:20px;">💰</span>
-              <div>
-                <div style="font-size:12px;font-weight:800;color:#fff;">PIX confirmado!</div>
-                <div style="font-size:11px;font-weight:700;color:var(--imp-green);">+ R$ 10,00 recebido</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Badge: nova venda -->
-          <div class="imp-notify absolute" style="top:30%;right:-10px;animation:imp-float 5s ease-in-out infinite .8s;">
-            <div style="display:flex;align-items:center;gap:10px;">
-              <span style="font-size:20px;">🎉</span>
-              <div>
-                <div style="font-size:12px;font-weight:800;color:#fff;">Cota vendida!</div>
-                <div style="font-size:11px;font-weight:700;color:#c4b5fd;">Nº 0437 reservado</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Badge: saque -->
-          <div class="imp-notify absolute" style="bottom:30px;right:-5px;animation:imp-float 6s ease-in-out infinite 1.5s;">
-            <div style="display:flex;align-items:center;gap:10px;">
-              <span style="font-size:20px;">🏆</span>
-              <div>
-                <div style="font-size:12px;font-weight:800;color:#fff;">Sorteio encerrado</div>
-                <div style="font-size:11px;font-weight:700;color:var(--imp-gold);">R$ 7.300 arrecadado</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Badge: ganhador -->
-          <div class="imp-notify absolute" style="bottom:20px;left:-10px;animation:imp-float 4.5s ease-in-out infinite 2s;">
-            <div style="display:flex;align-items:center;gap:10px;">
-              <span style="font-size:20px;">🏦</span>
-              <div>
-                <div style="font-size:12px;font-weight:800;color:#fff;">Saque realizado</div>
-                <div style="font-size:11px;font-weight:700;color:#7dd3fc;">PIX na hora</div>
-              </div>
-            </div>
+          <div class="flex flex-wrap gap-3 imp-slide-up imp-slide-up-3">
+            <span class="imp-tag"><i data-lucide="check" class="w-3.5 h-3.5 inline-block mr-1" style="color:var(--imp-green);vertical-align:-2px;"></i>Sem cartão</span>
+            <span class="imp-tag"><i data-lucide="check" class="w-3.5 h-3.5 inline-block mr-1" style="color:var(--imp-green);vertical-align:-2px;"></i>Rifas ilimitadas</span>
+            <span class="imp-tag"><i data-lucide="check" class="w-3.5 h-3.5 inline-block mr-1" style="color:var(--imp-green);vertical-align:-2px;"></i>Pagamento automático</span>
+            <span class="imp-tag"><i data-lucide="check" class="w-3.5 h-3.5 inline-block mr-1" style="color:var(--imp-green);vertical-align:-2px;"></i>Grátis para criar</span>
           </div>
         </div>
 
@@ -365,14 +448,14 @@ input[type=range].imp-range { accent-color: var(--imp-green); width:100%; }
     <div class="imp-ticker-wrap">
       <div class="imp-ticker-inner" style="gap:0;">
         <% const tItems = [
-          ['🏍️','Moto 0km'],['📱','iPhone'],['🎮','PS5'],['💻','Notebook'],['🚗','Carro'],['💰','Dinheiro'],
-          ['📺','Smart TV'],['🌴','Viagem'],['💎','Jóias'],['👟','Tênis Nike'],['🏠','Eletrônicos'],['🎸','Guitarra'],
-          ['🏍️','Moto 0km'],['📱','iPhone'],['🎮','PS5'],['💻','Notebook'],['🚗','Carro'],['💰','Dinheiro'],
-          ['📺','Smart TV'],['🌴','Viagem'],['💎','Jóias'],['👟','Tênis Nike'],['🏠','Eletrônicos'],['🎸','Guitarra']
+          ['bike','Moto 0km'],['smartphone','iPhone'],['gamepad-2','PS5'],['laptop','Notebook'],['car','Carro'],['banknote','Dinheiro'],
+          ['tv','Smart TV'],['plane','Viagem'],['gem','Jóias'],['footprints','Tênis Nike'],['plug','Eletrônicos'],['guitar','Guitarra'],
+          ['bike','Moto 0km'],['smartphone','iPhone'],['gamepad-2','PS5'],['laptop','Notebook'],['car','Carro'],['banknote','Dinheiro'],
+          ['tv','Smart TV'],['plane','Viagem'],['gem','Jóias'],['footprints','Tênis Nike'],['plug','Eletrônicos'],['guitar','Guitarra']
         ]; %>
-        <% tItems.forEach(([e,n]) => { %>
+        <% tItems.forEach(([ic,n]) => { %>
           <span style="display:inline-flex;align-items:center;gap:6px;padding:0 20px;font-size:13px;font-weight:900;color:#000;white-space:nowrap;">
-            <%= e %> <%= n %> <span style="color:rgba(0,0,0,.35);margin-left:10px;">•</span>
+            <i data-lucide="<%= ic %>" class="w-4 h-4"></i> <%= n %> <span style="color:rgba(0,0,0,.35);margin-left:10px;">•</span>
           </span>
         <% }) %>
       </div>
@@ -401,8 +484,8 @@ input[type=range].imp-range { accent-color: var(--imp-green); width:100%; }
           <div style="font-size:12px;color:var(--imp-muted);margin-top:2px;">Sem mensalidade</div>
         </div>
         <div class="imp-stat-card">
-          <div style="font-size:2.4rem;font-weight:900;line-height:1;" class="text-imp-green">PIX</div>
-          <div style="font-size:14px;font-weight:700;color:#fff;margin-top:6px;">Automático</div>
+          <div style="font-size:2.4rem;font-weight:900;color:var(--imp-green);line-height:1;display:flex;justify-content:center;"><i data-lucide="zap" style="width:38px;height:38px;"></i></div>
+          <div style="font-size:14px;font-weight:700;color:#fff;margin-top:6px;">Pagamento</div>
           <div style="font-size:12px;color:var(--imp-muted);margin-top:2px;">Confirmação na hora</div>
         </div>
       </div>
@@ -415,7 +498,7 @@ input[type=range].imp-range { accent-color: var(--imp-green); width:100%; }
   <section style="padding:80px 0;">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
       <div style="text-align:center;margin-bottom:48px;">
-        <div class="imp-badge mb-4">🎯 Possibilidades infinitas</div>
+        <div class="imp-badge mb-4">Possibilidades infinitas</div>
         <h2 style="font-size:clamp(1.8rem,4vw,2.6rem);font-weight:900;color:#fff;margin-top:12px;">
           Organize rifas de <span class="text-gold">qualquer prêmio</span>
         </h2>
@@ -424,20 +507,20 @@ input[type=range].imp-range { accent-color: var(--imp-green); width:100%; }
 
       <div class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
         <% const prizes = [
-          {e:'📱', n:'iPhone'},    {e:'🏍️', n:'Moto 0km'},  {e:'🎮', n:'PS5 / Xbox'},
-          {e:'💻', n:'Notebook'},  {e:'📺', n:'Smart TV'},   {e:'🚗', n:'Carro'},
-          {e:'💰', n:'Dinheiro'},  {e:'🌴', n:'Viagem'},     {e:'💎', n:'Jóias'},
-          {e:'👟', n:'Tênis'},     {e:'🎸', n:'Guitarra'},   {e:'🏠', n:'Eletrônicos'}
+          {i:'smartphone', n:'iPhone'},  {i:'bike', n:'Moto 0km'},   {i:'gamepad-2', n:'PS5 / Xbox'},
+          {i:'laptop', n:'Notebook'},    {i:'tv', n:'Smart TV'},     {i:'car', n:'Carro'},
+          {i:'banknote', n:'Dinheiro'},  {i:'plane', n:'Viagem'},    {i:'gem', n:'Jóias'},
+          {i:'footprints', n:'Tênis'},   {i:'guitar', n:'Guitarra'}, {i:'plug', n:'Eletrônicos'}
         ]; %>
         <% prizes.forEach(p => { %>
         <div class="prize-card">
-          <div style="font-size:2rem;margin-bottom:8px;"><%= p.e %></div>
+          <div style="display:flex;justify-content:center;margin-bottom:10px;color:var(--imp-green);"><i data-lucide="<%= p.i %>" style="width:28px;height:28px;"></i></div>
           <div style="font-size:12px;font-weight:700;color:#d1d5db;"><%= p.n %></div>
         </div>
         <% }) %>
       </div>
 
-      <p style="text-align:center;color:var(--imp-muted);font-size:13px;margin-top:28px;">e muito mais — o limite é a sua criatividade 🚀</p>
+      <p style="text-align:center;color:var(--imp-muted);font-size:13px;margin-top:28px;">e muito mais — o limite é a sua criatividade</p>
     </div>
   </section>
 
@@ -452,7 +535,7 @@ input[type=range].imp-range { accent-color: var(--imp-green); width:100%; }
 
         <!-- Esquerda: copy -->
         <div>
-          <div class="imp-badge mb-4">⚡ Simples e rápido</div>
+          <div class="imp-badge mb-4">Simples e rápido</div>
           <h2 style="font-size:clamp(1.8rem,4vw,2.6rem);font-weight:900;color:#fff;margin-top:12px;line-height:1.1;">
             Do cadastro à<br><span class="text-imp-green">primeira venda em minutos</span>
           </h2>
@@ -463,28 +546,28 @@ input[type=range].imp-range { accent-color: var(--imp-green); width:100%; }
 
           <div style="margin-top:32px;display:flex;flex-direction:column;gap:12px;">
             <div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--imp-border);">
-              <span style="font-size:1.4rem;">🔗</span>
+              <span class="imp-notify-ico" style="background:rgba(34,197,94,.12);color:var(--imp-green);"><i data-lucide="link" class="w-4 h-4"></i></span>
               <div>
                 <div style="font-weight:800;color:#fff;font-size:14px;">Link exclusivo para sua rifa online</div>
                 <div style="color:var(--imp-muted);font-size:12px;margin-top:2px;">vourifar.com.br/<strong style="color:var(--imp-green);">seu-nome</strong></div>
               </div>
             </div>
             <div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--imp-border);">
-              <span style="font-size:1.4rem;">🎫</span>
+              <span class="imp-notify-ico" style="background:rgba(139,92,246,.12);color:#c4b5fd;"><i data-lucide="ticket" class="w-4 h-4"></i></span>
               <div>
                 <div style="font-weight:800;color:#fff;font-size:14px;">Cotas ilimitadas, você define o preço</div>
                 <div style="color:var(--imp-muted);font-size:12px;margin-top:2px;">De R$ 1,00 a qualquer valor</div>
               </div>
             </div>
             <div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--imp-border);">
-              <span style="font-size:1.4rem;">💸</span>
+              <span class="imp-notify-ico" style="background:rgba(34,197,94,.12);color:var(--imp-green);"><i data-lucide="zap" class="w-4 h-4"></i></span>
               <div>
-                <div style="font-weight:800;color:#fff;font-size:14px;">Receba via PIX automaticamente</div>
+                <div style="font-weight:800;color:#fff;font-size:14px;">Recebimento automático</div>
                 <div style="color:var(--imp-muted);font-size:12px;margin-top:2px;">Confirmação instantânea, sem espera</div>
               </div>
             </div>
             <div style="display:flex;align-items:center;gap:12px;padding:14px 0;">
-              <span style="font-size:1.4rem;">🏆</span>
+              <span class="imp-notify-ico" style="background:rgba(245,158,11,.12);color:var(--imp-gold);"><i data-lucide="trophy" class="w-4 h-4"></i></span>
               <div>
                 <div style="font-weight:800;color:#fff;font-size:14px;">Sorteio transparente e auditável</div>
                 <div style="color:var(--imp-muted);font-size:12px;margin-top:2px;">Números sorteados com rastreabilidade</div>
@@ -495,14 +578,14 @@ input[type=range].imp-range { accent-color: var(--imp-green); width:100%; }
 
         <!-- Direita: como funciona (3 passos) -->
         <div>
-          <div class="imp-badge mb-4">⚡ Como funciona</div>
+          <div class="imp-badge mb-4">Como funciona</div>
           <h2 style="font-size:clamp(1.4rem,3vw,2rem);font-weight:900;color:#fff;margin-top:12px;margin-bottom:28px;">Pronto em <span class="text-imp-green">3 passos</span></h2>
 
           <div style="display:flex;flex-direction:column;gap:4px;">
             <div class="imp-card" style="padding:20px;display:flex;gap:16px;align-items:flex-start;">
               <div class="imp-step-num" style="flex-shrink:0;width:44px;height:44px;font-size:18px;">1</div>
               <div>
-                <div style="font-weight:800;color:#fff;font-size:15px;margin-bottom:4px;">🚀 Crie sua conta grátis</div>
+                <div style="font-weight:800;color:#fff;font-size:15px;margin-bottom:4px;">Crie sua conta grátis</div>
                 <div style="color:var(--imp-muted);font-size:13px;line-height:1.6;">Cadastro rápido com Google. Painel pronto na hora, sem burocracia.</div>
               </div>
             </div>
@@ -510,7 +593,7 @@ input[type=range].imp-range { accent-color: var(--imp-green); width:100%; }
             <div class="imp-card" style="padding:20px;display:flex;gap:16px;align-items:flex-start;">
               <div class="imp-step-num" style="flex-shrink:0;width:44px;height:44px;font-size:18px;">2</div>
               <div>
-                <div style="font-weight:800;color:#fff;font-size:15px;margin-bottom:4px;">🎯 Monte seu sorteio</div>
+                <div style="font-weight:800;color:#fff;font-size:15px;margin-bottom:4px;">Monte seu sorteio</div>
                 <div style="color:var(--imp-muted);font-size:13px;line-height:1.6;">Defina o prêmio, valor da cota e total de números. Adicione foto e publique.</div>
               </div>
             </div>
@@ -518,8 +601,8 @@ input[type=range].imp-range { accent-color: var(--imp-green); width:100%; }
             <div class="imp-card" style="padding:20px;display:flex;gap:16px;align-items:flex-start;">
               <div class="imp-step-num" style="flex-shrink:0;width:44px;height:44px;font-size:18px;">3</div>
               <div>
-                <div style="font-weight:800;color:#fff;font-size:15px;margin-bottom:4px;">💸 Compartilhe e receba</div>
-                <div style="color:var(--imp-muted);font-size:13px;line-height:1.6;">Manda o link no zap, as cotas vendem e o dinheiro cai direto na sua conta via PIX.</div>
+                <div style="font-weight:800;color:#fff;font-size:15px;margin-bottom:4px;">Compartilhe e receba</div>
+                <div style="color:var(--imp-muted);font-size:13px;line-height:1.6;">Manda o link no zap, as cotas vendem e o dinheiro cai direto na sua conta.</div>
               </div>
             </div>
           </div>
@@ -537,7 +620,7 @@ input[type=range].imp-range { accent-color: var(--imp-green); width:100%; }
   <section style="padding:80px 0;">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
       <div style="text-align:center;margin-bottom:48px;">
-        <div class="imp-badge mb-4">💎 Por que a VouRifar?</div>
+        <div class="imp-badge mb-4">Por que a VouRifar?</div>
         <h2 style="font-size:clamp(1.8rem,4vw,2.6rem);font-weight:900;color:#fff;margin-top:12px;">
           Tudo que você precisa,<br><span class="text-gold">em um só lugar</span>
         </h2>
@@ -545,14 +628,14 @@ input[type=range].imp-range { accent-color: var(--imp-green); width:100%; }
 
       <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <% const features = [
-          { e:'🆓', t:'100% Grátis para criar', d:'Nenhum plano, nenhuma assinatura. Comece hoje sem gastar nada.', c:'var(--imp-green)' },
-          { e:'♾️', t:'Rifas & cotas ilimitados', d:'Crie quantas rifas quiser com qualquer quantidade de cotas.', c:'#8b5cf6' },
-          { e:'⚡', t:'PIX automático', d:'Comprador paga e a cota é reservada na hora. Zero trabalho manual.', c:'#f59e0b' },
-          { e:'📲', t:'Seu link exclusivo', d:'Compartilhe nas redes e no zap. Cada criador tem seu endereço único.', c:'#38bdf8' },
+          { i:'gift', t:'100% Grátis para criar', d:'Nenhum plano, nenhuma assinatura. Comece hoje sem gastar nada.', c:'var(--imp-green)' },
+          { i:'infinity', t:'Rifas & cotas ilimitados', d:'Crie quantas rifas quiser com qualquer quantidade de cotas.', c:'#8b5cf6' },
+          { i:'zap', t:'PIX automático', d:'Comprador paga e a cota é reservada na hora. Zero trabalho manual.', c:'#f59e0b' },
+          { i:'share-2', t:'Seu link exclusivo', d:'Compartilhe nas redes e no zap. Cada criador tem seu endereço único.', c:'#38bdf8' },
         ]; %>
         <% features.forEach(f => { %>
         <div class="imp-card" style="padding:24px;border-top:3px solid <%= f.c %>;">
-          <div style="font-size:2rem;margin-bottom:12px;"><%= f.e %></div>
+          <div style="margin-bottom:12px;color:<%= f.c %>;"><i data-lucide="<%= f.i %>" style="width:28px;height:28px;"></i></div>
           <h3 style="font-weight:800;color:#fff;font-size:15px;margin-bottom:8px;"><%= f.t %></h3>
           <p style="color:var(--imp-muted);font-size:13px;line-height:1.65;"><%= f.d %></p>
         </div>
@@ -567,7 +650,7 @@ input[type=range].imp-range { accent-color: var(--imp-green); width:100%; }
   <section id="simulador" style="padding:80px 0;background:#111;">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       <div style="text-align:center;margin-bottom:48px;">
-        <div class="imp-badge mb-4">🧮 Simule seu lucro</div>
+        <div class="imp-badge mb-4">Simule seu lucro</div>
         <h2 style="font-size:clamp(1.8rem,4vw,2.6rem);font-weight:900;color:#fff;margin-top:12px;">
           Quanto você pode <span class="text-imp-green">arrecadar?</span>
         </h2>
@@ -578,12 +661,12 @@ input[type=range].imp-range { accent-color: var(--imp-green); width:100%; }
         <!-- Inputs -->
         <div class="grid sm:grid-cols-2 gap-6 mb-8">
           <div>
-            <label style="display:block;font-size:11px;font-weight:800;color:var(--imp-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">💵 Valor da cota (R$)</label>
+            <label style="display:block;font-size:11px;font-weight:800;color:var(--imp-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Valor da cota (R$)</label>
             <input type="number" x-model.number="valorCota" min="0.01" step="0.01" class="imp-field" style="font-size:1.5rem;">
           </div>
           <div>
             <label style="display:block;font-size:11px;font-weight:800;color:var(--imp-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">
-              🎫 Cotas vendidas: <span x-text="cotasVendidas.toLocaleString('pt-BR')" style="color:var(--imp-green);"></span>
+              Cotas vendidas: <span x-text="cotasVendidas.toLocaleString('pt-BR')" style="color:var(--imp-green);"></span>
             </label>
             <input type="range" x-model.number="cotasVendidas" min="1" max="10000" step="1" class="imp-range" style="margin-bottom:12px;">
             <div style="display:flex;flex-wrap:wrap;gap:8px;">
@@ -602,7 +685,7 @@ input[type=range].imp-range { accent-color: var(--imp-green); width:100%; }
 
         <!-- Resultado destaque -->
         <div style="background:linear-gradient(135deg,var(--imp-green-dark),var(--imp-green));border-radius:16px;padding:32px;text-align:center;margin-bottom:20px;box-shadow:0 0 40px var(--imp-green-glow);">
-          <div style="font-size:12px;font-weight:800;color:rgba(0,0,0,.6);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">💰 Você arrecada</div>
+          <div style="font-size:12px;font-weight:800;color:rgba(0,0,0,.6);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">Você arrecada</div>
           <div style="font-size:clamp(2.5rem,6vw,3.5rem);font-weight:900;color:#000;line-height:1;">R$ <span x-text="fmt(totalOrganizador)"></span></div>
           <div style="font-size:13px;color:rgba(0,0,0,.55);margin-top:8px;">líquido de R$ <span x-text="fmt(totalCompradores)"></span> arrecadados</div>
         </div>
@@ -622,7 +705,7 @@ input[type=range].imp-range { accent-color: var(--imp-green); width:100%; }
         </div>
 
         <!-- Breakdown -->
-        <div style="background:#0d0d0d;border:1px solid var(--imp-border);border-radius:12px;padding:16px;font-size:14px;">
+        <div style="background:var(--imp-card);border:1px solid var(--imp-border);border-radius:12px;padding:16px;font-size:14px;" class="imp-sim-inner">
           <div style="display:flex;justify-content:space-between;padding:8px 0;color:var(--imp-muted);">
             <span><span x-text="cotasVendidas.toLocaleString('pt-BR')"></span> cotas × R$ <span x-text="fmt(valorCota)"></span></span>
             <span style="font-weight:700;color:#e5e7eb;">R$ <span x-text="fmt(totalCompradores)"></span></span>
@@ -632,7 +715,7 @@ input[type=range].imp-range { accent-color: var(--imp-green); width:100%; }
             <span>R$ <span x-text="fmt(totalTaxa)"></span></span>
           </div>
           <div style="display:flex;justify-content:space-between;padding:12px 0 0;margin-top:4px;border-top:1px solid var(--imp-border);font-weight:900;font-size:16px;">
-            <span style="color:#fff;">💰 Você recebe</span>
+            <span style="color:#fff;">Você recebe</span>
             <span style="color:var(--imp-green);">R$ <span x-text="fmt(totalOrganizador)"></span></span>
           </div>
         </div>
@@ -646,7 +729,7 @@ input[type=range].imp-range { accent-color: var(--imp-green); width:100%; }
   <section id="faq" style="padding:80px 0;border-top:1px solid var(--imp-border);">
     <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
       <div style="text-align:center;margin-bottom:40px;">
-        <div class="imp-badge mb-4">❓ Perguntas frequentes</div>
+        <div class="imp-badge mb-4">Perguntas frequentes</div>
         <h2 style="font-size:clamp(1.8rem,4vw,2.4rem);font-weight:900;color:#fff;margin-top:12px;">
           Tudo sobre criar <span class="text-imp-green">rifas online</span>
         </h2>
@@ -676,23 +759,24 @@ input[type=range].imp-range { accent-color: var(--imp-green); width:100%; }
         <div style="position:absolute;bottom:-60px;left:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(245,158,11,.1) 0%,transparent 70%);"></div>
 
         <div style="position:relative;">
-          <div style="font-size:3rem;margin-bottom:16px;">🏆</div>
+          <div style="display:flex;justify-content:center;margin-bottom:16px;color:var(--imp-gold);"><i data-lucide="trophy" style="width:48px;height:48px;"></i></div>
           <div class="imp-badge mb-4">100% Gratuito para começar</div>
           <h2 style="font-size:clamp(1.8rem,4vw,2.8rem);font-weight:900;color:#fff;margin-top:16px;margin-bottom:12px;line-height:1.1;">
             Sua primeira rifa online<br>pode ser <span class="text-imp-green">hoje</span>
           </h2>
-          <p style="color:#9ca3af;font-size:16px;margin-bottom:8px;max-width:440px;margin-left:auto;margin-right:auto;">Rifas ilimitadas. Cotas ilimitadas. Receba via PIX na hora.</p>
+          <p style="color:#9ca3af;font-size:16px;margin-bottom:8px;max-width:440px;margin-left:auto;margin-right:auto;">Rifas ilimitadas. Cotas ilimitadas. Receba na hora, direto na sua conta.</p>
           <p style="color:#6b7280;font-size:14px;margin-bottom:40px;">Sem mensalidade — só 5% + R$ 0,50 por cota quando arrecadar.</p>
 
           <div style="display:flex;flex-direction:column;gap:14px;align-items:center;">
             <a href="/cadastro"
                class="imp-glow-btn inline-flex items-center justify-center gap-3 px-10 py-4 rounded-2xl font-black text-black transition-all hover:-translate-y-1"
                style="background:var(--imp-green);font-size:1.1rem;min-width:280px;">
-              🚀 Criar minha conta grátis
+              <i data-lucide="rocket" class="w-5 h-5"></i>
+              Criar minha conta grátis
             </a>
             <a href="/demo"
-               class="inline-flex items-center justify-center gap-2.5 px-10 py-4 rounded-2xl font-bold text-white transition-all hover:bg-white/5"
-               style="border:1px solid rgba(255,255,255,.15);font-size:1rem;">
+               class="imp-btn-demo inline-flex items-center justify-center gap-2.5 px-10 py-4 rounded-2xl font-bold transition-all"
+               style="font-size:1rem;">
               <i data-lucide="play-circle" class="w-5 h-5" style="color:var(--imp-green);"></i>
               Ver demo
             </a>

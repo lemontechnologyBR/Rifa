@@ -7,6 +7,10 @@
       <h1 class="super-page-title"><%= typeof titulo !== 'undefined' ? titulo : 'Super Admin' %></h1>
     </div>
     <div class="super-topbar-actions">
+      <button type="button" class="super-theme-btn" onclick="window.VouRifarTheme && window.VouRifarTheme.toggle()" title="Alternar tema claro/escuro" aria-label="Alternar tema">
+        <i data-lucide="moon" class="w-4 h-4 super-theme-icon super-theme-icon--light" aria-hidden="true"></i>
+        <i data-lucide="sun" class="w-4 h-4 super-theme-icon super-theme-icon--dark" aria-hidden="true"></i>
+      </button>
       <% if (typeof adminUsuario !== 'undefined' && adminUsuario) { %>
         <span class="super-user"><i data-lucide="shield" class="w-4 h-4"></i> <%= adminUsuario %></span>
       <% } %>

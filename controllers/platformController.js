@@ -12,6 +12,7 @@ const platformController = {
     const appUrl = res.locals.baseUrl || process.env.APP_URL || '';
     res.render('platform/landing', {
       titulo: 'VouRifar — Plataforma de Rifas Online',
+      bodyClass: 'platform-landing',
       faqItems: platformFaq(),
       ...platformLandingMeta(appUrl)
     });
@@ -24,6 +25,7 @@ const platformController = {
 
     res.render('platform/acessar', {
       titulo: 'Acessar painel',
+      bodyClass: 'platform-landing',
       seoTitle: 'Entrar — VouRifar',
       seoDescription: 'Acesse o painel do seu sistema de rifas online VouRifar.',
       seoNoIndex: true,
@@ -42,6 +44,7 @@ const platformController = {
       if (!org) {
         return res.render('platform/acessar', {
           titulo: 'Acessar painel',
+          bodyClass: 'platform-landing',
           erro: 'E-mail ou senha incorretos.',
           msg: null,
           googleEnabled: GoogleAuthService.isConfigured(),
@@ -58,6 +61,7 @@ const platformController = {
     } catch (err) {
       res.render('platform/acessar', {
         titulo: 'Acessar painel',
+        bodyClass: 'platform-landing',
         erro: err.message,
         msg: null,
         googleEnabled: GoogleAuthService.isConfigured(),
@@ -73,6 +77,7 @@ const platformController = {
       const appUrl = res.locals.baseUrl || process.env.APP_URL || '';
       res.render('platform/cadastro', {
         titulo: 'Criar seu sistema de rifas',
+        bodyClass: 'platform-landing',
         ...cadastroMeta(appUrl),
         erro: req.query.erro ? decodeURIComponent(String(req.query.erro).replace(/\+/g, ' ')) : null,
         dados: viaGoogle
@@ -147,6 +152,7 @@ const platformController = {
       const appUrl = res.locals.baseUrl || process.env.APP_URL || '';
       res.render('platform/cadastro', {
         titulo: 'Criar seu sistema de rifas',
+        bodyClass: 'platform-landing',
         ...cadastroMeta(appUrl),
         erro: err.message,
         dados,

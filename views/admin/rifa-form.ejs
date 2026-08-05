@@ -13,6 +13,7 @@
 
     <div class="max-w-3xl">
     <% if (erro) { %><div class="admin-alert admin-alert-error mb-4"><span><%= erro %></span></div><% } %>
+    <% if (typeof msg !== 'undefined' && msg) { %><div class="admin-alert admin-alert-success mb-4"><span><%= msg %></span></div><% } %>
     <form method="POST" action="<%= rifa && rifa.id ? adminBase+'/rifas/'+rifa.id+'/editar' : adminBase+'/rifas/nova' %>" class="space-y-4">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
@@ -25,10 +26,7 @@
         <label class="text-sm font-medium text-gray-600">Descrição</label>
         <textarea name="descricao" rows="3" class="w-full border rounded-xl px-4 py-2 mt-1"><%= rifa ? (rifa.descricao || '') : '' %></textarea>
       </div>
-      <%- include('partials/rifa-imagem', {
-        adminBase,
-        imagemUrl: rifa ? (rifa.imagemUrl || rifa.imagem_url || '') : ''
-      }) %>
+      <%- include('partials/rifa-galeria', { adminBase, rifa }) %>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label class="text-sm font-medium text-gray-600">Valor da cota *</label>
@@ -82,58 +80,83 @@
           </label>
         </div>
       </div>
-      <input type="hidden" name="chave_pix" value="">
+      <input type="hidden" name="chave_pix" value="<%= rifa && rifa.chavePix ? rifa.chavePix : '' %>">
       <%- include('partials/recebimento-carteira-info', { compact: true }) %>
       <div>
         <label class="text-sm font-medium text-gray-600">Meta mínima % (opcional)</label>
         <input type="number" name="meta_minima_pct" step="0.1" min="0" max="100" value="<%= rifa ? (rifa.metaMinimaPct ?? rifa.meta_minima_pct ?? '') : '' %>" class="w-full border rounded-xl px-4 py-2 mt-1" placeholder="Ex: 70">
+        <p class="text-xs text-gray-500 mt-1">Percentual mínimo de cotas vendidas para liberar o sorteio. A rifa permanece ativa até bater a meta; não há reembolso automático.</p>
       </div>
 
-      <% if (!rifa || !rifa.id) { %>
-        <fieldset class="border rounded-xl p-4">
-          <legend class="text-sm font-semibold px-2">Prêmios</legend>
-          <input type="text" name="premio_titulo" placeholder="Prêmio principal" class="w-full border rounded-xl px-4 py-2 mb-2">
-          <input type="text" name="premio_titulo" placeholder="Prêmio secundário (opcional)" class="w-full border rounded-xl px-4 py-2">
-        </fieldset>
-        <fieldset class="border rounded-xl p-4">
-          <legend class="text-sm font-semibold px-2">Faixas de Desconto</legend>
-          <div class="grid grid-cols-2 gap-2 mb-2">
-            <input type="number" name="faixa_qtd" placeholder="Qtd mín" class="border rounded-xl px-4 py-2">
-            <input type="number" name="faixa_valor" step="0.01" placeholder="Valor total" class="border rounded-xl px-4 py-2">
+      <%
+        const premiosOrd = (rifa && rifa.premios)
+          ? [...rifa.premios].sort((a, b) => (a.ordem || 0) - (b.ordem || 0))
+          : [];
+        const premioModoAtual = premiosOrd.length >= 3 ? 'podio' : premiosOrd.length === 2 ? 'duplo' : 'unico';
+        const p1 = premiosOrd[0]?.titulo || '';
+        const p2 = premiosOrd[1]?.titulo || '';
+        const p3 = premiosOrd[2]?.titulo || '';
+        const podeEditarPremios = !rifa || !rifa.id || rifa.status === 'ativa';
+      %>
+      <fieldset class="border rounded-xl p-4 space-y-3" x-data="{ premioModo: '<%= premioModoAtual %>' }">
+        <legend class="text-sm font-semibold px-2">Prêmios</legend>
+        <input type="hidden" name="premio_modo" :value="premioModo">
+        <% if (podeEditarPremios) { %>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <label class="flex items-start gap-2 border rounded-xl p-3 cursor-pointer"
+              :class="premioModo === 'unico' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200'">
+              <input type="radio" x-model="premioModo" value="unico" class="mt-0.5 accent-emerald-500">
+              <div>
+                <p class="font-semibold text-sm">1 prêmio</p>
+                <p class="text-xs text-gray-500">Um ganhador</p>
+              </div>
+            </label>
+            <label class="flex items-start gap-2 border rounded-xl p-3 cursor-pointer"
+              :class="premioModo === 'duplo' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200'">
+              <input type="radio" x-model="premioModo" value="duplo" class="mt-0.5 accent-emerald-500">
+              <div>
+                <p class="font-semibold text-sm">2 prêmios</p>
+                <p class="text-xs text-gray-500">1º e 2º lugar</p>
+              </div>
+            </label>
+            <label class="flex items-start gap-2 border rounded-xl p-3 cursor-pointer"
+              :class="premioModo === 'podio' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200'">
+              <input type="radio" x-model="premioModo" value="podio" class="mt-0.5 accent-emerald-500">
+              <div>
+                <p class="font-semibold text-sm">3 prêmios</p>
+                <p class="text-xs text-gray-500">1º, 2º e 3º</p>
+              </div>
+            </label>
           </div>
-          <div class="grid grid-cols-2 gap-2">
-            <input type="number" name="faixa_qtd" placeholder="Qtd mín" class="border rounded-xl px-4 py-2">
-            <input type="number" name="faixa_valor" step="0.01" placeholder="Valor total" class="border rounded-xl px-4 py-2">
+          <div class="space-y-2">
+            <input type="text" name="premio_1" value="<%= p1 %>" required
+              :placeholder="premioModo === 'unico' ? 'Prêmio *' : '1º lugar *'" class="admin-input">
+            <div class="space-y-2" x-show="premioModo === 'duplo' || premioModo === 'podio'" x-cloak>
+              <input type="text" name="premio_2" value="<%= p2 %>" placeholder="2º lugar *" class="admin-input"
+                :required="premioModo === 'duplo' || premioModo === 'podio'" :disabled="premioModo === 'unico'">
+            </div>
+            <div class="space-y-2" x-show="premioModo === 'podio'" x-cloak>
+              <input type="text" name="premio_3" value="<%= p3 %>" placeholder="3º lugar *" class="admin-input"
+                :required="premioModo === 'podio'" :disabled="premioModo !== 'podio'">
+            </div>
           </div>
-        </fieldset>
-      <% } else if (rifa.premios && rifa.premios.length) { %>
-        <fieldset class="border rounded-xl p-4 bg-gray-50">
-          <legend class="text-sm font-semibold px-2">Prêmios cadastrados</legend>
+        <% } else { %>
           <ul class="space-y-2 text-sm">
-            <% rifa.premios.forEach(function(p) { %>
-              <li class="flex justify-between gap-2">
-                <span class="font-medium"><%= p.titulo %></span>
-                <span class="text-gray-500"><%= p.descricao || '—' %></span>
-              </li>
+            <% premiosOrd.forEach(function(p, i) {
+              const lugar = premiosOrd.length > 1 ? ((i === 0 ? '1º' : i === 1 ? '2º' : '3º') + ' lugar — ') : '';
+            %>
+              <li class="font-medium"><%= lugar %><%= p.titulo %></li>
             <% }); %>
           </ul>
-          <p class="text-xs text-gray-400 mt-2">Prêmios não podem ser alterados após a criação.</p>
-        </fieldset>
-      <% } %>
+          <p class="text-xs text-gray-400">Prêmios não podem ser alterados após o sorteio.</p>
+        <% } %>
+      </fieldset>
 
-      <% if (rifa && rifa.id && rifa.faixasDesconto && rifa.faixasDesconto.length) { %>
-        <fieldset class="border rounded-xl p-4 bg-gray-50">
-          <legend class="text-sm font-semibold px-2">Faixas de desconto</legend>
-          <ul class="space-y-1 text-sm">
-            <% rifa.faixasDesconto.forEach(function(f) { %>
-              <li><%= f.quantidadeMin %>+ números → R$ <%= f.valorTotal.toFixed(2).replace('.', ',') %></li>
-            <% }); %>
-          </ul>
-        </fieldset>
-      <% } %>
-      </div>
+      <%- include('partials/rifa-descontos-pct', { rifa }) %>
+      <%- include('partials/rifa-pacotes-rapidos', { rifa }) %>
 
       <%- include('partials/rifa-aparencia') %>
+      </div>
 
       <div class="flex gap-3 pt-2">
         <% if (rifa && rifa.id) { %>

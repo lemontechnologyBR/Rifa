@@ -1,0 +1,40 @@
+<%
+  const PACOTES_DEF = [10, 50, 100];
+  let lista = PACOTES_DEF.slice();
+  if (typeof rifa !== 'undefined' && rifa && rifa.pacotesRapidos) {
+    try {
+      const arr = JSON.parse(rifa.pacotesRapidos);
+      if (Array.isArray(arr)) {
+        const nums = arr.map(function(n) { return parseInt(n, 10); }).filter(function(n) { return n > 0; });
+        if (nums.length) lista = nums.slice(0, 3);
+      }
+    } catch (e) { /* default */ }
+  }
+  const podeEditar = !rifa || !rifa.id || rifa.status === 'ativa';
+  const temFaixas = typeof rifa !== 'undefined' && rifa && rifa.faixasDesconto && rifa.faixasDesconto.length;
+%>
+
+<fieldset class="border border-gray-200 dark:border-gray-700 rounded-xl p-4 space-y-3">
+  <legend class="text-sm font-semibold px-2">Atalhos de compra</legend>
+  <p class="text-xs text-gray-500 dark:text-gray-400">
+    Quantidades dos botões <strong>+…</strong> na página pública
+    <% if (temFaixas) { %> (usados só se não houver promoção por desconto)<% } %>.
+  </p>
+
+  <% if (podeEditar) { %>
+  <div class="grid grid-cols-3 gap-3">
+    <% for (let i = 0; i < 3; i++) { %>
+    <div>
+      <label class="admin-label text-xs">Atalho <%= i + 1 %></label>
+      <input type="number" name="pacote_rapido_<%= i + 1 %>" min="1" max="10000" step="1"
+        value="<%= lista[i] || '' %>"
+        placeholder="<%= PACOTES_DEF[i] %>"
+        class="admin-input py-2 text-sm">
+    </div>
+    <% } %>
+  </div>
+  <p class="admin-hint">O do meio aparece como “Mais popular”. Valores somam à quantidade atual ao clicar.</p>
+  <% } else { %>
+  <p class="text-sm"><%= lista.map(function(n) { return '+' + n; }).join(' · ') %></p>
+  <% } %>
+</fieldset>

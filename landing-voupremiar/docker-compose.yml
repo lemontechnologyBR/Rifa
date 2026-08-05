@@ -1,0 +1,27 @@
+services:
+  landing:
+    image: nginx:alpine
+    restart: unless-stopped
+    volumes:
+      - ./public:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - pix-tips_proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=pix-tips_proxy"
+      - "traefik.http.routers.voupremiar.entrypoints=websecure"
+      - "traefik.http.routers.voupremiar.rule=Host(`voupremiar.com.br`) || Host(`www.voupremiar.com.br`)"
+      - "traefik.http.routers.voupremiar.tls=true"
+      - "traefik.http.routers.voupremiar.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.voupremiar.tls.domains[0].main=voupremiar.com.br"
+      - "traefik.http.routers.voupremiar.tls.domains[0].sans=www.voupremiar.com.br"
+      - "traefik.http.routers.voupremiar.middlewares=voupremiar-www-redirect"
+      - "traefik.http.middlewares.voupremiar-www-redirect.redirectregex.regex=^https://www\\.voupremiar\\.com\\.br/(.*)"
+      - "traefik.http.middlewares.voupremiar-www-redirect.redirectregex.replacement=https://voupremiar.com.br/$${1}"
+      - "traefik.http.middlewares.voupremiar-www-redirect.redirectregex.permanent=true"
+      - "traefik.http.services.voupremiar.loadbalancer.server.port=80"
+
+networks:
+  pix-tips_proxy:
+    external: true

@@ -19,6 +19,365 @@
   font-family: 'Inter', system-ui, sans-serif;
   color: #111827;
   font-size: 16px;
+  --imp-surface: #f1f5f9;
+  --imp-card: #ffffff;
+  --imp-card-border: #e2e8f0;
+  --imp-text: #0f172a;
+  --imp-text-muted: #64748b;
+  --imp-text-dim: #94a3b8;
+  --imp-nav-bg: rgba(255, 255, 255, 0.94);
+  --imp-nav-border: rgba(15, 23, 42, 0.08);
+  --imp-panel: #ffffff;
+  --imp-panel-border: #e2e8f0;
+  --imp-input-bg: #f8fafc;
+  --imp-input-border: #cbd5e1;
+  --imp-progress-track: rgba(15, 23, 42, 0.08);
+}
+
+.dark .public-site {
+  --imp-surface: #12121f;
+  --imp-card: #1a1a2e;
+  --imp-card-border: rgba(255, 255, 255, 0.07);
+  --imp-text: #ffffff;
+  --imp-text-muted: #9ca3af;
+  --imp-text-dim: #cbd5e1;
+  --imp-nav-bg: rgba(18, 18, 31, 0.97);
+  --imp-nav-border: rgba(255, 255, 255, 0.07);
+  --imp-panel: #1a1a2e;
+  --imp-panel-border: rgba(255, 255, 255, 0.07);
+  --imp-input-bg: #111827;
+  --imp-input-border: rgba(255, 255, 255, 0.15);
+  --imp-progress-track: rgba(255, 255, 255, 0.08);
+}
+
+.public-site .imp-store,
+.public-site .imp-detail {
+  background: var(--imp-surface) !important;
+  color: var(--imp-text);
+  min-height: 100vh;
+}
+
+.public-site .glass-nav {
+  background: var(--imp-nav-bg) !important;
+  border-color: var(--imp-nav-border) !important;
+}
+
+.public-site .imp-featured-card,
+.public-site .imp-list-card {
+  background: var(--imp-card) !important;
+  border-color: var(--imp-card-border) !important;
+}
+
+.public-site .imp-progress-wrap,
+.public-site .imp-progress-inline {
+  background: var(--imp-progress-track);
+}
+
+/* Utilitários de texto (respeitam claro/escuro) */
+.public-site .imp-txt {
+  color: var(--imp-text) !important;
+}
+.public-site .imp-txt-muted {
+  color: var(--imp-text-muted) !important;
+}
+.public-site .imp-txt-dim {
+  color: var(--imp-text-dim) !important;
+}
+
+/* Título sobre a foto — sempre branco (gradiente escuro por baixo) */
+.public-site .imp-hero-caption h1 {
+  color: #fff !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
+}
+.public-site .imp-hero-caption p {
+  color: rgba(255, 255, 255, 0.78) !important;
+}
+
+.public-site .imp-panel {
+  background: var(--imp-panel) !important;
+  border: 1px solid var(--imp-panel-border) !important;
+  color: var(--imp-text);
+  border-radius: 12px;
+}
+
+.public-site .imp-summary {
+  border-top: 1px solid var(--imp-panel-border);
+  padding-top: 12px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.public-site .imp-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  color: var(--imp-text-muted);
+}
+
+.public-site .imp-summary-val {
+  color: var(--imp-text) !important;
+  font-weight: 600;
+}
+
+.public-site .imp-summary-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 16px;
+  font-weight: 900;
+  padding-top: 10px;
+  margin-top: 4px;
+  border-top: 1px solid var(--imp-panel-border);
+}
+
+.public-site .imp-summary-total .imp-summary-label {
+  color: var(--imp-text) !important;
+}
+
+.public-site .imp-summary-total .imp-summary-total-val {
+  color: var(--brand-from, #22c55e);
+}
+
+.public-site .imp-resumo-cheio {
+  text-decoration: line-through;
+  color: var(--imp-text-dim) !important;
+  font-size: 12px;
+}
+
+.public-site .imp-resumo-desconto {
+  color: #16a34a !important;
+  font-weight: 700;
+}
+
+.dark .public-site .imp-resumo-desconto {
+  color: #4ade80 !important;
+}
+
+/* Painéis/modais ainda com inline escuro — força tema claro */
+html:not(.dark) .public-site .imp-detail [style*="background:#1a1a2e"],
+html:not(.dark) .public-site .imp-store [style*="background:#1a1a2e"],
+html:not(.dark) .public-site .imp-detail [style*="background: #1a1a2e"],
+html:not(.dark) .public-site .imp-store [style*="background: #1a1a2e"] {
+  background: var(--imp-panel) !important;
+  border-color: var(--imp-panel-border) !important;
+  color: var(--imp-text) !important;
+}
+
+html:not(.dark) .public-site .imp-detail [style*="color:#fff"],
+html:not(.dark) .public-site .imp-store [style*="color:#fff"],
+html:not(.dark) .public-site .imp-detail [style*="color: #fff"],
+html:not(.dark) .public-site .imp-store [style*="color: #fff"] {
+  color: var(--imp-text) !important;
+}
+
+html:not(.dark) .public-site .imp-detail [style*="color:#9ca3af"],
+html:not(.dark) .public-site .imp-store [style*="color:#9ca3af"],
+html:not(.dark) .public-site .imp-detail [style*="color:#6b7280"],
+html:not(.dark) .public-site .imp-store [style*="color:#6b7280"],
+html:not(.dark) .public-site .imp-detail [style*="color:#d1d5db"],
+html:not(.dark) .public-site .imp-store [style*="color:#d1d5db"] {
+  color: var(--imp-text-muted) !important;
+}
+
+/* Hero sobre foto — não aplicar regra acima */
+html:not(.dark) .public-site .imp-hero-caption [style*="color:#fff"],
+html:not(.dark) .public-site .imp-hero-caption h1,
+html:not(.dark) .public-site .imp-hero-caption p {
+  color: #fff !important;
+}
+
+html:not(.dark) .public-site .imp-detail [style*="background:#111827"],
+html:not(.dark) .public-site .imp-store [style*="background:#111827"] {
+  background: var(--imp-input-bg) !important;
+  border-color: var(--imp-input-border) !important;
+  color: var(--imp-text) !important;
+}
+
+
+.public-site .imp-pkg-btn {
+  background: var(--imp-card) !important;
+  border: 1px solid var(--imp-card-border) !important;
+  border-radius: 10px;
+  padding: 8px 6px 6px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+  position: relative;
+  min-height: 0;
+  color: var(--imp-text);
+}
+
+.public-site .imp-pkg-btn:hover {
+  border-color: color-mix(in srgb, var(--brand-from, #22c55e) 50%, var(--imp-card-border)) !important;
+  background: color-mix(in srgb, var(--brand-from, #22c55e) 6%, var(--imp-card)) !important;
+  transform: translateY(-1px);
+}
+
+.public-site .imp-pkg-qty {
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--brand-from, #22c55e);
+  line-height: 1.1;
+}
+
+.public-site .imp-pkg-price {
+  font-size: 11px;
+  font-weight: 700;
+  margin-top: 2px;
+  color: var(--imp-text) !important;
+}
+
+.public-site .imp-pkg-select {
+  font-size: 9px;
+  font-weight: 700;
+  margin-top: 2px;
+  color: var(--imp-text-muted) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.public-site .imp-pkg-popular {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--brand-from);
+  color: #000;
+  font-size: 8px;
+  font-weight: 900;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.public-site .imp-promo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 6px;
+  max-width: 100%;
+}
+
+.public-site .imp-promo-pct {
+  font-size: 9px;
+  font-weight: 800;
+  margin-bottom: 1px;
+  line-height: 1.2;
+  color: #b45309;
+}
+
+.dark .public-site .imp-promo-pct {
+  color: #fbbf24;
+}
+
+.public-site .imp-modal-sheet {
+  border: 1px solid var(--imp-panel-border) !important;
+}
+
+.public-site .imp-input {
+  background: var(--imp-input-bg) !important;
+  border: 1px solid var(--imp-input-border) !important;
+  color: var(--imp-text) !important;
+}
+
+.public-site .imp-ended-row {
+  display: flex;
+  align-items: stretch;
+  background: var(--imp-card) !important;
+  border: 1px solid var(--imp-card-border) !important;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 8px;
+  text-decoration: none;
+  transition: border-color 0.15s;
+}
+.public-site .imp-ended-row:hover {
+  border-color: color-mix(in srgb, var(--brand-from, #22c55e) 35%, var(--imp-card-border)) !important;
+}
+
+html:not(.dark) .public-site .imp-featured-card:hover {
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+}
+
+html:not(.dark) .public-site .imp-btn-outline:hover {
+  border-color: #94a3b8 !important;
+  color: var(--imp-text) !important;
+}
+
+.public-site .imp-btn-outline,
+.public-site .imp-btn-outline-sm {
+  background: transparent;
+  border: 1px solid var(--imp-input-border);
+  color: var(--imp-text-muted);
+  font-weight: 700;
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.public-site .imp-btn-outline-sm {
+  border-radius: 9px;
+  padding: 9px 16px;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.public-site .imp-btn-outline {
+  border-radius: 10px;
+  padding: 11px 20px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.public-site .imp-btn-outline:hover,
+.public-site .imp-btn-outline-sm:hover {
+  border-color: color-mix(in srgb, var(--brand-from, #22c55e) 40%, var(--imp-input-border));
+  color: var(--imp-text) !important;
+  background: color-mix(in srgb, var(--brand-from, #22c55e) 8%, var(--imp-panel));
+}
+
+.public-site .imp-btn-outline svg,
+.public-site .imp-btn-outline-sm svg,
+.public-site .imp-btn-outline [data-lucide],
+.public-site .imp-btn-outline-sm [data-lucide] {
+  color: currentColor;
+  stroke: currentColor;
+}
+
+html:not(.dark) .public-site .imp-stepper-btn {
+  background: #e2e8f0 !important;
+  border-color: #cbd5e1 !important;
+  color: var(--imp-text) !important;
+}
+
+html:not(.dark) .public-site .imp-stepper-input {
+  background: var(--imp-input-bg) !important;
+  border-color: var(--imp-input-border) !important;
+  color: var(--imp-text) !important;
+}
+
+html:not(.dark) .public-site .imp-detail .imp-card-dark {
+  background: var(--imp-panel) !important;
+  border-color: var(--imp-panel-border) !important;
+}
+
+html:not(.dark) .public-site .imp-store [style*="border-top:1px solid rgba(255,255,255"],
+html:not(.dark) .public-site .imp-detail [style*="border-top:1px solid rgba(255,255,255"] {
+  border-top-color: var(--imp-panel-border) !important;
+}
+
+.dark .public-site .imp-detail .glass-nav,
+.dark .public-site.mesh-bg .glass-nav {
+  background: var(--imp-nav-bg) !important;
+  border-color: var(--imp-nav-border) !important;
 }
 
 .public-hero-title {
@@ -394,15 +753,33 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
-  padding: 2rem 0 0.5rem;
+  gap: 0.65rem;
+  padding: 1.25rem 0 0.35rem;
   text-align: center;
 }
 
 .public-footer-brand {
   display: flex;
   justify-content: center;
-  margin-bottom: 0.125rem;
+  margin-bottom: 0;
+}
+
+.public-footer-disclaimer {
+  max-width: 26rem;
+  margin: 0;
+  color: #9ca3af;
+  font-size: 11px;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.public-footer-disclaimer p {
+  margin: 0 0 0.3rem;
+}
+
+.public-footer-disclaimer p:last-child {
+  margin-bottom: 0;
+  color: #6b7280;
 }
 
 .public-footer-desc {
@@ -424,6 +801,67 @@
   justify-content: center;
   gap: 0.625rem;
   margin-top: 0.25rem;
+}
+
+/* Redes flutuantes (lado direito) — só ícones, fora do footer */
+.public-social-float {
+  position: fixed;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.public-social-float-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(26, 26, 46, 0.94);
+  color: #fff;
+  text-decoration: none;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+}
+
+.public-social-float-btn svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
+.public-social-float-btn:hover {
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.42);
+}
+
+.public-social-float-btn--wa:hover {
+  border-color: #4ade80;
+}
+
+.public-social-float-btn--ig:hover {
+  border-color: #f9a8d4;
+}
+
+@media (max-width: 639px) {
+  .public-social-float {
+    right: 10px;
+    top: auto;
+    bottom: 100px;
+    transform: none;
+  }
+
+  .public-social-float-btn {
+    width: 44px;
+    height: 44px;
+  }
 }
 
 .public-footer-social-link {
@@ -499,7 +937,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.35rem;
+  margin-top: 0.15rem;
 }
 
 .public-footer-copy {
@@ -514,7 +953,7 @@
 
 .public-footer-link {
   font-weight: 600;
-  color: var(--brand-from, #10b981);
+  color: #10b981;
   text-decoration: none;
 }
 

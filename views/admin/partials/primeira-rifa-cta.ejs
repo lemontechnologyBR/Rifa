@@ -2,7 +2,6 @@
   const carteiraPronta = typeof carteiraOk !== 'undefined' && carteiraOk;
   const ctaHref = carteiraPronta ? (adminBase + '/rifas?nova=1') : (adminBase + '/carteira');
   const ctaLabel = carteiraPronta ? 'Criar minha primeira rifa' : 'Configurar carteira';
-  const mpSplit = typeof mpSplitConfigured !== 'undefined' && mpSplitConfigured;
 %>
   <div class="admin-onboard mb-6">
     <div class="admin-onboard-icon">
@@ -24,7 +23,7 @@
         <span class="admin-onboard-step-num">1</span>
         <div>
           <p class="font-semibold text-sm">Configure a Carteira</p>
-          <p class="text-xs text-gray-500 dark:text-gray-400"><%= mpSplit ? 'Conecte sua conta Mercado Pago' : 'Informe sua chave PIX' %></p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">Informe sua chave PIX</p>
         </div>
       </div>
       <div class="admin-onboard-step">

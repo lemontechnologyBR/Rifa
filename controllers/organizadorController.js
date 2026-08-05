@@ -8,25 +8,20 @@ const TenantService = require('../services/tenantService');
 const LogService = require('../services/logService');
 const GoogleAuthService = require('../services/googleAuthService');
 const OrganizadorService = require('../services/organizadorService');
+const { parseFaixas, parseImagensUrls } = require('../lib/rifaFormParse');
+const { parsePacotesRapidosFromBody, serializePacotesRapidos } = require('../lib/rifaPacotes');
 
 function cartPaymentContext(tenant) {
   const PaymentService = require('../services/paymentService');
-  const MercadoPagoOAuthService = require('../services/mercadoPagoOAuthService');
   const {
-    ORGANIZADOR_PERCENTUAL,
     ORGANIZADOR_PERCENTUAL_WOOVI,
     TAXA_FIXA_COTA_WOOVI
   } = require('../lib/config');
-  const mpSplitConfigured = MercadoPagoOAuthService.isSplitConfigured();
-  const mpConnected = MercadoPagoOAuthService.isTenantConnected(tenant);
   const provider = PaymentService.getProvider(tenant);
   return {
     carteiraOk: PaymentService.isConfigured(tenant),
-    mpSplitConfigured,
-    mpConnected,
-    usesSplit: provider === 'mercadopago',
     gateway: provider,
-    organizadorPercentual: provider === 'woovi' ? ORGANIZADOR_PERCENTUAL_WOOVI : ORGANIZADOR_PERCENTUAL,
+    organizadorPercentual: ORGANIZADOR_PERCENTUAL_WOOVI,
     taxaFixaCota: provider === 'woovi' ? TAXA_FIXA_COTA_WOOVI : 0
   };
 }
@@ -90,10 +85,12 @@ const organizadorController = {
   async dashboard(req, res) {
     const tid = req.tenant.id;
     const prisma = require('../lib/prisma');
-    const [metricas, logs, totalRifas] = await Promise.all([
+    const AnalyticsService = require('../services/analyticsService');
+    const [metricas, logs, totalRifas, trafego] = await Promise.all([
       RifaService.obterMetricasDashboard(tid),
       LogService.listar(20, tid),
-      prisma.rifa.count({ where: { tenantId: tid } })
+      prisma.rifa.count({ where: { tenantId: tid } }),
+      AnalyticsService.obterDashboardTenant(req.tenant.slug, 30)
     ]);
     const ab = `/${req.tenant.slug}/admin`;
     const paymentCtx = cartPaymentContext(req.tenant);
@@ -104,6 +101,7 @@ const organizadorController = {
       adminBase: ab,
       tenantBase: `/${req.tenant.slug}`,
       metricas,
+      trafego,
       totalRifas,
       ...paymentCtx,
       logs,
@@ -189,7 +187,6 @@ const organizadorController = {
   async carteiraForm(req, res, next) {
     try {
       const CarteiraService = require('../services/carteiraService');
-      const MercadoPagoOAuthService = require('../services/mercadoPagoOAuthService');
       const SaqueService = require('../services/saqueService');
       const PaymentService = require('../services/paymentService');
       const { detectarTipoChavePix, labelTipoPix } = require('../lib/pixKey');
@@ -199,28 +196,23 @@ const organizadorController = {
       const extratoSaques = await SaqueService.listarPorTenant(req.tenant.id);
       const pixTipoDetectado = detectarTipoChavePix(req.tenant.pixChave);
       const pixTipo = req.query.tipo || pixTipoDetectado || 'cpf';
-      const mpSplitConfigured = MercadoPagoOAuthService.isSplitConfigured();
-      const mpConnected = MercadoPagoOAuthService.isTenantConnected(req.tenant);
-      const temWooviResumo = (resumo.woovi?.bruto || 0) > 0 || (resumo.saldoDisponivel || 0) > 0;
-      let pageSubtitle = 'Onde você recebe os pagamentos dos sorteios';
-      if (mpConnected && temWooviResumo) {
-        pageSubtitle = 'Saldo da plataforma e repasses via Mercado Pago';
-      } else if (mpConnected) {
-        pageSubtitle = 'Pagamentos repassados automaticamente via Mercado Pago';
-      }
+      const pageSubtitle = 'PIX via plataforma — configure sua chave e saque quando quiser';
       const provider = PaymentService.getProvider(req.tenant);
       const {
-        TAXA_PLATAFORMA,
         TAXA_PLATAFORMA_WOOVI,
-        ORGANIZADOR_PERCENTUAL,
         ORGANIZADOR_PERCENTUAL_WOOVI,
         TAXA_FIXA_COTA_WOOVI,
         TAXA_SAQUE,
         SAQUE_MINIMO
       } = require('../lib/config');
-      // taxas específicas de cada modalidade (sempre passadas para a view)
-      const taxaPlataforma = provider === 'woovi' ? TAXA_PLATAFORMA_WOOVI : TAXA_PLATAFORMA;
-      const organizadorPercentual = provider === 'woovi' ? ORGANIZADOR_PERCENTUAL_WOOVI : ORGANIZADOR_PERCENTUAL;
+      const taxaPlataforma = TAXA_PLATAFORMA_WOOVI;
+      const organizadorPercentual = ORGANIZADOR_PERCENTUAL_WOOVI;
+
+      const prisma = require('../lib/prisma');
+      const orgPin = await prisma.organizador.findFirst({
+        where: { id: req.session.organizadorId, tenantId: req.tenant.id },
+        select: { pinHash: true }
+      });
 
       res.render('admin/carteira', {
         titulo: 'Carteira',
@@ -229,16 +221,11 @@ const organizadorController = {
         resumo,
         saque,
         extratoSaques,
+        temPin: !!orgPin?.pinHash,
         carteiraOk: PaymentService.isConfigured(req.tenant),
-        mpSplitConfigured,
-        mpConnected,
-        usesSplit: provider === 'mercadopago',
         gateway: provider,
         taxaPlataforma,
         organizadorPercentual,
-        // taxas fixas de cada modalidade (para mostrar no comparativo da UI)
-        mpTaxa: TAXA_PLATAFORMA,
-        mpPercentual: ORGANIZADOR_PERCENTUAL,
         wooviTaxa: TAXA_PLATAFORMA_WOOVI,
         wooviPercentual: ORGANIZADOR_PERCENTUAL_WOOVI,
         wooviTaxaFixaCota: TAXA_FIXA_COTA_WOOVI,
@@ -280,22 +267,26 @@ const organizadorController = {
       const PaymentService = require('../services/paymentService');
       const CarteiraService = require('../services/carteiraService');
       const SaqueService = require('../services/saqueService');
-      const MercadoPagoOAuthService = require('../services/mercadoPagoOAuthService');
+      const PinService = require('../services/pinService');
+      const prisma = require('../lib/prisma');
 
-      if (!PaymentService.isConfigured(req.tenant)) {
-        const msg = MercadoPagoOAuthService.isSplitConfigured()
-          ? 'Conecte sua conta Mercado Pago antes de sacar.'
-          : 'Configure sua chave PIX antes de sacar.';
-        return res.redirect(`/${req.tenant.slug}/admin/carteira?erro=${encodeURIComponent(msg)}`);
+      if (req.validationErrors?.length) {
+        return res.redirect(`/${req.tenant.slug}/admin/carteira?erro=${encodeURIComponent(req.validationErrors[0])}`);
       }
 
-      // Bloqueia saque somente se MP está conectado E não há saldo Woovi retido na plataforma
-      if (MercadoPagoOAuthService.isSplitConfigured() && MercadoPagoOAuthService.isTenantConnected(req.tenant)) {
-        const resumoCheck = await CarteiraService.obterResumo(req.tenant.id, req.tenant);
-        if (resumoCheck.saldoDisponivel <= 0) {
-          return res.redirect(`/${req.tenant.slug}/admin/carteira?erro=${encodeURIComponent('Pagamentos caem direto na sua conta Mercado Pago — saque manual não se aplica.')}`);
-        }
-        // Há saldo Woovi histórico retido — permite prosseguir com o saque
+      if (!PaymentService.isConfigured(req.tenant)) {
+        return res.redirect(`/${req.tenant.slug}/admin/carteira?erro=${encodeURIComponent('Configure sua chave PIX antes de sacar.')}`);
+      }
+
+      const org = await prisma.organizador.findFirst({
+        where: { id: req.session.organizadorId, tenantId: req.tenant.id }
+      });
+      if (!org?.pinHash) {
+        return res.redirect(`/${req.tenant.slug}/admin/carteira?erro=${encodeURIComponent('Defina um PIN de 6 dígitos antes de sacar.')}`);
+      }
+      const pinOk = await PinService.verificarPin(org, req.body.pin);
+      if (!pinOk) {
+        return res.redirect(`/${req.tenant.slug}/admin/carteira?erro=${encodeURIComponent('PIN incorreto. Tente novamente ou recupere o PIN por e-mail.')}`);
       }
 
       const resumoCarteira = await CarteiraService.obterResumo(req.tenant.id, req.tenant);
@@ -313,14 +304,39 @@ const organizadorController = {
       const taxaMsg = saqueResumo.taxa > 0
         ? ` Taxa de saque: R$ ${saqueResumo.taxa.toFixed(2).replace('.', ',')}.`
         : '';
-      const provider = PaymentService.getProvider(req.tenant);
-      const msg = provider === 'mercadopago'
-        ? `Saque registrado! Você receberá ${valorFmt} na sua chave PIX em até 1 dia útil.${taxaMsg}`
-        : `Saque solicitado com sucesso! Você receberá ${valorFmt} na sua chave PIX em instantes.${taxaMsg}`;
+      const msg = `Saque solicitado com sucesso! Você receberá ${valorFmt} na sua chave PIX em instantes.${taxaMsg}`;
 
       res.redirect(`/${req.tenant.slug}/admin/carteira?msg=${encodeURIComponent(msg)}`);
     } catch (err) {
       res.redirect(`/${req.tenant.slug}/admin/carteira?erro=${encodeURIComponent(err.message)}`);
+    }
+  },
+
+  async salvarPin(req, res) {
+    try {
+      const PinService = require('../services/pinService');
+      await PinService.definirPin(req.session.organizadorId, req.tenant.id, {
+        pin: req.body.pin,
+        confirmar: req.body.confirmar_pin,
+        pinAtual: req.body.pin_atual
+      });
+      res.redirect(`/${req.tenant.slug}/admin/carteira?msg=${encodeURIComponent('PIN de saque salvo com sucesso!')}`);
+    } catch (err) {
+      res.redirect(`/${req.tenant.slug}/admin/carteira?erro=${encodeURIComponent(err.message)}`);
+    }
+  },
+
+  async alterarSenhaConta(req, res) {
+    try {
+      const OrganizadorService = require('../services/organizadorService');
+      await OrganizadorService.alterarSenha(req.session.organizadorId, req.tenant.id, {
+        senhaAtual: req.body.senha_atual,
+        senhaNova: req.body.senha_nova,
+        senhaConfirmar: req.body.senha_confirmar
+      });
+      res.redirect(`/${req.tenant.slug}/admin/config?msg=${encodeURIComponent('Senha atualizada com sucesso!')}`);
+    } catch (err) {
+      res.redirect(`/${req.tenant.slug}/admin/config?erro=${encodeURIComponent(err.message)}`);
     }
   },
 
@@ -348,11 +364,7 @@ const organizadorController = {
       });
     }
     try {
-      await RifaService.criar(
-        { ...req.body, premios: parsePremios(req.body), faixas: parseFaixas(req.body) },
-        req.session.organizadorNome,
-        req.tenant.id
-      );
+      await RifaService.criar(rifaDadosFromRequest(req.body), req.session.organizadorNome, req.tenant.id);
       res.redirect(`${ab}/rifas?msg=Rifa criada com sucesso!`);
     } catch (err) {
       res.render('admin/rifa-form', {
@@ -372,7 +384,9 @@ const organizadorController = {
       titulo: 'Editar Rifa', tenant: req.tenant,
       adminBase: `/${req.tenant.slug}/admin`, tenantBase: `/${req.tenant.slug}`,
       adminUsuario: req.session.organizadorNome, active: 'rifas', pageTitle: 'Editar Rifa',
-      rifa, erro: null, csrfToken: res.locals.csrfToken,
+      rifa, erro: null,
+      msg: req.query.msg ? decodeURIComponent(String(req.query.msg).replace(/\+/g, ' ')) : null,
+      csrfToken: res.locals.csrfToken,
       ...cartPaymentContext(req.tenant)
     });
   },
@@ -390,8 +404,13 @@ const organizadorController = {
       });
     }
     try {
-      await RifaService.atualizar(req.params.id, req.body, req.session.organizadorNome, req.tenant.id);
-      res.redirect(`${ab}/rifas?msg=Rifa atualizada!`);
+      await RifaService.atualizar(
+        req.params.id,
+        rifaDadosFromRequest(req.body),
+        req.session.organizadorNome,
+        req.tenant.id
+      );
+      res.redirect(`${ab}/rifas/${req.params.id}/editar?msg=${encodeURIComponent('Sorteio atualizado!')}`);
     } catch (err) {
       const rifa = await RifaService.buscarPorId(req.params.id, req.tenant.id);
       res.render('admin/rifa-form', {
@@ -489,6 +508,84 @@ const organizadorController = {
       logs,
       csrfToken: res.locals.csrfToken
     });
+  },
+
+  /* ── Recuperação de PIN ───────────────────────────────────── */
+  esqueciPinForm(req, res) {
+    res.render('admin/esqueci-pin', {
+      titulo: 'Recuperar PIN',
+      tenant: req.tenant,
+      adminBase: `/${req.tenant.slug}/admin`,
+      tenantBase: `/${req.tenant.slug}`,
+      mensagem: req.query.ok ? 'Se o e-mail estiver cadastrado, você receberá as instruções em breve.' : null,
+      erro: null,
+      csrfToken: res.locals.csrfToken
+    });
+  },
+
+  async esqueciPin(req, res) {
+    const { email } = req.body;
+    const prisma = require('../lib/prisma');
+    const PinService = require('../services/pinService');
+
+    try {
+      const org = await prisma.organizador.findFirst({
+        where: { email: String(email || '').toLowerCase().trim(), tenantId: req.tenant.id }
+      });
+
+      if (org?.pinHash) {
+        await PinService.solicitarRecuperacaoPin(org, req.tenant.slug);
+      }
+
+      res.redirect(`/${req.tenant.slug}/admin/esqueci-pin?ok=1`);
+    } catch (err) {
+      console.error('[RecuperacaoPin]', err.message);
+      res.render('admin/esqueci-pin', {
+        titulo: 'Recuperar PIN',
+        tenant: req.tenant,
+        adminBase: `/${req.tenant.slug}/admin`,
+        tenantBase: `/${req.tenant.slug}`,
+        mensagem: null,
+        erro: 'Ocorreu um erro. Tente novamente.',
+        csrfToken: res.locals.csrfToken
+      });
+    }
+  },
+
+  async resetarPinForm(req, res) {
+    const { token } = req.query;
+    res.render('admin/resetar-pin', {
+      titulo: 'Redefinir PIN',
+      tenant: req.tenant,
+      adminBase: `/${req.tenant.slug}/admin`,
+      tenantBase: `/${req.tenant.slug}`,
+      token: token || '',
+      erro: null,
+      csrfToken: res.locals.csrfToken
+    });
+  },
+
+  async resetarPin(req, res) {
+    const { token, pin, confirmar } = req.body;
+    const PinService = require('../services/pinService');
+
+    const renderErro = (erro) => res.render('admin/resetar-pin', {
+      titulo: 'Redefinir PIN',
+      tenant: req.tenant,
+      adminBase: `/${req.tenant.slug}/admin`,
+      tenantBase: `/${req.tenant.slug}`,
+      token: token || '',
+      erro,
+      csrfToken: res.locals.csrfToken
+    });
+
+    try {
+      await PinService.resetarPinPorToken(req.tenant.id, token, pin, confirmar);
+      res.redirect(`/${req.tenant.slug}/admin/login?erro=${encodeURIComponent('PIN redefinido com sucesso! Faça login e saque na Carteira.')}`);
+    } catch (err) {
+      console.error('[ResetarPin]', err.message);
+      renderErro(err.message || 'Ocorreu um erro. Tente novamente.');
+    }
   },
 
   /* ── Recuperação de senha ─────────────────────────────────── */
@@ -622,24 +719,20 @@ function mergeRifaForm(rifa, body) {
   };
 }
 
+const { parsePremiosFromBody } = require('../lib/rifaPremiosParse');
+
 function parsePremios(body) {
-  const premios = [];
-  if (body.premio_titulo) {
-    const titulos = Array.isArray(body.premio_titulo) ? body.premio_titulo : [body.premio_titulo];
-    const descs = Array.isArray(body.premio_descricao) ? body.premio_descricao : [body.premio_descricao || ''];
-    titulos.forEach((t, i) => { if (t) premios.push({ titulo: t, descricao: descs[i] || '' }); });
-  }
-  return premios;
+  return parsePremiosFromBody(body);
 }
 
-function parseFaixas(body) {
-  const faixas = [];
-  if (body.faixa_qtd) {
-    const qtds = Array.isArray(body.faixa_qtd) ? body.faixa_qtd : [body.faixa_qtd];
-    const vals = Array.isArray(body.faixa_valor) ? body.faixa_valor : [body.faixa_valor];
-    qtds.forEach((q, i) => { if (q && vals[i]) faixas.push({ quantidade_min: q, valor_total: vals[i] }); });
-  }
-  return faixas;
+function rifaDadosFromRequest(body) {
+  return {
+    ...body,
+    premios: parsePremios(body),
+    faixas: parseFaixas(body),
+    imagens_urls: parseImagensUrls(body),
+    pacotes_rapidos: serializePacotesRapidos(parsePacotesRapidosFromBody(body))
+  };
 }
 
 module.exports = organizadorController;

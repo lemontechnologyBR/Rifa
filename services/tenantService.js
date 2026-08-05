@@ -5,7 +5,7 @@ const prisma = require('../lib/prisma');
 const { slugify, isSlugReservado } = require('../lib/reservedSlugs');
 const PaymentService = require('./paymentService');
 
-const { TAXA_PLATAFORMA, TAXA_PLATAFORMA_WOOVI } = require('../lib/config');
+const { TAXA_PLATAFORMA_WOOVI } = require('../lib/config');
 
 function buildWhere({ busca, status } = {}) {
   const where = {};
@@ -134,44 +134,22 @@ const TenantService = {
 
     const gmvTotal = receita._sum.valorTotal || 0;
 
-    // Receita real por modalidade (5% MP · 7% Plataforma/Woovi)
     const reservasConfirmadasLista = await prisma.reserva.findMany({
       where: { statusPagamento: 'confirmado' },
       select: {
         valorTotal: true,
-        wooviCorrelationId: true,
-        _count: { select: { reservaNumeros: true } },
-        rifa: {
-          select: {
-            tenant: {
-              select: { mpUserId: true, mpAccessToken: true, pixChave: true }
-            }
-          }
-        }
+        createdAt: true,
+        _count: { select: { reservaNumeros: true } }
       }
     });
 
     let receitaPlataforma = 0;
-    let receitaMp = 0;
-    let receitaWoovi = 0;
-    let gmvMp = 0;
     let gmvWoovi = 0;
 
     for (const r of reservasConfirmadasLista) {
-      const tenant = r.rifa?.tenant;
-      const provider = PaymentService.getProviderForReserva(r, tenant);
       const valor = Number(r.valorTotal || 0);
-      // Receita do painel = só a % sobre o GMV (sem R$ 0,50/cota Woovi).
-      // A taxa fixa reduz o líquido do organizador, mas não entra neste KPI.
-      const comissao = valor * PaymentService.getTaxaPlataformaReserva(r, tenant);
-      receitaPlataforma += comissao;
-      if (provider === 'mercadopago') {
-        receitaMp += comissao;
-        gmvMp += valor;
-      } else {
-        receitaWoovi += comissao;
-        gmvWoovi += valor;
-      }
+      gmvWoovi += valor;
+      receitaPlataforma += PaymentService.calcularReceitaReserva(r);
     }
 
     return {
@@ -181,12 +159,9 @@ const TenantService = {
       rifasAtivas,
       reservasConfirmadas,
       gmvTotal,
-      gmvMp,
       gmvWoovi,
       receitaPlataforma,
-      receitaMp,
-      receitaWoovi,
-      taxaMp: TAXA_PLATAFORMA,
+      receitaWoovi: receitaPlataforma,
       taxaWoovi: TAXA_PLATAFORMA_WOOVI,
       novosTenantsMes,
       totalOrganizadores

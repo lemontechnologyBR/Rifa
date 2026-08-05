@@ -5,20 +5,13 @@
    STORE PÚBLICA — ESTILO IMPÉRIO PRÊMIOS
 ═══════════════════════════════════════════════ */
 .imp-store {
-  background: #12121f;
   min-height: 100vh;
-  color: #fff;
-}
-.imp-store .glass-nav,
-body .glass-nav {
-  background: rgba(18,18,31,.97) !important;
-  border-color: rgba(255,255,255,.07) !important;
 }
 
 /* Card destaque (primeiro sorteio) */
 .imp-featured-card {
-  background: #1a1a2e;
-  border: 1px solid rgba(255,255,255,.07);
+  background: var(--imp-card, #1a1a2e);
+  border: 1px solid var(--imp-card-border, rgba(255,255,255,.07));
   border-radius: 16px;
   overflow: hidden;
   cursor: pointer;
@@ -31,8 +24,8 @@ body .glass-nav {
 
 /* Cards menores (lista) */
 .imp-list-card {
-  background: #1a1a2e;
-  border: 1px solid rgba(255,255,255,.07);
+  background: var(--imp-card, #1a1a2e);
+  border: 1px solid var(--imp-card-border, rgba(255,255,255,.07));
   border-radius: 14px;
   overflow: hidden;
   display: flex;
@@ -113,22 +106,10 @@ body .glass-nav {
 }
 
 .imp-btn-outline {
-  background: transparent;
-  color: #9ca3af;
-  font-weight: 700;
-  border-radius: 10px;
-  padding: 11px 20px;
-  font-size: 13px;
-  border: 1px solid rgba(255,255,255,.15);
+  /* cores em public.css */
   cursor: pointer;
-  transition: border-color .15s, color .15s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  text-decoration: none;
+  width: 100%;
 }
-.imp-btn-outline:hover { border-color: rgba(255,255,255,.4); color: #fff; }
 
 @keyframes imp-slide-up {
   from { opacity:0; transform:translateY(18px); }
@@ -151,16 +132,11 @@ body .glass-nav {
 <div class="imp-store">
   <div class="max-w-2xl mx-auto px-3 sm:px-4 py-6 pb-24">
 
-    <!-- Descrição da loja -->
-    <% if (tenant.descricao) { %>
-    <p style="color:#6b7280;font-size:13px;text-align:center;margin-bottom:20px;"><%= tenant.descricao %></p>
-    <% } %>
-
     <!-- Cabeçalho da seção -->
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;">
       <span class="imp-brand-text" style="font-size:18px;">⚡</span>
-      <h2 style="font-size:18px;font-weight:900;color:#fff;margin:0;">Campanhas</h2>
-      <span style="color:#6b7280;font-size:13px;font-weight:500;">Escolha sua sorte</span>
+      <h2 class="imp-txt" style="font-size:18px;font-weight:900;margin:0;">Campanhas</h2>
+      <span class="imp-txt-muted" style="font-size:13px;font-weight:500;">Escolha sua sorte</span>
     </div>
 
     <% if (rifas.length === 0) { %>
@@ -210,22 +186,21 @@ body .glass-nav {
 
           <!-- Info abaixo da imagem -->
           <div style="padding:12px 14px 14px;">
-            <h3 style="font-size:16px;font-weight:900;color:#fff;margin:0 0 2px;line-height:1.3;"><%= rifa.titulo %></h3>
-            <p style="font-size:11px;color:#6b7280;margin:0 0 10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;">PARTICIPE E CONCORRA!</p>
+            <h3 class="imp-txt" style="font-size:16px;font-weight:900;margin:0 0 2px;line-height:1.3;"><%= rifa.titulo %></h3>
+            <p class="imp-txt-muted" style="font-size:11px;margin:0 0 10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;">PARTICIPE E CONCORRA!</p>
 
             <!-- Barra de progresso -->
-            <div style="background:rgba(255,255,255,.08);border-radius:9999px;height:6px;overflow:hidden;margin-bottom:4px;">
+            <div class="imp-progress-inline" style="border-radius:9999px;height:6px;overflow:hidden;margin-bottom:4px;">
               <div class="imp-brand-grad" style="height:100%;border-radius:9999px;width:<%= pct %>%;transition:width .6s;"></div>
             </div>
             <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
               <span class="imp-brand-text" style="font-size:11px;font-weight:700;"><%= pct %>% vendido</span>
-              <span style="font-size:11px;color:#6b7280;"><%= rifa.stats.disponiveis %> disponíveis</span>
             </div>
 
             <!-- Preço + badges -->
             <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
               <div>
-                <span style="font-size:10px;color:#6b7280;font-weight:700;text-transform:uppercase;">Por apenas</span>
+                <span class="imp-txt-muted" style="font-size:10px;font-weight:700;text-transform:uppercase;">Por apenas</span>
                 <div class="imp-brand-text" style="font-size:18px;font-weight:900;line-height:1.1;"><%= precoFmt %></div>
               </div>
               <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;">
@@ -259,16 +234,16 @@ body .glass-nav {
                 <span class="imp-status-badge imp-badge-green" style="font-size:9px;padding:2px 6px;">● ATIVA</span>
                 <% if (urgente) { %><span class="imp-status-badge imp-badge-red" style="font-size:9px;padding:2px 6px;">⏰ <%= diasRestantes === 0 ? 'Hoje!' : diasRestantes + 'd' %></span><% } %>
               </div>
-              <h3 style="font-size:13px;font-weight:800;color:#fff;margin:0;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3;"><%= rifa.titulo %></h3>
+              <h3 class="imp-txt" style="font-size:13px;font-weight:800;margin:0;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3;"><%= rifa.titulo %></h3>
             </div>
 
             <!-- Barra de progresso compacta -->
             <div>
-              <div style="background:rgba(255,255,255,.08);border-radius:9999px;height:4px;overflow:hidden;margin-bottom:3px;">
+              <div class="imp-progress-inline" style="border-radius:9999px;height:4px;overflow:hidden;margin-bottom:3px;">
                 <div class="imp-brand-grad" style="height:100%;border-radius:9999px;width:<%= pct %>%;"></div>
               </div>
               <div style="display:flex;justify-content:space-between;align-items:center;">
-                <span style="font-size:10px;color:#6b7280;"><%= pct %>% vendido</span>
+                <span class="imp-txt-muted" style="font-size:10px;"><%= pct %>% vendido</span>
                 <span class="imp-brand-text" style="font-size:12px;font-weight:900;">Por apenas <%= precoFmt %></span>
               </div>
             </div>
@@ -297,14 +272,14 @@ body .glass-nav {
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
         <div style="display:flex;align-items:center;gap:8px;">
           <span style="font-size:16px;">🏁</span>
-          <h2 style="font-size:16px;font-weight:900;color:#fff;margin:0;">Encerradas</h2>
-          <span style="font-size:12px;color:#6b7280;">concluídas</span>
+          <h2 class="imp-txt" style="font-size:16px;font-weight:900;margin:0;">Encerradas</h2>
+          <span class="imp-txt-muted" style="font-size:12px;">concluídas</span>
         </div>
         <a href="<%= tenantBase %>/encerradas" class="imp-brand-text" style="font-size:12px;font-weight:700;text-decoration:none;">Ver todas →</a>
       </div>
 
       <% rifasEncerradas.forEach(function(rifa) { %>
-      <a href="<%= tenantBase %>/rifas/<%= rifa.id %>" style="display:flex;align-items:stretch;background:#1a1a2e;border:1px solid rgba(255,255,255,.07);border-radius:12px;overflow:hidden;margin-bottom:8px;text-decoration:none;transition:border-color .15s;" onmouseover="this.style.borderColor='rgba(255,255,255,.2)'" onmouseout="this.style.borderColor='rgba(255,255,255,.07)'">
+      <a href="<%= tenantBase %>/rifas/<%= rifa.id %>" class="imp-ended-row">
         <!-- Thumb -->
         <div style="width:90px;height:76px;flex-shrink:0;overflow:hidden;">
           <% if (rifa.imagemUrl) { %>
@@ -338,8 +313,8 @@ body .glass-nav {
     <div style="margin-top:32px;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
         <span style="font-size:16px;">🎉</span>
-        <h2 style="font-size:16px;font-weight:900;color:#fff;margin:0;">Ganhadores</h2>
-        <span style="font-size:12px;color:#6b7280;">sortudos</span>
+        <h2 class="imp-txt" style="font-size:16px;font-weight:900;margin:0;">Ganhadores</h2>
+        <span class="imp-txt-muted" style="font-size:12px;">sortudos</span>
       </div>
 
       <% ganhadores.forEach(function(g) { %>
@@ -350,8 +325,8 @@ body .glass-nav {
         </div>
         <!-- Info -->
         <div style="flex:1;min-width:0;">
-          <div style="font-weight:800;color:#fff;font-size:14px;margin-bottom:2px;"><%= g.nome %> ***</div>
-          <div style="font-size:12px;color:#9ca3af;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:4px;"><%= g.titulo %></div>
+          <div class="imp-txt" style="font-weight:800;font-size:14px;margin-bottom:2px;"><%= g.nome %> ***</div>
+          <div class="imp-txt-dim" style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:4px;"><%= g.titulo %></div>
           <% if (g.numero) { %>
             <div class="imp-brand-text" style="font-size:11px;font-weight:700;">Número da sorte: <strong><%= g.numero %></strong></div>
           <% } %>
@@ -402,13 +377,21 @@ body .glass-nav {
           <span id="modal-label-disponiveis">0</span> cotas disponíveis
         </p>
 
+        <p id="modal-desconto-hint" class="hidden" style="text-align:center;font-size:11px;color:#fbbf24;font-weight:700;margin:0 0 10px;"></p>
+
         <!-- Resumo -->
         <div style="border-top:1px solid rgba(255,255,255,.08);padding-top:12px;display:flex;flex-direction:column;gap:6px;">
           <div style="display:flex;justify-content:space-between;font-size:13px;color:#9ca3af;">
             <span>Cotas</span><span id="modal-qtd" style="color:#fff;font-weight:600;">1</span>
           </div>
+          <div id="modal-cheio-row" style="display:none;justify-content:space-between;font-size:13px;color:#9ca3af;">
+            <span>Valor cheio</span><span id="modal-cheio" style="text-decoration:line-through;color:#6b7280;">R$ 0,00</span>
+          </div>
+          <div id="modal-desconto-row" style="display:none;justify-content:space-between;font-size:13px;color:#9ca3af;">
+            <span id="modal-desconto-label">Desconto</span><span id="modal-desconto" style="color:#4ade80;font-weight:700;">− R$ 0,00</span>
+          </div>
           <div style="display:flex;justify-content:space-between;font-size:13px;color:#9ca3af;">
-            <span>Subtotal</span><span id="modal-subtotal">R$ 0,00</span>
+            <span id="modal-subtotal-label">Subtotal</span><span id="modal-subtotal" style="color:#fff;font-weight:600;">R$ 0,00</span>
           </div>
           <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:900;padding-top:8px;border-top:1px solid rgba(255,255,255,.08);">
             <span style="color:#fff;">Total PIX</span>
@@ -504,6 +487,7 @@ body .glass-nav {
   const PUBLIC_API_BASE    = '<%= tenantBase %>/api';
   const PUBLIC_TENANT_BASE = '<%= tenantBase %>';
   window.__pendingScripts = window.__pendingScripts || [];
+  window.__pendingScripts.push('/js/rifa-pricing.js');
   window.__pendingScripts.push('/js/public-index.js');
 </script>
 
