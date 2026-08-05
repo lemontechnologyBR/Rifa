@@ -155,21 +155,21 @@
 <p class="plat-section-title">Saldos Woovi</p>
 <div class="plat-grid">
   <div class="plat-card">
-    <p class="plat-card-label">Caixa da plataforma</p>
-    <p class="plat-card-value plat-card-value--green">R$ <%= wooviSaldos.contaAvailableFmt %></p>
+    <p class="plat-card-label">Saldo da conta</p>
+    <p class="plat-card-value">R$ <%= wooviSaldos.contaSaldoFmt %></p>
+    <p class="plat-card-hint">conta Lemon (Woovi)</p>
+  </div>
+  <div class="plat-card">
+    <p class="plat-card-label">Saldo das subcontas</p>
+    <p class="plat-card-value">R$ <%= wooviSaldos.subcontasEstimadoFmt %></p>
     <p class="plat-card-hint">
-      saldo disponível · conta Lemon (Woovi)
-      <% if (wooviSaldos.conta && wooviSaldos.conta.blocked > 0) { %>
-        · bloqueado R$ <%= wooviSaldos.contaBlockedFmt %>
-      <% } %>
+      <%= wooviSaldos.tenantsComSaldo %> loja(s) · vendas Woovi − saques
     </p>
   </div>
   <div class="plat-card">
-    <p class="plat-card-label">Subcontas (organizadores)</p>
-    <p class="plat-card-value">R$ <%= wooviSaldos.subcontasEstimadoFmt %></p>
-    <p class="plat-card-hint">
-      <%= wooviSaldos.tenantsComSaldo %> loja(s) com saldo · vendas Woovi − saques
-    </p>
+    <p class="plat-card-label">Saldo disponível</p>
+    <p class="plat-card-value plat-card-value--green">R$ <%= wooviSaldos.saldoDisponivelFmt %></p>
+    <p class="plat-card-hint">caixa da plataforma · conta − subcontas</p>
   </div>
 </div>
 

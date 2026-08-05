@@ -12,6 +12,40 @@ function fmtMoney(v) {
   return Number(v || 0).toFixed(2).replace('.', ',');
 }
 
+/**
+ * Saldos no estilo do painel Woovi:
+ * - Saldo da conta = balance.available da API
+ * - Subcontas = soma teórica (vendas Woovi − saques)
+ * - Saldo disponível (caixa) = conta − subcontas  ← o que a Woovi chama "Saldo disponível"
+ */
+function montarWooviSaldosView(saldoConta, saldosCarteira) {
+  const conta = saldoConta ? Number(saldoConta.available || 0) : null;
+  const bloqueado = saldoConta ? Number(saldoConta.blocked || 0) : 0;
+  const subcontas = saldosCarteira?.saldoSubcontasEstimado != null
+    ? Number(saldosCarteira.saldoSubcontasEstimado)
+    : null;
+
+  let disponivel = null;
+  if (conta != null && subcontas != null) {
+    disponivel = Math.max(0, Math.round((conta - subcontas) * 100) / 100);
+  } else if (conta != null) {
+    disponivel = conta;
+  }
+
+  return {
+    conta: saldoConta,
+    contaSaldo: conta,
+    contaSaldoFmt: conta != null ? fmtMoney(conta) : '—',
+    contaBlockedFmt: fmtMoney(bloqueado),
+    subcontasEstimado: subcontas,
+    subcontasEstimadoFmt: subcontas != null ? fmtMoney(subcontas) : '—',
+    tenantsComSaldo: saldosCarteira?.tenantsComSaldo || 0,
+    /** Caixa da plataforma = Saldo disponível Woovi (conta − subcontas) */
+    saldoDisponivel: disponivel,
+    saldoDisponivelFmt: disponivel != null ? fmtMoney(disponivel) : '—'
+  };
+}
+
 function fmtDate(d) {
   if (!d) return '—';
   return new Date(d).toLocaleDateString('pt-BR');
@@ -106,18 +140,23 @@ const superAdminController = {
   },
 
   async dashboard(req, res) {
+    const CarteiraService = require('../services/carteiraService');
     const WooviService = require('../services/wooviService');
-    const [metricas, recentes, info, saldoConta] = await Promise.all([
+    const [metricas, recentes, info, saldosCarteira, saldoConta] = await Promise.all([
       TenantService.obterMetricasPlataforma(),
       TenantService.obterTenantsRecentes(5),
       SuperAdminService.obterInfoPlataforma(),
+      CarteiraService.somarSaldosSacaveisPlataforma().catch(() => ({
+        saldoSubcontasEstimado: null,
+        tenantsComSaldo: 0
+      })),
       WooviService.consultarSaldoContaPrincipal().catch(() => null)
     ]);
 
     const receitaMes = Number(metricas.receitaMes || 0);
     const taxasSaqueMes = Number(info.taxasSaqueMes || 0);
     const lucroMes = receitaMes + taxasSaqueMes;
-    const caixaDisponivel = saldoConta ? Number(saldoConta.available || 0) : null;
+    const wooviSaldos = montarWooviSaldosView(saldoConta, saldosCarteira);
 
     res.render('super/dashboard', renderLocals(req, res, {
       titulo: 'Visão geral',
@@ -129,8 +168,7 @@ const superAdminController = {
         receitaWooviFmt: fmtMoney(receitaMes),
         totalTaxasSaqueFmt: fmtMoney(taxasSaqueMes),
         lucroTotalFmt: fmtMoney(lucroMes),
-        caixaDisponivel,
-        caixaDisponivelFmt: caixaDisponivel != null ? fmtMoney(caixaDisponivel) : '—'
+        caixaDisponivelFmt: wooviSaldos.saldoDisponivelFmt
       },
       recentes: recentes.map((t) => ({
         ...t,
@@ -255,6 +293,7 @@ const superAdminController = {
     const receitaMes = Number(metricas.receitaMes || 0);
     const taxasSaqueMes = Number(info.taxasSaqueMes || 0);
     const lucroMes = receitaMes + taxasSaqueMes;
+    const wooviSaldos = montarWooviSaldosView(saldoConta, saldosCarteira);
 
     res.render('super/plataforma', renderLocals(req, res, {
       titulo: 'Plataforma',
@@ -281,16 +320,7 @@ const superAdminController = {
         gmvMesFmt: fmtMoney(info.gmvMes ?? metricas.gmvMes),
         vendasMes: info.vendasMes ?? metricas.vendasMes
       },
-      wooviSaldos: {
-        conta: saldoConta,
-        contaAvailableFmt: saldoConta ? fmtMoney(saldoConta.available) : '—',
-        contaBlockedFmt: saldoConta ? fmtMoney(saldoConta.blocked) : '—',
-        subcontasEstimado: saldosCarteira.saldoSubcontasEstimado,
-        subcontasEstimadoFmt: saldosCarteira.saldoSubcontasEstimado != null
-          ? fmtMoney(saldosCarteira.saldoSubcontasEstimado)
-          : '—',
-        tenantsComSaldo: saldosCarteira.tenantsComSaldo || 0
-      }
+      wooviSaldos
     }));
   },
 
