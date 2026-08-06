@@ -5,10 +5,13 @@
   <% const legalCompany = 'LEMON TECHNOLOGY - SERVICOS DE TECNOLOGIA LTDA'; %>
   <% const legalCnpj = '67.816.117/0001-19'; %>
 
+  <% const footerWa = (typeof rifaBrand !== 'undefined' && rifaBrand && rifaBrand.whatsapp)
+    ? rifaBrand.whatsapp
+    : ((typeof tenant !== 'undefined' && tenant) ? tenant.whatsapp : null); %>
   <% const footerIg = (typeof rifaBrand !== 'undefined' && rifaBrand && rifaBrand.instagram)
     ? rifaBrand.instagram
     : ((typeof tenant !== 'undefined' && tenant) ? tenant.instagram : null); %>
-  <% const showTenantSocial = !isPlatformLanding && typeof tenant !== 'undefined' && tenant && footerIg; %>
+  <% const showTenantSocial = !isPlatformLanding && typeof tenant !== 'undefined' && tenant && (footerWa || footerIg); %>
 
   <footer class="mt-auto border-t border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-gray-900<%= isPlatformLanding ? ' platform-footer' : '' %>">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -33,6 +36,11 @@
 
   <% if (showTenantSocial) { %>
   <nav class="public-social-float" aria-label="Redes sociais">
+    <% if (footerWa) { %>
+      <a href="https://wa.me/<%= footerWa %>" target="_blank" rel="noopener noreferrer" class="public-social-float-btn public-social-float-btn--wa" title="WhatsApp" aria-label="WhatsApp">
+        <%- include('icon-whatsapp', { iconClass: 'w-5 h-5' }) %>
+      </a>
+    <% } %>
     <% if (footerIg) { %>
       <a href="https://instagram.com/<%= footerIg %>" target="_blank" rel="noopener noreferrer" class="public-social-float-btn public-social-float-btn--ig" title="@<%= footerIg %>" aria-label="Instagram @<%= footerIg %>">
         <%- include('icon-instagram', { iconClass: 'w-5 h-5', gradId: 'ig-gradient-float' }) %>
@@ -41,7 +49,9 @@
   </nav>
   <% } %>
 
+  <% if (isPlatformLanding) { %>
   <%- include('chatwoot-widget') %>
+  <% } %>
 
   <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
   <script>

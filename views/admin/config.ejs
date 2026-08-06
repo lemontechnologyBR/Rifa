@@ -150,7 +150,12 @@
           </div>
 
           <div class="grid sm:grid-cols-2 gap-4">
-            <div class="sm:col-span-2">
+            <div>
+              <label class="admin-label">WhatsApp</label>
+              <input type="tel" name="whatsapp" value="<%= tenant.whatsapp || '' %>" class="admin-input" placeholder="5511999999999">
+              <p class="admin-hint">Aparece como botão flutuante na sua loja (com DDI, ex.: 5511…).</p>
+            </div>
+            <div>
               <label class="admin-label">Instagram</label>
               <div class="relative">
                 <span class="admin-input-prefix">@</span>
