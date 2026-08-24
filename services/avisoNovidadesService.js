@@ -79,19 +79,18 @@ const AvisoNovidadesService = {
         });
         const texto = [
           `Olá, ${org.nome}!`,
-          'Novidades na VouRifar:',
-          '- Tema claro na loja (dark no botão do menu)',
-          '- Galeria de fotos na rifa',
-          '- Pacotes rápidos e descontos por quantidade',
-          '- Pódio 1º / 2º / 3º lugar',
-          '- Carteira e saque mais estáveis',
-          `Painel: https://vourifar.com.br/${org.tenant.slug}/admin`,
-          `Loja: https://vourifar.com.br/${org.tenant.slug}`
+          'Atualização na Carteira VouRifar:',
+          '- Verificação de identidade (KYC) antes do primeiro saque',
+          '- Documento + selfie em ambiente seguro (Didit)',
+          '- Rifas, vendas e saldo não mudam',
+          '- Depois de aprovado, saque com PIN e PIX como antes',
+          `Carteira: https://vourifar.com.br/${org.tenant.slug}/admin/carteira`,
+          `Painel: https://vourifar.com.br/${org.tenant.slug}/admin`
         ].join('\n');
 
         await enviarEmail({
           para: org.email,
-          assunto: 'Novidades na VouRifar: tema, galeria, pacotes e mais ✨',
+          assunto: 'VouRifar: verificação de identidade antes do saque',
           html,
           texto
         });
