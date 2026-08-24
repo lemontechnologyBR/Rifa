@@ -4,7 +4,10 @@
  */
 const prisma = require('../lib/prisma');
 const { enviarEmail } = require('../lib/emailService');
-const { templateNovidadesPlataforma } = require('../lib/emailTemplates');
+const {
+  templateNovidadesPlataforma,
+  templateAtualizacaoPainelRifas
+} = require('../lib/emailTemplates');
 
 const DELAY_MS = 400;
 
@@ -24,6 +27,49 @@ const tenantInclude = {
     }
   }
 };
+
+function montarCampanha(campanha, org, rifasAtivas) {
+  const slug = org.tenant.slug;
+  if (campanha === 'painel_rifas') {
+    return {
+      assunto: 'VouRifar: editar cotas e excluir rifa no painel',
+      html: templateAtualizacaoPainelRifas({
+        organizador: org,
+        tenantSlug: slug,
+        rifasAtivas
+      }),
+      texto: [
+        `Olá, ${org.nome}!`,
+        'Melhorias no painel das rifas:',
+        '- Editar total de cotas com a rifa ativa (aumentar livre; reduzir só cotas disponíveis)',
+        '- Excluir sorteio (bloqueado se houver cotas pagas)',
+        '- KYC na Carteira antes do próximo saque',
+        `Rifas: https://vourifar.com.br/${slug}/admin/rifas`,
+        `Painel: https://vourifar.com.br/${slug}/admin`
+      ].join('\n')
+    };
+  }
+
+  // default / kyc
+  return {
+    assunto: 'VouRifar: verificação de identidade antes do saque',
+    html: templateNovidadesPlataforma({
+      organizador: org,
+      tenantSlug: slug,
+      rifasAtivas
+    }),
+    texto: [
+      `Olá, ${org.nome}!`,
+      'Atualização na Carteira VouRifar:',
+      '- Verificação de identidade (KYC) antes do primeiro saque',
+      '- Documento + selfie em ambiente seguro (Didit)',
+      '- Rifas, vendas e saldo não mudam',
+      '- Depois de aprovado, saque com PIN e PIX como antes',
+      `Carteira: https://vourifar.com.br/${slug}/admin/carteira`,
+      `Painel: https://vourifar.com.br/${slug}/admin`
+    ].join('\n')
+  };
+}
 
 const AvisoNovidadesService = {
   async listarComRifaAtiva() {
@@ -54,11 +100,15 @@ const AvisoNovidadesService = {
     return this.listarComRifaAtiva();
   },
 
-  async enviarParaTodos({ dryRun = false, publico = 'rifa_ativa' } = {}) {
+  /**
+   * @param {{ dryRun?: boolean, publico?: 'rifa_ativa'|'todos_ativos', campanha?: 'kyc'|'painel_rifas' }} opts
+   */
+  async enviarParaTodos({ dryRun = false, publico = 'rifa_ativa', campanha = 'kyc' } = {}) {
     const orgs = await this.listarDestinatarios(publico);
     let enviados = 0;
     const erros = [];
     const destinatarios = [];
+    const tipo = campanha === 'painel_rifas' ? 'painel_rifas' : 'kyc';
 
     for (const org of orgs) {
       const rifasAtivas = org.tenant.rifas || [];
@@ -72,30 +122,15 @@ const AvisoNovidadesService = {
       if (dryRun) continue;
 
       try {
-        const html = templateNovidadesPlataforma({
-          organizador: org,
-          tenantSlug: org.tenant.slug,
-          rifasAtivas
-        });
-        const texto = [
-          `Olá, ${org.nome}!`,
-          'Atualização na Carteira VouRifar:',
-          '- Verificação de identidade (KYC) antes do primeiro saque',
-          '- Documento + selfie em ambiente seguro (Didit)',
-          '- Rifas, vendas e saldo não mudam',
-          '- Depois de aprovado, saque com PIN e PIX como antes',
-          `Carteira: https://vourifar.com.br/${org.tenant.slug}/admin/carteira`,
-          `Painel: https://vourifar.com.br/${org.tenant.slug}/admin`
-        ].join('\n');
-
+        const msg = montarCampanha(tipo, org, rifasAtivas);
         await enviarEmail({
           para: org.email,
-          assunto: 'VouRifar: verificação de identidade antes do saque',
-          html,
-          texto
+          assunto: msg.assunto,
+          html: msg.html,
+          texto: msg.texto
         });
         enviados++;
-        console.log(`[AvisoNovidades] Enviado para ${org.email} (/${org.tenant.slug}) rifas=${rifasAtivas.length}`);
+        console.log(`[AvisoNovidades] [${tipo}] Enviado para ${org.email} (/${org.tenant.slug}) rifas=${rifasAtivas.length}`);
         await sleep(DELAY_MS);
       } catch (err) {
         erros.push({ orgId: org.id, email: org.email, erro: err.message });
@@ -103,7 +138,7 @@ const AvisoNovidadesService = {
       }
     }
 
-    return { total: orgs.length, enviados, dryRun, publico, destinatarios, erros };
+    return { total: orgs.length, enviados, dryRun, publico, campanha: tipo, destinatarios, erros };
   }
 };
 
