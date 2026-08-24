@@ -1,0 +1,148 @@
+<%- include('partials/page-start') %>
+<%- include('partials/alerts') %>
+
+<div class="super-panel-head" style="padding:0 0 1rem;border:0;">
+  <div>
+    <p class="super-panel-sub" style="margin:0 0 0.35rem;">
+      <a href="/super/operacoes?aba=compliance" class="super-action-link">← Voltar para Compliance</a>
+    </p>
+    <h2 class="super-panel-title" style="font-size:1.15rem;"><%= org.nome %></h2>
+    <p class="super-panel-sub">
+      <%= org.email %>
+      · <a href="/<%= org.tenant.slug %>/" target="_blank" rel="noopener" class="super-action-link">/<%= org.tenant.slug %></a>
+      · KYC: <strong><%= kycLabel %></strong>
+      <% if (org.kycVerifiedAt) { %> · <%= new Date(org.kycVerifiedAt).toLocaleString('pt-BR') %><% } %>
+    </p>
+  </div>
+</div>
+
+<% if (erro) { %>
+  <div class="super-alert super-alert--warn"><%= erro %></div>
+<% } else if (!evidencias) { %>
+  <p class="super-analytics-empty">Sem evidências disponíveis.</p>
+<% } else { %>
+
+  <section class="super-metrics" style="grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));">
+    <article class="super-metric">
+      <p class="super-metric-label">Status Didit</p>
+      <p class="super-metric-value" style="font-size:1.1rem;"><%= evidencias.sessionStatus || '—' %></p>
+    </article>
+    <article class="super-metric">
+      <p class="super-metric-label">Documentos</p>
+      <p class="super-metric-value" style="font-size:1.1rem;"><%= evidencias.documentos.length %></p>
+    </article>
+    <article class="super-metric">
+      <p class="super-metric-label">Liveness</p>
+      <p class="super-metric-value" style="font-size:1.1rem;"><%= evidencias.livenessImages.length %></p>
+    </article>
+    <article class="super-metric">
+      <p class="super-metric-label">Face match</p>
+      <p class="super-metric-value" style="font-size:1.1rem;">
+        <% if (evidencias.faceMatchMeta.length && evidencias.faceMatchMeta[0].score != null) { %>
+          <%= Math.round(evidencias.faceMatchMeta[0].score) %>%
+        <% } else { %>—<% } %>
+      </p>
+    </article>
+  </section>
+
+  <% if (evidencias.idInfos && evidencias.idInfos.length) { %>
+  <section class="super-panel" style="margin-bottom:1.25rem;">
+    <div class="super-panel-head">
+      <div>
+        <h2 class="super-panel-title">Dados extraídos do documento</h2>
+        <p class="super-panel-sub">OCR do Didit — compare com o cadastro se necessário</p>
+      </div>
+    </div>
+    <div class="super-panel-body">
+      <% evidencias.idInfos.forEach(function(info) { %>
+      <ul class="super-info-list">
+        <% if (info.fullName) { %><li>Nome: <strong><%= info.fullName %></strong></li><% } %>
+        <% if (info.documentType) { %><li>Tipo: <strong><%= info.documentType %></strong></li><% } %>
+        <% if (info.documentNumber) { %><li>Número: <strong><%= info.documentNumber %></strong></li><% } %>
+        <% if (info.dateOfBirth) { %><li>Nascimento: <strong><%= info.dateOfBirth %></strong></li><% } %>
+        <% if (info.nationality) { %><li>Nacionalidade: <strong><%= info.nationality %></strong></li><% } %>
+        <% if (info.status) { %><li>Status ID: <strong><%= info.status %></strong></li><% } %>
+      </ul>
+      <% }) %>
+    </div>
+  </section>
+  <% } %>
+
+  <div class="super-grid super-grid--analytics">
+    <section class="super-panel">
+      <div class="super-panel-head">
+        <div>
+          <h2 class="super-panel-title">Documento</h2>
+          <p class="super-panel-sub">URLs assinadas Didit (expiram; recarregue a página se falhar)</p>
+        </div>
+      </div>
+      <div class="super-panel-body">
+        <% if (!evidencias.documentos.length) { %>
+          <p class="super-analytics-empty">Nenhuma imagem de documento nesta sessão.</p>
+        <% } else { %>
+          <div class="super-kyc-gallery">
+            <% evidencias.documentos.forEach(function(img) { %>
+            <figure class="super-kyc-card">
+              <a href="<%= img.url %>" target="_blank" rel="noopener noreferrer">
+                <img src="<%= img.url %>" alt="<%= img.label %>" loading="lazy" referrerpolicy="no-referrer">
+              </a>
+              <figcaption><%= img.label %></figcaption>
+            </figure>
+            <% }) %>
+          </div>
+        <% } %>
+      </div>
+    </section>
+
+    <section class="super-panel">
+      <div class="super-panel-head">
+        <div>
+          <h2 class="super-panel-title">Liveness (prova de vida)</h2>
+          <p class="super-panel-sub">Selfie / referência capturada na verificação</p>
+        </div>
+      </div>
+      <div class="super-panel-body">
+        <% if (!evidencias.livenessImages.length && !evidencias.livenessVideos.length) { %>
+          <p class="super-analytics-empty">Nenhuma prova de liveness nesta sessão.</p>
+        <% } else { %>
+          <div class="super-kyc-gallery">
+            <% evidencias.livenessImages.forEach(function(img) { %>
+            <figure class="super-kyc-card">
+              <a href="<%= img.url %>" target="_blank" rel="noopener noreferrer">
+                <img src="<%= img.url %>" alt="<%= img.label %>" loading="lazy" referrerpolicy="no-referrer">
+              </a>
+              <figcaption><%= img.label %></figcaption>
+            </figure>
+            <% }) %>
+            <% evidencias.livenessVideos.forEach(function(v) { %>
+            <figure class="super-kyc-card">
+              <video src="<%= v.url %>" controls playsinline style="width:100%;border-radius:0.75rem;background:#0f172a;"></video>
+              <figcaption><%= v.label %></figcaption>
+            </figure>
+            <% }) %>
+          </div>
+        <% } %>
+
+        <% if (evidencias.faceMatchImages.length) { %>
+          <h3 class="super-panel-title" style="font-size:0.9rem;margin:1.25rem 0 0.75rem;">Face match</h3>
+          <div class="super-kyc-gallery">
+            <% evidencias.faceMatchImages.forEach(function(img) { %>
+            <figure class="super-kyc-card">
+              <a href="<%= img.url %>" target="_blank" rel="noopener noreferrer">
+                <img src="<%= img.url %>" alt="<%= img.label %>" loading="lazy" referrerpolicy="no-referrer">
+              </a>
+              <figcaption><%= img.label %></figcaption>
+            </figure>
+            <% }) %>
+          </div>
+        <% } %>
+      </div>
+    </section>
+  </div>
+
+  <% if (org.kycSessionId) { %>
+  <p class="super-analytics-foot">Session ID: <code><%= org.kycSessionId %></code></p>
+  <% } %>
+<% } %>
+
+<%- include('partials/page-end') %>

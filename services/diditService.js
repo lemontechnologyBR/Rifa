@@ -134,6 +134,120 @@ async function obterDecisao(sessionId) {
   return api(`/session/${encodeURIComponent(sessionId)}/decision/`);
 }
 
+function pushUrl(list, url, label) {
+  if (!url || typeof url !== 'string') return;
+  const u = url.trim();
+  if (!u.startsWith('http')) return;
+  if (list.some((x) => x.url === u)) return;
+  list.push({ url: u, label });
+}
+
+/**
+ * Extrai imagens/OCR da decisão Didit (v3 plural arrays + legado singular).
+ */
+function extrairEvidencias(decision) {
+  const docs = [];
+  const liveness = [];
+  const idInfos = [];
+
+  const idList = []
+    .concat(decision?.id_verifications || [])
+    .concat(decision?.id_verification ? [decision.id_verification] : []);
+
+  for (const idv of idList) {
+    if (!idv || typeof idv !== 'object') continue;
+    pushUrl(docs, idv.front_image, 'Frente do documento');
+    pushUrl(docs, idv.back_image, 'Verso do documento');
+    pushUrl(docs, idv.full_front_image, 'Frente (frame completo)');
+    pushUrl(docs, idv.full_back_image, 'Verso (frame completo)');
+    pushUrl(docs, idv.portrait_image, 'Retrato do documento');
+    if (Array.isArray(idv.document_images)) {
+      idv.document_images.forEach((u, i) => pushUrl(docs, u, `Documento ${i + 1}`));
+    }
+    idInfos.push({
+      status: idv.status || null,
+      fullName: idv.full_name || idv.fullName || null,
+      firstName: idv.first_name || null,
+      lastName: idv.last_name || null,
+      documentType: idv.document_type || idv.documentType || null,
+      documentNumber: idv.document_number || idv.documentNumber || null,
+      nationality: idv.nationality || null,
+      dateOfBirth: idv.date_of_birth || idv.dateOfBirth || null,
+      expirationDate: idv.expiration_date || null,
+      issuingState: idv.issuing_state || null
+    });
+  }
+
+  const liveList = []
+    .concat(decision?.liveness_checks || [])
+    .concat(decision?.liveness ? [decision.liveness] : []);
+
+  for (const lv of liveList) {
+    if (!lv || typeof lv !== 'object') continue;
+    pushUrl(liveness, lv.reference_image, 'Selfie / liveness');
+    pushUrl(liveness, lv.video_url, 'Vídeo liveness');
+    if (Array.isArray(lv.images)) {
+      lv.images.forEach((u, i) => pushUrl(liveness, u, `Liveness ${i + 1}`));
+    }
+  }
+
+  const matchList = []
+    .concat(decision?.face_matches || [])
+    .concat(decision?.face_match ? [decision.face_match] : []);
+
+  const faceMatchImages = [];
+  const faceMatchMeta = [];
+  for (const fm of matchList) {
+    if (!fm || typeof fm !== 'object') continue;
+    pushUrl(faceMatchImages, fm.source_image, 'Face match — documento');
+    pushUrl(faceMatchImages, fm.target_image, 'Face match — selfie');
+    faceMatchMeta.push({
+      status: fm.status || null,
+      score: fm.score != null ? Number(fm.score) : null
+    });
+  }
+
+  const livenessImages = liveness.filter((x) => x.url && !/\.(webm|mp4)(\?|$)/i.test(x.url));
+  const livenessVideos = liveness.filter((x) => x.url && /\.(webm|mp4)(\?|$)/i.test(x.url));
+
+  return {
+    sessionStatus: decision?.status || null,
+    sessionId: decision?.session_id || null,
+    documentos: docs,
+    livenessImages,
+    livenessVideos,
+    faceMatchImages,
+    faceMatchMeta,
+    idInfos: idInfos.filter((i) => i.fullName || i.documentNumber || i.documentType || i.status)
+  };
+}
+
+async function obterEvidenciasOrganizador(organizadorId) {
+  const org = await prisma.organizador.findUnique({
+    where: { id: Number(organizadorId) },
+    select: {
+      id: true,
+      nome: true,
+      email: true,
+      kycStatus: true,
+      kycSessionId: true,
+      kycVerifiedAt: true,
+      tenant: { select: { id: true, nome: true, slug: true } }
+    }
+  });
+  if (!org) throw new Error('Organizador não encontrado.');
+  if (!org.kycSessionId) {
+    return { org, evidencias: null, erro: 'Sem sessão Didit. O organizador ainda não iniciou o KYC.' };
+  }
+  if (!isConfigured()) {
+    return { org, evidencias: null, erro: 'Didit não configurado neste ambiente.' };
+  }
+
+  const decision = await obterDecisao(org.kycSessionId);
+  const evidencias = extrairEvidencias(decision);
+  return { org, evidencias, decision, erro: null };
+}
+
 /**
  * Sincroniza status do organizador a partir da decisão Didit (callback / poll).
  */
@@ -295,6 +409,8 @@ module.exports = {
   isKycAprovado,
   iniciarVerificacao,
   obterDecisao,
+  extrairEvidencias,
+  obterEvidenciasOrganizador,
   sincronizarPorSessionId,
   aplicarStatusWebhook,
   verificarAssinaturaWebhook,

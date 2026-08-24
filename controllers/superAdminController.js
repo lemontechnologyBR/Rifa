@@ -493,6 +493,32 @@ const superAdminController = {
     }
   },
 
+  async kycDetalhe(req, res) {
+    try {
+      const DiditService = require('../services/diditService');
+      const { org, evidencias, erro } = await DiditService.obterEvidenciasOrganizador(req.params.id);
+      const kycLabel = {
+        aprovado: 'Aprovado',
+        pendente: 'Pendente',
+        em_andamento: 'Em andamento',
+        em_analise: 'Em análise',
+        reprovado: 'Reprovado',
+        abandonado: 'Abandonado',
+        expirado: 'Expirado'
+      };
+      res.render('super/kyc-detalhe', renderLocals(req, res, {
+        titulo: `KYC · ${org.nome}`,
+        active: 'operacoes',
+        org,
+        evidencias,
+        erro,
+        kycLabel: kycLabel[org.kycStatus] || org.kycStatus || '—'
+      }));
+    } catch (err) {
+      res.redirect(`/super/operacoes?aba=compliance&erro=${encodeURIComponent(err.message)}`);
+    }
+  },
+
   async saques(req, res) {
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const status = ['todos', 'solicitado', 'processando', 'concluido', 'erro'].includes(req.query.status)

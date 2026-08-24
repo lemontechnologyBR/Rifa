@@ -135,6 +135,9 @@
               <td>
                 <div class="super-actions super-actions--row">
                   <a href="/<%= o.tenant.slug %>/admin" target="_blank" rel="noopener" class="super-action-link">Painel</a>
+                  <% if (o.kycSessionId) { %>
+                  <a href="/super/organizadores/<%= o.id %>/kyc" class="super-action-link">Ver documento</a>
+                  <% } %>
                   <form method="POST" action="/super/tenants/<%= o.tenant.id %>/saldo-bloqueado" class="inline"
                     onsubmit="return confirm('<%= o.tenant.saldoBloqueado ? 'Desbloquear' : 'Bloquear' %> saldo de <%= String(o.tenant.nome || '').replace(/'/g, "\\'") %>?')">
                     <input type="hidden" name="_csrf" value="<%= csrfToken %>">

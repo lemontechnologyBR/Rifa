@@ -17,6 +17,7 @@ router.get('/organizadores', requireAdmin, superAdminController.organizadores);
 router.post('/organizadores/campanha-leads-quentes', requireAdmin, superAdminController.campanhaLeadsQuentes);
 router.post('/organizadores/:id/nurture-email', requireAdmin, superAdminController.enviarNurtureOrganizador);
 router.post('/organizadores/:id/kyc-reset', requireAdmin, superAdminController.resetarKyc);
+router.get('/organizadores/:id/kyc', requireAdmin, superAdminController.kycDetalhe);
 router.get('/plataforma', requireAdmin, superAdminController.plataforma);
 router.get('/marketing', requireAdmin, superAdminController.marketing);
 router.post('/marketing', requireAdmin, superAdminController.salvarMarketing);
