@@ -44,7 +44,14 @@
               <% } %>
             </td>
             <td><%= t.createdAtFmt %></td>
-            <td><span class="super-badge super-badge--<%= t.status === 'ativo' ? 'ativo' : 'suspenso' %>"><%= t.status %></span></td>
+            <td>
+              <div class="flex flex-col gap-1 items-start">
+                <span class="super-badge super-badge--<%= t.status === 'ativo' ? 'ativo' : 'suspenso' %>"><%= t.status %></span>
+                <% if (t.saldoBloqueado) { %>
+                  <span class="super-badge super-badge--saldo-bloqueado">Saldo bloqueado</span>
+                <% } %>
+              </div>
+            </td>
             <td>
               <div class="super-actions">
                 <a href="/<%= t.slug %>/" target="_blank" rel="noopener" class="super-action-link">Loja</a>
@@ -54,6 +61,15 @@
                   <input type="hidden" name="redirect" value="/super/sistemas<%= busca ? '?q=' + encodeURIComponent(busca) : '' %><%= statusFiltro !== 'todos' ? (busca ? '&' : '?') + 'status=' + statusFiltro : '' %>">
                   <input type="hidden" name="status" value="<%= t.status === 'ativo' ? 'suspenso' : 'ativo' %>">
                   <button type="submit" class="super-action-btn <%= t.status === 'ativo' ? '' : 'super-action-btn--ok' %>"><%= t.status === 'ativo' ? 'Suspender' : 'Ativar' %></button>
+                </form>
+                <form method="POST" action="/super/tenants/<%= t.id %>/saldo-bloqueado" class="inline"
+                  onsubmit="return confirm('<%= t.saldoBloqueado ? 'Desbloquear' : 'Bloquear' %> o saldo de <%= String(t.nome || '').replace(/'/g, "\\'") %>?')">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <input type="hidden" name="redirect" value="/super/sistemas<%= busca ? '?q=' + encodeURIComponent(busca) : '' %><%= statusFiltro !== 'todos' ? (busca ? '&' : '?') + 'status=' + statusFiltro : '' %>">
+                  <input type="hidden" name="acao" value="<%= t.saldoBloqueado ? 'desbloquear' : 'bloquear' %>">
+                  <button type="submit" class="super-action-btn <%= t.saldoBloqueado ? 'super-action-btn--ok' : 'super-action-btn--danger' %>">
+                    <%= t.saldoBloqueado ? 'Desbloquear saldo' : 'Bloquear saldo' %>
+                  </button>
                 </form>
               </div>
             </td>

@@ -131,6 +131,16 @@ const apiController = {
         }
         await ReservaService.enviarEmailPagamento(reservaId);
 
+        try {
+          const AnalyticsService = require('../services/analyticsService');
+          AnalyticsService.trackFromRequest(req, res, AnalyticsService.EVENTOS.PURCHASE_PENDING, {
+            tenantSlug: tenant.slug,
+            rifaId: rifa.id,
+            valor: valorTotal,
+            meta: { reservaId }
+          });
+        } catch (_) {}
+
         return res.json({
           sucesso: true,
           reservaId,
@@ -166,6 +176,16 @@ const apiController = {
         throw pagErr;
       }
       await ReservaService.enviarEmailPagamento(reservaId);
+
+      try {
+        const AnalyticsService = require('../services/analyticsService');
+        AnalyticsService.trackFromRequest(req, res, AnalyticsService.EVENTOS.PURCHASE_PENDING, {
+          tenantSlug: tenant.slug,
+          rifaId: rifa.id,
+          valor: valorTotal,
+          meta: { reservaId }
+        });
+      } catch (_) {}
 
       res.json({
         sucesso: true,
@@ -330,6 +350,38 @@ const apiController = {
       res.json({ carrinho });
     } catch (err) {
       res.status(400).json({ erro: err.message });
+    }
+  },
+
+  /** Webhook Didit (status.updated) — KYC do organizador */
+  async webhookDidit(req, res) {
+    const DiditService = require('../services/diditService');
+    try {
+      const body = req.body || {};
+      const check = DiditService.verificarAssinaturaWebhook(req, body);
+      if (!check.ok) {
+        console.warn(`[Webhook Didit] assinatura rejeitada: ${check.reason}`);
+        return res.status(401).json({ ok: false, erro: check.reason });
+      }
+
+      if (body.webhook_type && body.webhook_type !== 'status.updated') {
+        return res.json({ ok: true, ignored: body.webhook_type });
+      }
+
+      const result = await DiditService.aplicarStatusWebhook({
+        sessionId: body.session_id,
+        vendorData: body.vendor_data,
+        status: body.status
+      });
+
+      console.log(
+        `[Webhook Didit] session=${body.session_id} status=${body.status} ` +
+        `org=${result.org?.id || '-'} mapped=${result.status || result.reason}`
+      );
+      return res.json({ ok: true, ...result });
+    } catch (err) {
+      console.error('[Webhook Didit]', err.message);
+      return res.status(500).json({ ok: false, erro: err.message });
     }
   }
 };

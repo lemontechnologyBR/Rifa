@@ -29,6 +29,7 @@ model Tenant {
   pixChave      String?  @map("pix_chave")
   wooviAtivo    Boolean  @default(false) @map("woovi_ativo")
   status        String   @default("ativo")
+  saldoBloqueado Boolean @default(false) @map("saldo_bloqueado")
   createdAt     DateTime @default(now()) @map("created_at")
 
   organizadores Organizador[]
@@ -69,6 +70,9 @@ model Organizador {
   pinHash              String?   @map("pin_hash")
   pinTokenRecuperacao  String?   @map("pin_token_recuperacao")
   pinTokenExpira       DateTime? @map("pin_token_expira")
+  kycStatus            String    @default("pendente") @map("kyc_status")
+  kycSessionId         String?   @map("kyc_session_id")
+  kycVerifiedAt        DateTime? @map("kyc_verified_at")
   nurtureD1SentAt  DateTime? @map("nurture_d1_sent_at")
   nurtureD3SentAt  DateTime? @map("nurture_d3_sent_at")
   campanhaLeadsSentAt DateTime? @map("campanha_leads_sent_at")
@@ -76,6 +80,7 @@ model Organizador {
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
+  @@index([kycSessionId])
   @@map("organizadores")
 }
 
@@ -282,6 +287,7 @@ model PageView {
   id          Int      @id @default(autoincrement())
   path        String
   tenantSlug  String?  @map("tenant_slug")
+  rifaId      Int?     @map("rifa_id")
   visitorId   String   @map("visitor_id")
   referrer    String?
   source      String?
@@ -289,12 +295,38 @@ model PageView {
   utmSource   String?  @map("utm_source")
   utmMedium   String?  @map("utm_medium")
   utmCampaign String?  @map("utm_campaign")
+  utmContent  String?  @map("utm_content")
+  utmTerm     String?  @map("utm_term")
+  gclid       String?
   createdAt   DateTime @default(now()) @map("created_at")
 
   @@index([createdAt])
   @@index([path])
   @@index([tenantSlug])
+  @@index([rifaId])
   @@index([visitorId])
   @@index([source])
+  @@index([utmCampaign])
   @@map("page_views")
+}
+
+/// Eventos de funil (cadastro, compra, KYC, etc.)
+model AnalyticsEvent {
+  id          Int      @id @default(autoincrement())
+  event       String
+  visitorId   String?  @map("visitor_id")
+  tenantSlug  String?  @map("tenant_slug")
+  rifaId      Int?     @map("rifa_id")
+  valor       Float?
+  source      String?
+  utmSource   String?  @map("utm_source")
+  utmCampaign String?  @map("utm_campaign")
+  meta        String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([event, createdAt])
+  @@index([createdAt])
+  @@index([tenantSlug])
+  @@index([visitorId])
+  @@map("analytics_events")
 }

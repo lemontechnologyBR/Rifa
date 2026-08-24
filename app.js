@@ -69,7 +69,8 @@ app.use(helmet({
       imgSrc: ["'self'", 'data:', 'https:', 'http:', 'https://chart.googleapis.com', ...GOOGLE_ADS_CSP.img],
       fontSrc: ["'self'", 'https://fonts.gstatic.com', 'https://cdn.jsdelivr.net', CHATWOOT_ORIGIN],
       connectSrc: ["'self'", 'https://cdn.tailwindcss.com', 'https://unpkg.com', 'https://cdn.jsdelivr.net', CHATWOOT_ORIGIN, CHATWOOT_ORIGIN.replace(/^https/, 'wss'), ...GOOGLE_ADS_CSP.connect],
-      frameSrc: ["'self'", CHATWOOT_ORIGIN, ...GOOGLE_ADS_CSP.frame],
+      frameSrc: ["'self'", CHATWOOT_ORIGIN, 'https://verify.didit.me', ...GOOGLE_ADS_CSP.frame],
+      formAction: ["'self'", 'https://verify.didit.me'],
       workerSrc: ["'self'", 'blob:']
     }
   },

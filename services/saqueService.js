@@ -247,6 +247,12 @@ const SaqueService = {
   },
 
   async processarSaque(tenant, saldoDisponivel, adminUsuario, valorBruto = null) {
+    if (tenant?.saldoBloqueado) {
+      throw new Error(
+        'Seu saldo está temporariamente bloqueado pela plataforma. Entre em contato com o suporte para mais informações.'
+      );
+    }
+
     const provider = PaymentService.getProvider(tenant);
     let saldoEfetivo = Math.max(0, Number(saldoDisponivel) || 0);
     let wooviRefs = [];

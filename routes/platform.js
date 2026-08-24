@@ -13,5 +13,6 @@ router.get('/cadastro', platformController.cadastroForm);
 router.get('/cadastro/auth/google', googleAuthController.iniciarCadastro);
 router.post('/cadastro', platformController.cadastro);
 router.post('/webhooks/woovi', apiController.webhookWoovi);
+router.post('/webhooks/didit', apiController.webhookDidit);
 
 module.exports = router;

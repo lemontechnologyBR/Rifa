@@ -101,6 +101,15 @@
                 </button>
               <% } %>
             <% } %>
+            <% if (r.status !== 'finalizada') { %>
+              <form method="POST" action="<%= adminBase %>/rifas/<%= r.id %>/excluir" class="inline"
+                onsubmit="return confirm('Excluir permanentemente \"<%= String(r.titulo || '').replace(/\"/g, '').replace(/'/g, "\\'") %>\"? Cotas pagas impedem a exclusão.')">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button type="submit" class="admin-action-btn border-red-300 text-red-700 dark:border-red-800 dark:text-red-400">
+                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Excluir
+                </button>
+              </form>
+            <% } %>
           </div>
         </div>
       </article>

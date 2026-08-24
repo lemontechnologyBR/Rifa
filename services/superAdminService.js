@@ -179,6 +179,7 @@ const SuperAdminService = {
               nome: true,
               slug: true,
               status: true,
+              saldoBloqueado: true,
               createdAt: true,
               pixChave: true,
               wooviAtivo: true,
@@ -446,6 +447,122 @@ const SuperAdminService = {
       totalPendente: pendentes._sum.valorLiquido || 0,
       countPendente: pendentes._count.id || 0
     };
+  },
+
+  /**
+   * Compliance: organizadores + KYC + saldo bloqueado.
+   */
+  async listarCompliance({ page = 1, limite = 30, kyc = 'todos', saldo = 'todos', busca = '' } = {}) {
+    const where = {};
+    if (busca && String(busca).trim()) {
+      const q = String(busca).trim();
+      where.OR = [
+        { nome: { contains: q } },
+        { email: { contains: q } },
+        { tenant: { nome: { contains: q } } },
+        { tenant: { slug: { contains: q.toLowerCase() } } }
+      ];
+    }
+    if (kyc && kyc !== 'todos') {
+      where.kycStatus = kyc;
+    }
+    if (saldo === 'bloqueado') {
+      where.tenant = { ...(typeof where.tenant === 'object' ? where.tenant : {}), saldoBloqueado: true };
+    } else if (saldo === 'liberado') {
+      where.tenant = { ...(typeof where.tenant === 'object' ? where.tenant : {}), saldoBloqueado: false };
+    }
+
+    // Prisma: se OR usa tenant e also where.tenant filter, combine carefully
+    if ((saldo === 'bloqueado' || saldo === 'liberado') && where.OR) {
+      const saldoFilter = saldo === 'bloqueado' ? { saldoBloqueado: true } : { saldoBloqueado: false };
+      where.AND = [
+        { OR: where.OR },
+        { tenant: saldoFilter }
+      ];
+      delete where.OR;
+      delete where.tenant;
+    }
+
+    const p = Math.max(1, Number(page) || 1);
+    const take = Math.min(100, Math.max(10, Number(limite) || 30));
+
+    const [organizadores, total, kycGroup, saldoBloqueados] = await Promise.all([
+      prisma.organizador.findMany({
+        where,
+        include: {
+          tenant: {
+            select: {
+              id: true,
+              nome: true,
+              slug: true,
+              status: true,
+              saldoBloqueado: true
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: (p - 1) * take,
+        take
+      }),
+      prisma.organizador.count({ where }),
+      prisma.organizador.groupBy({
+        by: ['kycStatus'],
+        _count: { id: true }
+      }),
+      prisma.tenant.count({ where: { saldoBloqueado: true } })
+    ]);
+
+    const kycContagem = {
+      aprovado: 0,
+      pendente: 0,
+      em_andamento: 0,
+      em_analise: 0,
+      reprovado: 0,
+      abandonado: 0,
+      expirado: 0
+    };
+    for (const g of kycGroup) {
+      const key = g.kycStatus || 'pendente';
+      kycContagem[key] = (kycContagem[key] || 0) + g._count.id;
+    }
+
+    return {
+      organizadores,
+      total,
+      page: p,
+      paginas: Math.max(1, Math.ceil(total / take)),
+      resumo: {
+        kyc: kycContagem,
+        saldoBloqueados
+      }
+    };
+  },
+
+  async resetarKyc(organizadorId, adminUsuario) {
+    const org = await prisma.organizador.findUnique({
+      where: { id: Number(organizadorId) },
+      select: { id: true, email: true, tenantId: true, kycStatus: true, kycSessionId: true }
+    });
+    if (!org) throw new Error('Organizador não encontrado.');
+
+    const atualizado = await prisma.organizador.update({
+      where: { id: org.id },
+      data: {
+        kycStatus: 'pendente',
+        kycSessionId: null,
+        kycVerifiedAt: null
+      }
+    });
+
+    const LogService = require('./logService');
+    await LogService.registrar(
+      adminUsuario || 'super',
+      'kyc_reset',
+      `KYC resetado · org #${org.id} ${org.email} (antes: ${org.kycStatus || 'pendente'})`,
+      org.tenantId
+    );
+
+    return atualizado;
   }
 };
 

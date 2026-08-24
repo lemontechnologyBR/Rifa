@@ -209,10 +209,18 @@ const organizadorController = {
       const organizadorPercentual = ORGANIZADOR_PERCENTUAL_WOOVI;
 
       const prisma = require('../lib/prisma');
+      const DiditService = require('../services/diditService');
       const orgPin = await prisma.organizador.findFirst({
         where: { id: req.session.organizadorId, tenantId: req.tenant.id },
-        select: { pinHash: true }
+        select: {
+          pinHash: true,
+          kycStatus: true,
+          kycSessionId: true,
+          kycVerifiedAt: true
+        }
       });
+      const kycAprovado = DiditService.isKycAprovado(orgPin);
+      const kycObrigatorio = DiditService.isConfigured();
 
       res.render('admin/carteira', {
         titulo: 'Carteira',
@@ -222,6 +230,10 @@ const organizadorController = {
         saque,
         extratoSaques,
         temPin: !!orgPin?.pinHash,
+        kycObrigatorio,
+        kycAprovado,
+        kycStatus: orgPin?.kycStatus || 'pendente',
+        kycVerifiedAt: orgPin?.kycVerifiedAt || null,
         carteiraOk: PaymentService.isConfigured(req.tenant),
         gateway: provider,
         taxaPlataforma,
@@ -238,12 +250,82 @@ const organizadorController = {
         adminUsuario: req.session.organizadorNome,
         active: 'carteira',
         onboarding: req.query.onboarding === '1',
-        msg: req.query.msg || null,
+        msg: req.query.msg ? decodeURIComponent(String(req.query.msg).replace(/\+/g, ' ')) : null,
         erro: req.query.erro ? decodeURIComponent(String(req.query.erro).replace(/\+/g, ' ')) : null,
         csrfToken: res.locals.csrfToken
       });
     } catch (err) {
       next(err);
+    }
+  },
+
+  async iniciarKyc(req, res) {
+    const ab = `/${req.tenant.slug}/admin/carteira`;
+    try {
+      const DiditService = require('../services/diditService');
+      const prisma = require('../lib/prisma');
+      if (!DiditService.isConfigured()) {
+        return res.redirect(`${ab}?erro=${encodeURIComponent('Verificação de identidade ainda não está disponível.')}`);
+      }
+      const org = await prisma.organizador.findFirst({
+        where: { id: req.session.organizadorId, tenantId: req.tenant.id }
+      });
+      if (!org) {
+        return res.redirect(`${ab}?erro=${encodeURIComponent('Organizador não encontrado.')}`);
+      }
+      if (DiditService.isKycAprovado(org)) {
+        return res.redirect(`${ab}?msg=${encodeURIComponent('Identidade já verificada. Você pode sacar.')}`);
+      }
+
+      const appUrl = (process.env.APP_URL || `${req.protocol}://${req.get('host')}`).replace(/\/$/, '');
+      const callbackUrl = `${appUrl}/${req.tenant.slug}/admin/carteira/kyc/retorno`;
+      const result = await DiditService.iniciarVerificacao(org, { callbackUrl, language: 'pt' });
+      if (result.alreadyApproved) {
+        return res.redirect(`${ab}?msg=${encodeURIComponent('Identidade já verificada.')}`);
+      }
+      if (!result.url) {
+        return res.redirect(`${ab}?erro=${encodeURIComponent('Não foi possível iniciar a verificação. Tente novamente.')}`);
+      }
+      // Bridge HTML (evita CSP form-action ao redirecionar POST → domínio Didit)
+      const dest = String(result.url);
+      res.status(200).type('html').send(`<!DOCTYPE html>
+<html lang="pt-BR"><head>
+<meta charset="utf-8">
+<meta http-equiv="refresh" content="0;url=${dest.replace(/"/g, '&quot;')}">
+<title>Abrindo verificação…</title>
+</head><body>
+<p>Abrindo verificação de identidade…</p>
+<p><a href="${dest.replace(/"/g, '&quot;')}">Clique aqui se não for redirecionado</a></p>
+<script>window.location.replace(${JSON.stringify(dest)});</script>
+</body></html>`);
+    } catch (err) {
+      return res.redirect(`${ab}?erro=${encodeURIComponent(err.message)}`);
+    }
+  },
+
+  async kycRetorno(req, res) {
+    const ab = `/${req.tenant.slug}/admin/carteira`;
+    try {
+      const DiditService = require('../services/diditService');
+      const sessionId = req.query.verificationSessionId || req.query.session_id || '';
+      if (!sessionId) {
+        return res.redirect(`${ab}?erro=${encodeURIComponent('Retorno KYC sem sessão. Se já concluiu, aguarde alguns segundos e atualize a página.')}`);
+      }
+      const { status } = await DiditService.sincronizarPorSessionId(sessionId, {
+        expectedOrgId: req.session.organizadorId
+      });
+      if (status === 'aprovado') {
+        return res.redirect(`${ab}?msg=${encodeURIComponent('Identidade verificada com sucesso! Agora você pode sacar.')}`);
+      }
+      if (status === 'reprovado') {
+        return res.redirect(`${ab}?erro=${encodeURIComponent('Verificação reprovada. Tente novamente com um documento válido.')}`);
+      }
+      if (status === 'em_analise') {
+        return res.redirect(`${ab}?msg=${encodeURIComponent('Verificação em análise. Você será notificado quando for aprovada.')}`);
+      }
+      return res.redirect(`${ab}?msg=${encodeURIComponent('Verificação em andamento. Conclua as etapas no Didit e volte à carteira.')}`);
+    } catch (err) {
+      return res.redirect(`${ab}?erro=${encodeURIComponent(err.message)}`);
     }
   },
 
@@ -284,6 +366,16 @@ const organizadorController = {
       if (!org?.pinHash) {
         return res.redirect(`/${req.tenant.slug}/admin/carteira?erro=${encodeURIComponent('Defina um PIN de 6 dígitos antes de sacar.')}`);
       }
+
+      const DiditService = require('../services/diditService');
+      if (DiditService.isConfigured() && !DiditService.isKycAprovado(org)) {
+        return res.redirect(
+          `/${req.tenant.slug}/admin/carteira?erro=${encodeURIComponent(
+            'Conclua a verificação de identidade (KYC) antes de sacar.'
+          )}`
+        );
+      }
+
       const pinOk = await PinService.verificarPin(org, req.body.pin);
       if (!pinOk) {
         return res.redirect(`/${req.tenant.slug}/admin/carteira?erro=${encodeURIComponent('PIN incorreto. Tente novamente ou recupere o PIN por e-mail.')}`);
@@ -482,9 +574,9 @@ const organizadorController = {
     const ab = `/${req.tenant.slug}/admin`;
     try {
       await RifaService.excluir(req.params.id, req.session.organizadorNome, req.tenant.id);
-      res.redirect(`${ab}/rifas?msg=Rifa excluída.`);
+      res.redirect(`${ab}/rifas?msg=${encodeURIComponent('Sorteio excluído.')}`);
     } catch (err) {
-      res.redirect(`${ab}?erro=${encodeURIComponent(err.message)}`);
+      res.redirect(`${ab}/rifas?erro=${encodeURIComponent(err.message)}`);
     }
   },
 
@@ -713,6 +805,9 @@ function mergeRifaForm(rifa, body) {
     descricao: body.descricao ?? rifa.descricao,
     imagemUrl: body.imagem_url ?? rifa.imagemUrl,
     valorCota: body.valor_cota ?? rifa.valorCota,
+    totalNumeros: body.total_numeros != null && body.total_numeros !== ''
+      ? Number(body.total_numeros)
+      : rifa.totalNumeros,
     dataSorteio: body.data_sorteio ?? rifa.dataSorteio,
     chavePix: body.chave_pix ?? rifa.chavePix,
     metaMinimaPct: body.meta_minima_pct ?? rifa.metaMinimaPct

@@ -229,6 +229,31 @@ const superAdminController = {
     }));
   },
 
+  async excluirRifa(req, res) {
+    const redirect = req.body.redirect || '/super/rifas';
+    const sep = redirect.includes('?') ? '&' : '?';
+    try {
+      const RifaService = require('../services/rifaService');
+      const prisma = require('../lib/prisma');
+      const rifa = await prisma.rifa.findUnique({
+        where: { id: Number(req.params.id) },
+        select: { id: true, tenantId: true, titulo: true }
+      });
+      if (!rifa) throw new Error('Rifa não encontrada.');
+
+      await RifaService.excluir(
+        rifa.id,
+        req.session.adminUsuario || 'super',
+        rifa.tenantId
+      );
+      res.redirect(
+        `${redirect}${sep}msg=${encodeURIComponent(`Sorteio "${rifa.titulo}" excluído.`)}`
+      );
+    } catch (err) {
+      res.redirect(`${redirect}${sep}erro=${encodeURIComponent(err.message)}`);
+    }
+  },
+
   async vendas(req, res) {
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const status = ['todos', 'confirmado', 'pendente'].includes(req.query.status) ? req.query.status : 'todos';
@@ -342,13 +367,7 @@ const superAdminController = {
   },
 
   async marketing(req, res) {
-    const settings = await PlatformSettingsService.getMarketingSettings();
-    res.render('super/marketing', renderLocals(req, res, {
-      titulo: 'Marketing',
-      active: 'marketing',
-      googleAdsTagId: settings.googleAdsTagId,
-      googleAdsEnabled: settings.googleAdsEnabled
-    }));
+    return res.redirect('/super/operacoes?aba=ferramentas');
   },
 
   async salvarMarketing(req, res) {
@@ -357,9 +376,120 @@ const superAdminController = {
         tagInput: req.body.google_ads_tag,
         enabled: req.body.google_ads_enabled === 'on'
       });
-      res.redirect('/super/marketing?msg=Tag Google Ads salva com sucesso.');
+      res.redirect('/super/operacoes?aba=ferramentas&msg=' + encodeURIComponent('Tag Google Ads salva com sucesso.'));
     } catch (err) {
-      res.redirect(`/super/marketing?erro=${encodeURIComponent(err.message)}`);
+      res.redirect(`/super/operacoes?aba=ferramentas&erro=${encodeURIComponent(err.message)}`);
+    }
+  },
+
+  async operacoes(req, res) {
+    const abas = ['compliance', 'comunicados', 'auditoria', 'ferramentas'];
+    const aba = abas.includes(req.query.aba) ? req.query.aba : 'compliance';
+
+    const locals = {
+      titulo: 'Operações',
+      active: 'operacoes',
+      aba
+    };
+
+    if (aba === 'compliance') {
+      const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+      const kyc = String(req.query.kyc || 'todos');
+      const saldo = String(req.query.saldo || 'todos');
+      const busca = String(req.query.q || '').trim();
+      const data = await SuperAdminService.listarCompliance({ page, kyc, saldo, busca });
+      Object.assign(locals, {
+        compliance: data,
+        kycFiltro: kyc,
+        saldoFiltro: saldo,
+        busca,
+        page: data.page,
+        paginas: data.paginas,
+        total: data.total
+      });
+    } else if (aba === 'comunicados') {
+      const AvisoNovidadesService = require('../services/avisoNovidadesService');
+      const [comRifa, todosAtivos] = await Promise.all([
+        AvisoNovidadesService.listarComRifaAtiva(),
+        AvisoNovidadesService.listarTenantsAtivos()
+      ]);
+      let ultimoResultado = null;
+      if (req.query.resultado) {
+        try {
+          ultimoResultado = JSON.parse(decodeURIComponent(String(req.query.resultado)));
+        } catch {
+          ultimoResultado = null;
+        }
+      }
+      Object.assign(locals, {
+        contagemRifaAtiva: comRifa.length,
+        contagemTodosAtivos: todosAtivos.length,
+        ultimoResultado
+      });
+    } else if (aba === 'auditoria') {
+      const LogService = require('../services/logService');
+      const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+      const acao = String(req.query.acao || '').trim();
+      const busca = String(req.query.q || '').trim();
+      const data = await LogService.listarPaginado({ page, acao, busca, limite: 50 });
+      Object.assign(locals, {
+        logs: data.logs.map((l) => ({
+          ...l,
+          createdAtFmt: fmtDateTime(l.createdAt)
+        })),
+        page: data.page,
+        paginas: data.paginas,
+        total: data.total,
+        acaoFiltro: acao,
+        busca
+      });
+    } else if (aba === 'ferramentas') {
+      const settings = await PlatformSettingsService.getMarketingSettings();
+      Object.assign(locals, {
+        googleAdsTagId: settings.googleAdsTagId,
+        googleAdsEnabled: settings.googleAdsEnabled
+      });
+    }
+
+    res.render('super/operacoes', renderLocals(req, res, locals));
+  },
+
+  async enviarComunicado(req, res) {
+    const dryRun = req.body.acao === 'simular';
+    const publico = req.body.publico === 'todos_ativos' ? 'todos_ativos' : 'rifa_ativa';
+    try {
+      const AvisoNovidadesService = require('../services/avisoNovidadesService');
+      const LogService = require('../services/logService');
+      const result = await AvisoNovidadesService.enviarParaTodos({ dryRun, publico });
+      await LogService.registrar(
+        req.session.adminUsuario || 'super',
+        dryRun ? 'comunicado_dry_run' : 'comunicado_envio',
+        `${dryRun ? 'Simulação' : 'Envio'} · público=${publico} · total=${result.total} · enviados=${result.enviados} · erros=${result.erros.length}`
+      );
+      const payload = encodeURIComponent(JSON.stringify({
+        dryRun: result.dryRun,
+        publico: result.publico,
+        total: result.total,
+        enviados: result.enviados,
+        erros: (result.erros || []).slice(0, 20)
+      }));
+      const msg = dryRun
+        ? `Simulação: ${result.total} destinatário(s).`
+        : `Comunicado enviado: ${result.enviados}/${result.total}.`;
+      res.redirect(`/super/operacoes?aba=comunicados&msg=${encodeURIComponent(msg)}&resultado=${payload}`);
+    } catch (err) {
+      res.redirect(`/super/operacoes?aba=comunicados&erro=${encodeURIComponent(err.message)}`);
+    }
+  },
+
+  async resetarKyc(req, res) {
+    const redirect = req.body.redirect || '/super/operacoes?aba=compliance';
+    const sep = redirect.includes('?') ? '&' : '?';
+    try {
+      await SuperAdminService.resetarKyc(req.params.id, req.session.adminUsuario);
+      res.redirect(`${redirect}${sep}msg=${encodeURIComponent('KYC resetado. O organizador pode verificar novamente.')}`);
+    } catch (err) {
+      res.redirect(`${redirect}${sep}erro=${encodeURIComponent(err.message)}`);
     }
   },
 
@@ -420,6 +550,27 @@ const superAdminController = {
       await TenantService.alterarStatus(req.params.id, req.body.status);
       const sep = redirect.includes('?') ? '&' : '?';
       res.redirect(`${redirect}${sep}msg=Status atualizado.`);
+    } catch (err) {
+      const sep = redirect.includes('?') ? '&' : '?';
+      res.redirect(`${redirect}${sep}erro=${encodeURIComponent(err.message)}`);
+    }
+  },
+
+  async alterarSaldoBloqueado(req, res) {
+    const redirect = req.body.redirect || '/super/sistemas';
+    try {
+      const LogService = require('../services/logService');
+      const bloquear = req.body.acao === 'bloquear';
+      const tenant = await TenantService.alterarSaldoBloqueado(req.params.id, bloquear);
+      await LogService.registrar(
+        req.session.adminUsuario || 'super',
+        bloquear ? 'saldo_bloquear' : 'saldo_desbloquear',
+        `${bloquear ? 'Bloqueou' : 'Desbloqueou'} saldo · tenant #${tenant.id} ${tenant.nome || tenant.slug || ''}`,
+        tenant.id
+      );
+      const sep = redirect.includes('?') ? '&' : '?';
+      const msg = bloquear ? 'Saldo do tenant bloqueado.' : 'Saldo do tenant desbloqueado.';
+      res.redirect(`${redirect}${sep}msg=${encodeURIComponent(msg)}`);
     } catch (err) {
       const sep = redirect.includes('?') ? '&' : '?';
       res.redirect(`${redirect}${sep}erro=${encodeURIComponent(err.message)}`);

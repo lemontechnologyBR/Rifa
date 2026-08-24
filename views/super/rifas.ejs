@@ -33,7 +33,18 @@
             <td><%= r._count.reservas %></td>
             <td><%= r.sorteioFmt %></td>
             <td><span class="super-badge super-badge--<%= r.status === 'ativa' ? 'ativo' : 'suspenso' %>"><%= r.status %></span></td>
-            <td><a href="/<%= r.tenant.slug %>/rifas/<%= r.id %>" target="_blank" rel="noopener" class="super-action-link">Ver sorteio</a></td>
+            <td>
+              <div class="super-actions">
+                <a href="/<%= r.tenant.slug %>/rifas/<%= r.id %>" target="_blank" rel="noopener" class="super-action-link">Ver sorteio</a>
+                <a href="/<%= r.tenant.slug %>/admin/rifas/<%= r.id %>/editar" target="_blank" rel="noopener" class="super-action-link">Editar</a>
+                <form method="POST" action="/super/rifas/<%= r.id %>/excluir" class="inline"
+                  onsubmit="return confirm('Excluir permanentemente \"<%= String(r.titulo || '').replace(/\"/g, '').replace(/'/g, "\\'") %>\" do sistema <%= String(r.tenant.nome || '').replace(/'/g, "\\'") %>? Cotas pagas impedem a exclusão.')">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <input type="hidden" name="redirect" value="/super/rifas?page=<%= page %><%= busca ? '&q=' + encodeURIComponent(busca) : '' %><%= statusFiltro !== 'todos' ? '&status=' + statusFiltro : '' %>">
+                  <button type="submit" class="super-action-btn super-action-btn--danger text-[11px]">Excluir</button>
+                </form>
+              </div>
+            </td>
           </tr>
         <% }); %>
       </tbody>

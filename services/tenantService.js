@@ -105,6 +105,15 @@ const TenantService = {
     return prisma.tenant.update({ where: { id: Number(id) }, data: { status } });
   },
 
+  async alterarSaldoBloqueado(id, bloqueado) {
+    const valor = bloqueado === true || bloqueado === 'true' || bloqueado === '1' || bloqueado === 'bloquear';
+    return prisma.tenant.update({
+      where: { id: Number(id) },
+      data: { saldoBloqueado: valor },
+      select: { id: true, nome: true, slug: true, saldoBloqueado: true }
+    });
+  },
+
   async obterMetricasPlataforma() {
     const inicioMes = new Date();
     inicioMes.setDate(1);

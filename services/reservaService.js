@@ -352,13 +352,14 @@ const ReservaService = {
   },
 
   async _confirmarInterno(reservaId) {
+    let confirmada = null;
     await prisma.$transaction(async (tx) => {
       const reserva = await tx.reserva.findUnique({ where: { id: Number(reservaId) } });
       if (!reserva || reserva.statusPagamento !== 'pendente') {
         throw new Error('Reserva não encontrada ou não pendente.');
       }
 
-      await tx.reserva.update({
+      confirmada = await tx.reserva.update({
         where: { id: reserva.id },
         data: { statusPagamento: 'confirmado' }
       });
@@ -368,6 +369,27 @@ const ReservaService = {
         await tx.numero.update({ where: { id: v.numeroId }, data: { status: 'vendido' } });
       }
     });
+
+    if (confirmada) {
+      setImmediate(async () => {
+        try {
+          const AnalyticsService = require('./analyticsService');
+          const rifa = await prisma.rifa.findUnique({
+            where: { id: confirmada.rifaId },
+            select: { tenant: { select: { slug: true } } }
+          });
+          await AnalyticsService.registrarEvento({
+            event: AnalyticsService.EVENTOS.PURCHASE_PAID,
+            rifaId: confirmada.rifaId,
+            tenantSlug: rifa?.tenant?.slug || null,
+            valor: confirmada.valorTotal,
+            meta: { reservaId: confirmada.id }
+          });
+        } catch (e) {
+          console.error('[Analytics] purchase_paid:', e.message);
+        }
+      });
+    }
 
     // Envia emails de confirmação em background (comprador + organizadores)
     setImmediate(async () => {

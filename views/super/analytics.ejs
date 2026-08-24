@@ -1,6 +1,12 @@
 <%- include('partials/page-start') %>
 <%- include('partials/alerts') %>
 
+<%
+  function money(v) {
+    return Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  }
+%>
+
 <div class="super-analytics-toolbar">
   <p class="super-analytics-toolbar-label">Período</p>
   <div class="super-analytics-filters">
@@ -10,7 +16,7 @@
   </div>
 </div>
 
-<section class="super-metrics">
+<section class="super-metrics super-metrics--5">
   <article class="super-metric">
     <p class="super-metric-label">Pageviews (<%= dias %>d)</p>
     <p class="super-metric-value"><%= resumo.viewsPeriodo.toLocaleString('pt-BR') %></p>
@@ -20,6 +26,16 @@
     <p class="super-metric-label">Visitantes únicos</p>
     <p class="super-metric-value"><%= resumo.unicosPeriodo.toLocaleString('pt-BR') %></p>
     <p class="super-metric-hint">Cookie 30 dias</p>
+  </article>
+  <article class="super-metric">
+    <p class="super-metric-label">Compras pagas</p>
+    <p class="super-metric-value super-metric-value--green"><%= (resumo.comprasPagas || 0).toLocaleString('pt-BR') %></p>
+    <p class="super-metric-hint"><%= money(resumo.receitaPeriodo) %> · ticket <%= money(resumo.ticketMedio) %></p>
+  </article>
+  <article class="super-metric">
+    <p class="super-metric-label">Cadastros</p>
+    <p class="super-metric-value"><%= (resumo.cadastros || 0).toLocaleString('pt-BR') %></p>
+    <p class="super-metric-hint">KYC ok: <%= resumo.kycAprovados || 0 %></p>
   </article>
   <article class="super-metric">
     <p class="super-metric-label">Hoje</p>
@@ -33,10 +49,28 @@
       <% } %>
     </p>
   </article>
+</section>
+
+<section class="super-metrics" style="grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));">
   <article class="super-metric">
-    <p class="super-metric-label">Ontem</p>
-    <p class="super-metric-value"><%= resumo.viewsOntem.toLocaleString('pt-BR') %></p>
-    <p class="super-metric-hint">Comparativo diário</p>
+    <p class="super-metric-label">Landing</p>
+    <p class="super-metric-value" style="font-size:1.25rem;"><%= (resumo.viewsLanding || 0).toLocaleString('pt-BR') %></p>
+  </article>
+  <article class="super-metric">
+    <p class="super-metric-label">Lojas</p>
+    <p class="super-metric-value" style="font-size:1.25rem;"><%= (resumo.viewsLojas || 0).toLocaleString('pt-BR') %></p>
+  </article>
+  <article class="super-metric">
+    <p class="super-metric-label">PIX gerados</p>
+    <p class="super-metric-value" style="font-size:1.25rem;"><%= ((resumo.comprasPendentes || 0) + (resumo.comprasPagas || 0)).toLocaleString('pt-BR') %></p>
+  </article>
+  <article class="super-metric">
+    <p class="super-metric-label">Conv. visitante→compra</p>
+    <p class="super-metric-value" style="font-size:1.25rem;"><%= (resumo.convVisitanteCompra || 0).toLocaleString('pt-BR') %>%</p>
+  </article>
+  <article class="super-metric">
+    <p class="super-metric-label">PIX pendentes</p>
+    <p class="super-metric-value" style="font-size:1.25rem;"><%= (resumo.comprasPendentes || 0).toLocaleString('pt-BR') %></p>
   </article>
 </section>
 
@@ -63,6 +97,53 @@
         </div>
         <% }) %>
       </div>
+      <% } %>
+    </div>
+  </section>
+</div>
+
+<div class="super-grid super-grid--analytics">
+  <section class="super-panel">
+    <div class="super-panel-head">
+      <div>
+        <h2 class="super-panel-title">Funil do período</h2>
+        <p class="super-panel-sub">Tráfego → PIX → compra / cadastro</p>
+      </div>
+    </div>
+    <div class="super-panel-body">
+      <ul class="super-analytics-bars">
+        <% (funil || []).forEach(function(f) { %>
+        <li>
+          <div class="super-analytics-bar-head">
+            <span><%= f.label %></span>
+            <strong><%= Number(f.value || 0).toLocaleString('pt-BR') %></strong>
+          </div>
+          <div class="super-analytics-bar-track"><div class="super-analytics-bar-fill" style="width:<%= f.pct %>%"></div></div>
+        </li>
+        <% }) %>
+      </ul>
+    </div>
+  </section>
+
+  <section class="super-panel">
+    <div class="super-panel-head">
+      <div><h2 class="super-panel-title">Campanhas UTM</h2></div>
+    </div>
+    <div class="super-panel-body super-panel-body--flush">
+      <% if (!topCampanhas || !topCampanhas.length) { %>
+      <p class="super-analytics-empty">Nenhuma campanha com <code>utm_campaign</code> no período. Use links com UTM nos anúncios.</p>
+      <% } else { %>
+      <table class="super-table super-table--compact">
+        <thead><tr><th>Campanha</th><th>Views</th></tr></thead>
+        <tbody>
+          <% topCampanhas.forEach(function(c) { %>
+          <tr>
+            <td><code class="super-path"><%= c.campaign %></code></td>
+            <td><strong><%= c.views.toLocaleString('pt-BR') %></strong></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
       <% } %>
     </div>
   </section>
@@ -105,7 +186,7 @@
         <% topFontes.forEach(function(f) { %>
         <li>
           <div class="super-analytics-bar-head">
-            <span><%= f.source === 'google' ? 'Google (orgânico/pago)' : (f.source === 'social' ? 'Redes sociais' : (f.source === 'direct' ? 'Direto' : f.source)) %></span>
+            <span><%= f.label || f.source %></span>
             <strong><%= f.views.toLocaleString('pt-BR') %></strong>
           </div>
           <div class="super-analytics-bar-track"><div class="super-analytics-bar-fill" style="width:<%= Math.round((f.views / maxFonte) * 100) %>%"></div></div>
@@ -143,6 +224,37 @@
 
   <section class="super-panel">
     <div class="super-panel-head">
+      <div><h2 class="super-panel-title">Rifas mais vistas</h2></div>
+    </div>
+    <div class="super-panel-body super-panel-body--flush">
+      <% if (!topRifas || !topRifas.length) { %>
+      <p class="super-analytics-empty">Sem views de páginas de rifa no período (ou dados anteriores à medição por rifa).</p>
+      <% } else { %>
+      <table class="super-table super-table--compact">
+        <thead><tr><th>Rifa</th><th>Views</th></tr></thead>
+        <tbody>
+          <% topRifas.forEach(function(r) { %>
+          <tr>
+            <td>
+              <% if (r.slug) { %>
+                <a href="/<%= r.slug %>/rifas/<%= r.rifaId %>" target="_blank" rel="noopener" class="super-action-link"><%= r.titulo %></a>
+              <% } else { %>
+                <%= r.titulo %>
+              <% } %>
+            </td>
+            <td><strong><%= r.views.toLocaleString('pt-BR') %></strong></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <% } %>
+    </div>
+  </section>
+</div>
+
+<div class="super-grid super-grid--analytics">
+  <section class="super-panel">
+    <div class="super-panel-head">
       <div><h2 class="super-panel-title">Dispositivos</h2></div>
     </div>
     <div class="super-panel-body">
@@ -163,8 +275,36 @@
       <% } %>
     </div>
   </section>
+
+  <section class="super-panel">
+    <div class="super-panel-head">
+      <div><h2 class="super-panel-title">UTM medium</h2></div>
+    </div>
+    <div class="super-panel-body">
+      <% if (!topMedias || !topMedias.length) { %>
+      <p class="super-analytics-empty">Sem <code>utm_medium</code> no período.</p>
+      <% } else { %>
+      <ul class="super-analytics-bars">
+        <% const maxMed = topMedias[0].views || 1; %>
+        <% topMedias.forEach(function(m) { %>
+        <li>
+          <div class="super-analytics-bar-head">
+            <span><%= m.medium %></span>
+            <strong><%= m.views.toLocaleString('pt-BR') %></strong>
+          </div>
+          <div class="super-analytics-bar-track"><div class="super-analytics-bar-fill" style="width:<%= Math.round((m.views / maxMed) * 100) %>%"></div></div>
+        </li>
+        <% }) %>
+      </ul>
+      <% } %>
+    </div>
+  </section>
 </div>
 
-<p class="super-analytics-foot">Dados internos VouRifar · retenção <%= typeof RETENTION_DAYS !== 'undefined' ? RETENTION_DAYS : 90 %> dias · não inclui painéis admin nem bots</p>
+<p class="super-analytics-foot">
+  Dados internos VouRifar · retenção <%= typeof RETENTION_DAYS !== 'undefined' ? RETENTION_DAYS : 90 %> dias ·
+  pageviews + funil (PIX/compras/cadastros/KYC) · não inclui painéis admin nem bots ·
+  UTM: <code>utm_source</code>, <code>utm_medium</code>, <code>utm_campaign</code>, <code>utm_content</code>, <code>utm_term</code>, <code>gclid</code>
+</p>
 
 <%- include('partials/page-end') %>

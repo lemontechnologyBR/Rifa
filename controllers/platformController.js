@@ -147,6 +147,14 @@ const platformController = {
         }
       });
 
+      try {
+        const AnalyticsService = require('../services/analyticsService');
+        AnalyticsService.trackFromRequest(req, res, AnalyticsService.EVENTOS.SIGNUP, {
+          tenantSlug: tenant.slug,
+          meta: { organizadorId: organizador.id }
+        });
+      } catch (_) {}
+
       res.redirect(`/${tenant.slug}/admin/carteira?onboarding=1`);
     } catch (err) {
       const appUrl = res.locals.baseUrl || process.env.APP_URL || '';

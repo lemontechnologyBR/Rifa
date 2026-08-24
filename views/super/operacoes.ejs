@@ -1,0 +1,362 @@
+<%- include('partials/page-start') %>
+<%- include('partials/alerts') %>
+
+<%
+  const abaAtual = typeof aba !== 'undefined' ? aba : 'compliance';
+  function opUrl(a, extra) {
+    const params = new URLSearchParams();
+    params.set('aba', a);
+    if (extra) {
+      Object.keys(extra).forEach(function (k) {
+        if (extra[k] != null && extra[k] !== '' && extra[k] !== 'todos') params.set(k, extra[k]);
+      });
+    }
+    return '/super/operacoes?' + params.toString();
+  }
+  const kycLabel = {
+    aprovado: 'Aprovado',
+    pendente: 'Pendente',
+    em_andamento: 'Em andamento',
+    em_analise: 'Em análise',
+    reprovado: 'Reprovado',
+    abandonado: 'Abandonado',
+    expirado: 'Expirado'
+  };
+%>
+
+<nav class="super-ops-tabs" aria-label="Abas de operações">
+  <a href="<%= opUrl('compliance') %>" class="super-ops-tab <%= abaAtual === 'compliance' ? 'is-active' : '' %>">
+    <i data-lucide="shield-check" class="w-4 h-4"></i> Compliance
+  </a>
+  <a href="<%= opUrl('comunicados') %>" class="super-ops-tab <%= abaAtual === 'comunicados' ? 'is-active' : '' %>">
+    <i data-lucide="mail" class="w-4 h-4"></i> Comunicados
+  </a>
+  <a href="<%= opUrl('auditoria') %>" class="super-ops-tab <%= abaAtual === 'auditoria' ? 'is-active' : '' %>">
+    <i data-lucide="scroll-text" class="w-4 h-4"></i> Auditoria
+  </a>
+  <a href="<%= opUrl('ferramentas') %>" class="super-ops-tab <%= abaAtual === 'ferramentas' ? 'is-active' : '' %>">
+    <i data-lucide="wrench" class="w-4 h-4"></i> Ferramentas
+  </a>
+</nav>
+
+<% if (abaAtual === 'compliance') { %>
+  <% const rk = compliance.resumo.kyc; %>
+  <section class="super-metrics super-metrics--5">
+    <article class="super-metric">
+      <p class="super-metric-label">KYC aprovado</p>
+      <p class="super-metric-value super-metric-value--green"><%= rk.aprovado || 0 %></p>
+    </article>
+    <article class="super-metric">
+      <p class="super-metric-label">Pendente</p>
+      <p class="super-metric-value"><%= (rk.pendente || 0) %></p>
+    </article>
+    <article class="super-metric">
+      <p class="super-metric-label">Em andamento</p>
+      <p class="super-metric-value"><%= (rk.em_andamento || 0) + (rk.em_analise || 0) %></p>
+    </article>
+    <article class="super-metric">
+      <p class="super-metric-label">Reprovado</p>
+      <p class="super-metric-value"><%= rk.reprovado || 0 %></p>
+    </article>
+    <article class="super-metric">
+      <p class="super-metric-label">Saldo bloqueado</p>
+      <p class="super-metric-value"><%= compliance.resumo.saldoBloqueados || 0 %></p>
+    </article>
+  </section>
+
+  <section class="super-panel">
+    <div class="super-panel-head">
+      <div>
+        <h2 class="super-panel-title">Identidade e saldo</h2>
+        <p class="super-panel-sub"><%= total %> organizador<%= total !== 1 ? 'es' : '' %></p>
+      </div>
+    </div>
+    <div class="super-panel-toolbar">
+      <form method="GET" action="/super/operacoes" class="super-filters">
+        <input type="hidden" name="aba" value="compliance">
+        <input type="text" name="q" value="<%= typeof busca !== 'undefined' ? busca : '' %>" placeholder="Nome, e-mail ou slug…" class="super-input super-input--grow">
+        <select name="kyc" class="super-select">
+          <option value="todos" <%= kycFiltro === 'todos' ? 'selected' : '' %>>KYC: todos</option>
+          <% ['aprovado','pendente','em_andamento','em_analise','reprovado','abandonado','expirado'].forEach(function(s) { %>
+            <option value="<%= s %>" <%= kycFiltro === s ? 'selected' : '' %>><%= kycLabel[s] || s %></option>
+          <% }) %>
+        </select>
+        <select name="saldo" class="super-select">
+          <option value="todos" <%= saldoFiltro === 'todos' ? 'selected' : '' %>>Saldo: todos</option>
+          <option value="bloqueado" <%= saldoFiltro === 'bloqueado' ? 'selected' : '' %>>Bloqueado</option>
+          <option value="liberado" <%= saldoFiltro === 'liberado' ? 'selected' : '' %>>Liberado</option>
+        </select>
+        <button type="submit" class="super-btn super-btn--primary">Filtrar</button>
+      </form>
+    </div>
+    <div class="super-table-wrap">
+      <table class="super-table">
+        <thead>
+          <tr>
+            <th>Organizador</th>
+            <th>Sistema</th>
+            <th>KYC</th>
+            <th>Saldo</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (!compliance.organizadores.length) { %>
+            <tr><td colspan="5" class="super-empty">Nenhum registro encontrado.</td></tr>
+          <% } %>
+          <% compliance.organizadores.forEach(function(o) {
+            const st = o.kycStatus || 'pendente';
+            const redirectComp = opUrl('compliance', { page: page, kyc: kycFiltro, saldo: saldoFiltro, q: busca });
+          %>
+            <tr>
+              <td>
+                <span class="font-medium text-sm"><%= o.nome %></span>
+                <span class="super-tenant-email block"><%= o.email %></span>
+              </td>
+              <td>
+                <a href="/<%= o.tenant.slug %>/" target="_blank" rel="noopener" class="super-action-link"><%= o.tenant.nome %></a>
+                <span class="super-tenant-email">/<%= o.tenant.slug %></span>
+              </td>
+              <td>
+                <span class="super-badge <%= st === 'aprovado' ? 'super-badge--ativo' : (st === 'reprovado' ? 'super-badge--saldo-bloqueado' : 'super-badge--warning') %>">
+                  <%= kycLabel[st] || st %>
+                </span>
+                <% if (o.kycVerifiedAt) { %>
+                  <span class="super-tenant-email block"><%= new Date(o.kycVerifiedAt).toLocaleDateString('pt-BR') %></span>
+                <% } %>
+              </td>
+              <td>
+                <% if (o.tenant.saldoBloqueado) { %>
+                  <span class="super-badge super-badge--saldo-bloqueado">Bloqueado</span>
+                <% } else { %>
+                  <span class="super-badge super-badge--ativo">Liberado</span>
+                <% } %>
+              </td>
+              <td>
+                <div class="super-actions super-actions--row">
+                  <a href="/<%= o.tenant.slug %>/admin" target="_blank" rel="noopener" class="super-action-link">Painel</a>
+                  <form method="POST" action="/super/tenants/<%= o.tenant.id %>/saldo-bloqueado" class="inline"
+                    onsubmit="return confirm('<%= o.tenant.saldoBloqueado ? 'Desbloquear' : 'Bloquear' %> saldo de <%= String(o.tenant.nome || '').replace(/'/g, "\\'") %>?')">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <input type="hidden" name="redirect" value="<%= redirectComp %>">
+                    <input type="hidden" name="acao" value="<%= o.tenant.saldoBloqueado ? 'desbloquear' : 'bloquear' %>">
+                    <button type="submit" class="super-action-btn <%= o.tenant.saldoBloqueado ? 'super-action-btn--ok' : 'super-action-btn--danger' %>">
+                      <%= o.tenant.saldoBloqueado ? 'Desbloquear' : 'Bloquear' %>
+                    </button>
+                  </form>
+                  <% if (st !== 'pendente') { %>
+                  <form method="POST" action="/super/organizadores/<%= o.id %>/kyc-reset" class="inline"
+                    onsubmit="return confirm('Resetar KYC de <%= String(o.nome || '').replace(/'/g, "\\'") %>?')">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <input type="hidden" name="redirect" value="<%= redirectComp %>">
+                    <button type="submit" class="super-action-btn">Reset KYC</button>
+                  </form>
+                  <% } %>
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <% if (paginas > 1) { %>
+      <div class="super-pagination">
+        <span><%= total %> registros</span>
+        <div class="super-pagination-links">
+          <% if (page > 1) { %><a class="super-page-link" href="<%= opUrl('compliance', { page: page - 1, kyc: kycFiltro, saldo: saldoFiltro, q: busca }) %>">←</a><% } %>
+          <% for (var p = Math.max(1, page - 2); p <= Math.min(paginas, page + 2); p++) { %>
+            <a class="super-page-link <%= p === page ? 'is-active' : '' %>" href="<%= opUrl('compliance', { page: p, kyc: kycFiltro, saldo: saldoFiltro, q: busca }) %>"><%= p %></a>
+          <% } %>
+          <% if (page < paginas) { %><a class="super-page-link" href="<%= opUrl('compliance', { page: page + 1, kyc: kycFiltro, saldo: saldoFiltro, q: busca }) %>">→</a><% } %>
+        </div>
+      </div>
+    <% } %>
+  </section>
+<% } %>
+
+<% if (abaAtual === 'comunicados') { %>
+  <div class="super-grid super-grid--marketing">
+    <section class="super-panel super-panel--stack">
+      <div class="super-panel-head">
+        <div>
+          <h2 class="super-panel-title">E-mail em massa</h2>
+          <p class="super-panel-sub">Usa o template de novidades da plataforma. Simule antes de enviar.</p>
+        </div>
+      </div>
+      <div class="super-panel-body">
+        <form method="POST" action="/super/operacoes/comunicados" class="super-form-stack" id="form-comunicado">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <input type="hidden" name="acao" id="comunicado-acao" value="simular">
+
+          <div class="super-field">
+            <span class="super-field-label">Público</span>
+            <label class="super-check-row">
+              <input type="radio" name="publico" value="rifa_ativa" checked>
+              <span>Com rifa ativa (<%= contagemRifaAtiva %>)</span>
+            </label>
+            <label class="super-check-row">
+              <input type="radio" name="publico" value="todos_ativos">
+              <span>Todos os tenants ativos (<%= contagemTodosAtivos %>)</span>
+            </label>
+          </div>
+
+          <div class="super-form-actions" style="gap:0.75rem;flex-wrap:wrap;">
+            <button type="submit" class="super-btn super-btn--ghost" onclick="document.getElementById('comunicado-acao').value='simular'">Simular (dry-run)</button>
+            <button type="submit" class="super-btn super-btn--primary"
+              onclick="document.getElementById('comunicado-acao').value='enviar'; return confirm('Enviar e-mail real para o público selecionado? Esta ação não pode ser desfeita.');">
+              Enviar agora
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="super-panel super-panel--stack">
+      <div class="super-panel-head">
+        <div>
+          <h2 class="super-panel-title">Último resultado</h2>
+          <p class="super-panel-sub">Simulação ou envio desta sessão</p>
+        </div>
+      </div>
+      <div class="super-panel-body">
+        <% if (ultimoResultado) { %>
+          <ul class="super-info-list">
+            <li>Modo: <strong><%= ultimoResultado.dryRun ? 'Simulação' : 'Envio real' %></strong></li>
+            <li>Público: <code><%= ultimoResultado.publico %></code></li>
+            <li>Total: <strong><%= ultimoResultado.total %></strong></li>
+            <li>Enviados: <strong><%= ultimoResultado.enviados %></strong></li>
+            <li>Erros: <strong><%= (ultimoResultado.erros && ultimoResultado.erros.length) || 0 %></strong></li>
+          </ul>
+          <% if (ultimoResultado.erros && ultimoResultado.erros.length) { %>
+            <ul class="super-info-list" style="margin-top:1rem;">
+              <% ultimoResultado.erros.forEach(function(e) { %>
+                <li class="super-info-list__muted"><%= e.email %>: <%= e.erro %></li>
+              <% }) %>
+            </ul>
+          <% } %>
+        <% } else { %>
+          <p class="super-analytics-empty">Nenhum resultado ainda. Rode uma simulação primeiro.</p>
+        <% } %>
+      </div>
+    </section>
+  </div>
+<% } %>
+
+<% if (abaAtual === 'auditoria') { %>
+  <section class="super-panel">
+    <div class="super-panel-head">
+      <div>
+        <h2 class="super-panel-title">Logs da plataforma</h2>
+        <p class="super-panel-sub"><%= total %> registro<%= total !== 1 ? 's' : '' %></p>
+      </div>
+    </div>
+    <div class="super-panel-toolbar">
+      <form method="GET" action="/super/operacoes" class="super-filters">
+        <input type="hidden" name="aba" value="auditoria">
+        <input type="text" name="q" value="<%= typeof busca !== 'undefined' ? busca : '' %>" placeholder="Buscar detalhes…" class="super-input super-input--grow">
+        <input type="text" name="acao" value="<%= typeof acaoFiltro !== 'undefined' ? acaoFiltro : '' %>" placeholder="Ação (ex: excluir_rifa)" class="super-input">
+        <button type="submit" class="super-btn super-btn--primary">Filtrar</button>
+      </form>
+    </div>
+    <div class="super-table-wrap">
+      <table class="super-table">
+        <thead>
+          <tr><th>Quando</th><th>Quem</th><th>Ação</th><th>Detalhes</th><th>Tenant</th></tr>
+        </thead>
+        <tbody>
+          <% if (!logs.length) { %>
+            <tr><td colspan="5" class="super-empty">Nenhum log encontrado.</td></tr>
+          <% } %>
+          <% logs.forEach(function(l) { %>
+            <tr>
+              <td><%= l.createdAtFmt %></td>
+              <td><%= l.adminUsuario %></td>
+              <td><code><%= l.acao %></code></td>
+              <td class="super-tenant-email"><%= l.detalhes || '—' %></td>
+              <td>
+                <% if (l.tenant) { %>
+                  <a href="/<%= l.tenant.slug %>/" target="_blank" rel="noopener" class="super-action-link"><%= l.tenant.nome %></a>
+                <% } else { %>—<% } %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <% if (paginas > 1) { %>
+      <div class="super-pagination">
+        <span>Página <%= page %> de <%= paginas %></span>
+        <div class="super-pagination-links">
+          <% if (page > 1) { %><a class="super-page-link" href="<%= opUrl('auditoria', { page: page - 1, acao: acaoFiltro, q: busca }) %>">←</a><% } %>
+          <% for (var p = Math.max(1, page - 2); p <= Math.min(paginas, page + 2); p++) { %>
+            <a class="super-page-link <%= p === page ? 'is-active' : '' %>" href="<%= opUrl('auditoria', { page: p, acao: acaoFiltro, q: busca }) %>"><%= p %></a>
+          <% } %>
+          <% if (page < paginas) { %><a class="super-page-link" href="<%= opUrl('auditoria', { page: page + 1, acao: acaoFiltro, q: busca }) %>">→</a><% } %>
+        </div>
+      </div>
+    <% } %>
+  </section>
+<% } %>
+
+<% if (abaAtual === 'ferramentas') { %>
+  <div class="super-grid super-grid--marketing">
+    <section class="super-panel super-panel--stack">
+      <div class="super-panel-head">
+        <div>
+          <h2 class="super-panel-title">Google Ads — Tag de conversão</h2>
+          <p class="super-panel-sub">Configure o ID da tag para medir tráfego pago nas páginas públicas. Não é inserida no painel admin.</p>
+        </div>
+      </div>
+      <div class="super-panel-body">
+        <form method="POST" action="/super/operacoes/ferramentas/ads" class="super-form-stack">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="super-field">
+            <span class="super-field-label">Tag ativa</span>
+            <label class="super-check-row">
+              <input type="checkbox" name="google_ads_enabled" value="on" <%= googleAdsEnabled ? 'checked' : '' %>>
+              <span>Injetar tag nas páginas públicas</span>
+            </label>
+          </div>
+          <div class="super-field">
+            <label class="super-field-label" for="google_ads_tag">ID da tag Google Ads</label>
+            <input type="text" id="google_ads_tag" name="google_ads_tag" class="super-input"
+              value="<%= googleAdsTagId %>" placeholder="AW-18290467577" autocomplete="off" spellcheck="false">
+            <p class="super-field-hint">Cole o snippet completo ou apenas o ID (ex.: <code>AW-18290467577</code>).</p>
+          </div>
+          <div class="super-form-actions">
+            <button type="submit" class="super-btn super-btn--primary">Salvar tag</button>
+          </div>
+        </form>
+      </div>
+    </section>
+    <section class="super-panel super-panel--stack">
+      <div class="super-panel-head">
+        <div>
+          <h2 class="super-panel-title">Onde a tag aparece</h2>
+          <p class="super-panel-sub">Páginas indexáveis e públicas</p>
+        </div>
+      </div>
+      <div class="super-panel-body super-panel-body--grow">
+        <ul class="super-info-list">
+          <li>Landing <code>/</code> e cadastro <code>/cadastro</code></li>
+          <li>Lojas dos organizadores <code>/{slug}/</code></li>
+          <li>Páginas de rifas, encerradas e como funciona</li>
+          <li class="super-info-list__muted"><strong>Não</strong> aparece em <code>/super</code>, <code>/{slug}/admin</code> nem comprovantes</li>
+        </ul>
+        <% if (googleAdsEnabled && googleAdsTagId) { %>
+        <div class="super-marketing-status super-alert super-alert--ok">
+          <i data-lucide="check-circle" class="w-4 h-4"></i>
+          <span>Tag ativa: <strong><%= googleAdsTagId %></strong></span>
+        </div>
+        <% } else if (googleAdsTagId) { %>
+        <div class="super-marketing-status super-alert super-alert--warn">
+          <i data-lucide="alert-circle" class="w-4 h-4"></i>
+          <span>Tag salva mas <strong>desativada</strong>.</span>
+        </div>
+        <% } %>
+      </div>
+    </section>
+  </div>
+<% } %>
+
+<%- include('partials/page-end') %>

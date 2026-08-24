@@ -63,6 +63,56 @@
     </div>
 
     <% const pinOk = typeof temPin !== 'undefined' && temPin; %>
+    <% const kycOn = typeof kycObrigatorio !== 'undefined' && kycObrigatorio; %>
+    <% const kycOk = typeof kycAprovado !== 'undefined' && kycAprovado; %>
+    <%
+      const kycStatusLabel = {
+        aprovado: 'Aprovado',
+        reprovado: 'Reprovado',
+        em_analise: 'Em análise',
+        em_andamento: 'Em andamento',
+        abandonado: 'Abandonado',
+        expirado: 'Expirado',
+        pendente: 'Pendente'
+      }[typeof kycStatus !== 'undefined' ? kycStatus : 'pendente'] || 'Pendente';
+    %>
+
+    <% if (kycOn) { %>
+    <div id="kyc-verificacao" class="admin-panel-card p-5 mb-6 border-l-4 <%= kycOk ? 'border-emerald-400' : 'border-sky-400' %>">
+      <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+        <div class="flex items-start gap-3 flex-1">
+          <div class="w-10 h-10 rounded-xl <%= kycOk ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-sky-100 dark:bg-sky-900/30' %> flex items-center justify-center shrink-0">
+            <i data-lucide="<%= kycOk ? 'shield-check' : 'shield' %>" class="w-5 h-5 <%= kycOk ? 'text-emerald-600' : 'text-sky-600' %>"></i>
+          </div>
+          <div>
+            <p class="font-bold text-sm <%= kycOk ? 'text-emerald-800 dark:text-emerald-300' : 'text-sky-800 dark:text-sky-300' %>">
+              <%= kycOk ? 'Identidade verificada' : 'Verificação de identidade (KYC) obrigatória' %>
+            </p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <% if (kycOk) { %>
+                Status: <strong><%= kycStatusLabel %></strong>
+                <% if (typeof kycVerifiedAt !== 'undefined' && kycVerifiedAt) { %>
+                  · em <%= new Date(kycVerifiedAt).toLocaleDateString('pt-BR') %>
+                <% } %>
+                . Você já pode solicitar saques.
+              <% } else { %>
+                Antes do primeiro saque, confirme sua identidade com documento e selfie (Didit). Status atual: <strong><%= kycStatusLabel %></strong>.
+              <% } %>
+            </p>
+          </div>
+        </div>
+        <% if (!kycOk) { %>
+        <form method="POST" action="<%= adminBase %>/carteira/kyc" class="shrink-0">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-bold transition shadow">
+            <i data-lucide="scan-face" class="w-4 h-4"></i>
+            <%= (typeof kycStatus !== 'undefined' && kycStatus === 'em_andamento') ? 'Continuar verificação' : 'Verificar identidade' %>
+          </button>
+        </form>
+        <% } %>
+      </div>
+    </div>
+    <% } %>
 
     <!-- PIN de saque -->
     <div id="pin-saque" class="admin-panel-card p-5 mb-6 border-l-4 <%= pinOk ? 'border-emerald-400' : 'border-amber-400' %>"
@@ -117,7 +167,8 @@
 
     <%
       const saldoDisp = saque ? saque.saldoDisponivel : (resumo.saldoDisponivel != null ? resumo.saldoDisponivel : resumo.saldoConfirmado * 0.95);
-      const podeSacar = saque ? saque.podeSacar : saldoDisp >= 50;
+      const saldoBloqueado = !!(tenant && tenant.saldoBloqueado);
+      const podeSacar = !saldoBloqueado && (saque ? saque.podeSacar : saldoDisp >= 50);
       const taxaSaque = saque ? saque.taxa : (taxaSaqueValor || 5.50);
       const saldoLiquido = saque ? saque.saldoLiquido : (podeSacar ? saldoDisp - taxaSaque : 0);
       const saqueMinimo = saque ? saque.saqueMinimo : 100;
@@ -125,14 +176,32 @@
     <div
       x-data="carteiraSaqueData(<%= saldoDisp %>, <%= taxaSaqueValor || 5.50 %>, false, <%= saqueMinimo %>, '<%= saldoDisp.toFixed(2) %>', <%= pinOk ? 'true' : 'false' %>)"
       @keydown.escape.window="fecharModal()">
-    <div class="admin-panel-card p-5 mb-6 border-l-4 <%= podeSacar ? 'border-violet-400' : 'border-gray-300 dark:border-gray-700' %>">
+    <% if (saldoBloqueado) { %>
+    <div class="admin-panel-card p-5 mb-6 border-l-4 border-red-400">
+      <div class="flex items-start gap-3">
+        <div class="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center shrink-0">
+          <i data-lucide="ban" class="w-5 h-5 text-red-600"></i>
+        </div>
+        <div>
+          <p class="font-bold text-sm text-red-800 dark:text-red-300">Saldo bloqueado</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Sua conta não pode solicitar saques no momento. Fale com o suporte da VouRifar se precisar de ajuda.
+          </p>
+        </div>
+      </div>
+    </div>
+    <% } %>
+    <div class="admin-panel-card p-5 mb-6 border-l-4 <%= saldoBloqueado ? 'border-red-300' : (podeSacar ? 'border-violet-400' : 'border-gray-300 dark:border-gray-700') %>">
       <div class="flex flex-col sm:flex-row sm:items-center gap-4">
         <div class="flex items-start gap-3 flex-1">
-          <div class="w-10 h-10 rounded-xl <%= podeSacar ? 'bg-violet-100 dark:bg-violet-900/30' : 'bg-gray-100 dark:bg-gray-800' %> flex items-center justify-center shrink-0">
-            <i data-lucide="<%= podeSacar ? 'wallet' : 'clock' %>" class="w-5 h-5 <%= podeSacar ? 'text-violet-600' : 'text-gray-400' %>"></i>
+          <div class="w-10 h-10 rounded-xl <%= saldoBloqueado ? 'bg-red-100 dark:bg-red-900/30' : (podeSacar ? 'bg-violet-100 dark:bg-violet-900/30' : 'bg-gray-100 dark:bg-gray-800') %> flex items-center justify-center shrink-0">
+            <i data-lucide="<%= saldoBloqueado ? 'ban' : (podeSacar ? 'wallet' : 'clock') %>" class="w-5 h-5 <%= saldoBloqueado ? 'text-red-600' : (podeSacar ? 'text-violet-600' : 'text-gray-400') %>"></i>
           </div>
           <div>
-            <% if (podeSacar) { %>
+            <% if (saldoBloqueado) { %>
+              <p class="font-bold text-sm text-red-800 dark:text-red-300">Saque indisponível — saldo bloqueado</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Disponível na conta: R$ <%= saldoDisp.toFixed(2).replace('.', ',') %>. O valor permanece na plataforma até o desbloqueio.</p>
+            <% } else if (podeSacar) { %>
               <p class="font-bold text-sm text-violet-800 dark:text-violet-300">💰 Saque disponível — R$ <%= saldoDisp.toFixed(2).replace('.', ',') %></p>
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Taxa de saque: <strong>R$ <%= (taxaSaqueValor||5.50).toFixed(2).replace('.', ',') %></strong>. Você receberá <strong>R$ <%= saldoLiquido.toFixed(2).replace('.', ',') %></strong> na chave PIX (saque total).</p>
             <% } else { %>
@@ -141,18 +210,23 @@
             <% } %>
           </div>
         </div>
-        <% if (podeSacar && tenant.pixChave && pinOk) { %>
+        <% if (!saldoBloqueado && podeSacar && tenant.pixChave && pinOk && (!kycOn || kycOk)) { %>
         <button type="button" @click="abrirModal()"
           class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold transition shrink-0 shadow">
           <i data-lucide="arrow-down-to-line" class="w-4 h-4"></i>
           Sacar agora
         </button>
-        <% } else if (podeSacar && tenant.pixChave && !pinOk) { %>
+        <% } else if (!saldoBloqueado && podeSacar && tenant.pixChave && pinOk && kycOn && !kycOk) { %>
+        <a href="#kyc-verificacao" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-bold transition shrink-0 shadow">
+          <i data-lucide="shield" class="w-4 h-4"></i>
+          Verificar para sacar
+        </a>
+        <% } else if (!saldoBloqueado && podeSacar && tenant.pixChave && !pinOk) { %>
         <a href="#pin-saque" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold transition shrink-0 shadow">
           <i data-lucide="key-round" class="w-4 h-4"></i>
           Criar PIN para sacar
         </a>
-        <% } else if (!tenant.pixChave) { %>
+        <% } else if (!saldoBloqueado && !tenant.pixChave) { %>
         <span class="text-xs text-gray-400 shrink-0">Configure a chave PIX para sacar</span>
         <% } %>
       </div>

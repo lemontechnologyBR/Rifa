@@ -1,5 +1,5 @@
 /**
- * Avisa organizadores com rifa ativa sobre novidades da plataforma.
+ * Avisa organizadores sobre novidades da plataforma.
  * Produção: node -e "require('./services/avisoNovidadesService').enviarParaTodos()"
  */
 const prisma = require('../lib/prisma');
@@ -12,6 +12,19 @@ function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+const tenantInclude = {
+  select: {
+    id: true,
+    slug: true,
+    nome: true,
+    rifas: {
+      where: { status: 'ativa' },
+      select: { id: true, titulo: true },
+      orderBy: { createdAt: 'desc' }
+    }
+  }
+};
+
 const AvisoNovidadesService = {
   async listarComRifaAtiva() {
     return prisma.organizador.findMany({
@@ -21,26 +34,28 @@ const AvisoNovidadesService = {
           rifas: { some: { status: 'ativa' } }
         }
       },
-      include: {
-        tenant: {
-          select: {
-            id: true,
-            slug: true,
-            nome: true,
-            rifas: {
-              where: { status: 'ativa' },
-              select: { id: true, titulo: true },
-              orderBy: { createdAt: 'desc' }
-            }
-          }
-        }
-      },
+      include: { tenant: tenantInclude },
       orderBy: { createdAt: 'asc' }
     });
   },
 
-  async enviarParaTodos({ dryRun = false } = {}) {
-    const orgs = await this.listarComRifaAtiva();
+  async listarTenantsAtivos() {
+    return prisma.organizador.findMany({
+      where: {
+        tenant: { status: 'ativo' }
+      },
+      include: { tenant: tenantInclude },
+      orderBy: { createdAt: 'asc' }
+    });
+  },
+
+  async listarDestinatarios(publico = 'rifa_ativa') {
+    if (publico === 'todos_ativos') return this.listarTenantsAtivos();
+    return this.listarComRifaAtiva();
+  },
+
+  async enviarParaTodos({ dryRun = false, publico = 'rifa_ativa' } = {}) {
+    const orgs = await this.listarDestinatarios(publico);
     let enviados = 0;
     const erros = [];
     const destinatarios = [];
@@ -89,7 +104,7 @@ const AvisoNovidadesService = {
       }
     }
 
-    return { total: orgs.length, enviados, dryRun, destinatarios, erros };
+    return { total: orgs.length, enviados, dryRun, publico, destinatarios, erros };
   }
 };
 

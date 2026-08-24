@@ -263,6 +263,22 @@
   }
 }
 
+.super-metrics--5 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (min-width: 640px) {
+  .super-metrics--5 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1100px) {
+  .super-metrics--5 {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
 .super-metric {
   background: #fff;
   border: 1px solid #e2e8f0;
@@ -591,6 +607,20 @@
   cursor: pointer;
 }
 
+.super-badge--saldo-bloqueado {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.super-action-btn--danger {
+  color: #b91c1c;
+  border-color: #fca5a5;
+}
+.super-action-btn--danger:hover {
+  background: #fef2f2;
+}
+
 .super-action-btn--ok {
   color: #059669;
 }
@@ -858,6 +888,84 @@
 
 .super-grid--marketing {
   grid-template-columns: 1fr;
+}
+
+.super-ops-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  width: fit-content;
+  max-width: 100%;
+  margin-bottom: 1.25rem;
+  padding: 0.25rem;
+  border-radius: 0.75rem;
+  background: #e2e8f0;
+  border: 1px solid #cbd5e1;
+}
+
+.super-ops-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.875rem;
+  border-radius: 0.55rem;
+  border: 0;
+  background: transparent;
+  color: #475569;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+
+.super-ops-tab:hover {
+  background: rgba(255, 255, 255, 0.55);
+  color: #0f172a;
+}
+
+.super-ops-tab.is-active {
+  background: #fff;
+  color: #0f172a;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+html.dark .super-ops-tabs {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+html.dark .super-ops-tab {
+  background: transparent;
+  color: #94a3b8;
+}
+
+html.dark .super-ops-tab:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #e2e8f0;
+}
+
+html.dark .super-ops-tab.is-active {
+  background: #1e293b;
+  color: #f8fafc;
+  box-shadow: none;
+}
+
+.super-panel-toolbar {
+  padding: 0.875rem 1.125rem;
+  border-bottom: 1px solid #f1f5f9;
+  background: #f8fafc;
+}
+
+.super-input--grow {
+  flex: 1 1 14rem;
+  min-width: 10rem;
+}
+
+.super-actions--row {
+  flex-wrap: wrap;
+  gap: 0.375rem 0.75rem;
+  align-items: center;
 }
 
 .super-info-list {
@@ -1215,6 +1323,11 @@ html.dark .super-link-card {
 }
 
 html.dark .super-panel-head {
+  border-bottom-color: #334155;
+}
+
+html.dark .super-panel-toolbar {
+  background: #0f172a;
   border-bottom-color: #334155;
 }
 

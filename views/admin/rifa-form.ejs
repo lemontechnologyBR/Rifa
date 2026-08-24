@@ -32,15 +32,26 @@
           <label class="text-sm font-medium text-gray-600">Valor da cota *</label>
           <input type="number" name="valor_cota" step="0.01" min="0.01" required value="<%= rifa ? (rifa.valorCota ?? rifa.valor_cota ?? '') : '' %>" class="w-full border rounded-xl px-4 py-2 mt-1">
         </div>
-        <% if (!rifa || !rifa.id) { %>
+        <%
+          const totalNumerosEdit = rifa
+            ? (rifa.totalNumeros ?? rifa.total_numeros ?? rifa.stats?.total ?? '')
+            : '';
+          const podeEditarCotas = !rifa || !rifa.id || rifa.status === 'ativa';
+        %>
+        <% if (podeEditarCotas) { %>
           <div>
-            <label class="text-sm font-medium text-gray-600">Total de números *</label>
-            <input type="number" name="total_numeros" id="input_total_numeros" required min="1" class="w-full border rounded-xl px-4 py-2 mt-1">
+            <label class="text-sm font-medium text-gray-600">Total de cotas *</label>
+            <input type="number" name="total_numeros" id="input_total_numeros" required min="1" max="10000"
+              value="<%= totalNumerosEdit %>"
+              class="w-full border rounded-xl px-4 py-2 mt-1">
+            <% if (rifa && rifa.id) { %>
+              <p class="text-xs text-gray-500 mt-1">Pode aumentar livremente. Para reduzir, só remove cotas ainda disponíveis (não vendidas/reservadas).</p>
+            <% } %>
           </div>
         <% } else { %>
           <div>
-            <label class="text-sm font-medium text-gray-600">Total de números</label>
-            <input type="text" readonly value="<%= rifa.stats ? rifa.stats.total : '—' %>" class="w-full border rounded-xl px-4 py-2 mt-1 bg-gray-50 text-gray-500">
+            <label class="text-sm font-medium text-gray-600">Total de cotas</label>
+            <input type="text" readonly value="<%= totalNumerosEdit || '—' %>" class="w-full border rounded-xl px-4 py-2 mt-1 bg-gray-50 text-gray-500">
           </div>
         <% } %>
       </div>
@@ -158,13 +169,23 @@
       <%- include('partials/rifa-aparencia') %>
       </div>
 
-      <div class="flex gap-3 pt-2">
+      <div class="flex flex-col sm:flex-row gap-3 pt-2">
         <% if (rifa && rifa.id) { %>
-          <a href="<%= adminBase %>/rifas/<%= rifa.id %>/participantes" class="flex-1 text-center border border-gray-300 font-semibold py-3 rounded-xl hover:bg-gray-50 transition">Participantes</a>
+          <a href="<%= adminBase %>/rifas/<%= rifa.id %>/participantes" class="flex-1 text-center border border-gray-300 dark:border-gray-600 font-semibold py-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">Participantes</a>
         <% } %>
         <button type="submit" class="flex-1 admin-btn-primary py-3 text-sm"><%= rifa && rifa.id ? 'Salvar alterações' : 'Criar sorteio' %></button>
       </div>
     </form>
+
+    <% if (rifa && rifa.id && rifa.status !== 'finalizada') { %>
+      <form method="POST" action="<%= adminBase %>/rifas/<%= rifa.id %>/excluir" class="mt-6"
+        onsubmit="return confirm('Excluir permanentemente o sorteio \"<%= String(rifa.titulo || '').replace(/\"/g, '') %>\"? Cotas pagas impedem a exclusão.')">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" class="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-red-300 text-red-700 dark:border-red-800 dark:text-red-400 text-sm font-semibold hover:bg-red-50 dark:hover:bg-red-950/40 transition">
+          Excluir sorteio
+        </button>
+      </form>
+    <% } %>
     </div>
 
   <%- include('partials/layout-end') %>

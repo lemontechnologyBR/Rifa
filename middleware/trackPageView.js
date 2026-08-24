@@ -5,8 +5,9 @@ const AnalyticsService = require('../services/analyticsService');
 const {
   getOrCreateVisitorId,
   parseDevice,
-  parseSource,
+  attributionFromRequest,
   extractTenantSlug,
+  extractRifaId,
   shouldTrackRequest
 } = require('../lib/analyticsVisitor');
 
@@ -14,11 +15,9 @@ module.exports = function trackPageView(req, res, next) {
   if (!shouldTrackRequest(req)) return next();
 
   const path = (req.originalUrl || req.path || '/').split('?')[0].slice(0, 500);
-  const referrer = (req.get('referer') || '').slice(0, 500) || null;
-  const utmSource = req.query.utm_source ? String(req.query.utm_source).slice(0, 80) : null;
-  const utmMedium = req.query.utm_medium ? String(req.query.utm_medium).slice(0, 80) : null;
-  const utmCampaign = req.query.utm_campaign ? String(req.query.utm_campaign).slice(0, 80) : null;
   const userAgent = req.get('user-agent') || '';
+  const attr = attributionFromRequest(req);
+  const rifaId = extractRifaId(path);
 
   // Cookie precisa ser definido ANTES da resposta ser enviada
   const visitorId = getOrCreateVisitorId(req, res);
@@ -26,13 +25,17 @@ module.exports = function trackPageView(req, res, next) {
   const payload = {
     path,
     tenantSlug: extractTenantSlug(path),
+    rifaId,
     visitorId,
-    referrer,
-    source: parseSource(referrer, utmSource),
+    referrer: attr.referrer,
+    source: attr.source,
     device: parseDevice(userAgent),
-    utmSource,
-    utmMedium,
-    utmCampaign
+    utmSource: attr.utmSource,
+    utmMedium: attr.utmMedium,
+    utmCampaign: attr.utmCampaign,
+    utmContent: attr.utmContent,
+    utmTerm: attr.utmTerm,
+    gclid: attr.gclid
   };
 
   res.on('finish', () => {
@@ -40,6 +43,17 @@ module.exports = function trackPageView(req, res, next) {
     AnalyticsService.registrar(payload).catch((err) => {
       console.error('[Analytics] Erro ao registrar:', err.message);
     });
+    if (rifaId) {
+      AnalyticsService.registrarEvento({
+        event: AnalyticsService.EVENTOS.RIFA_VIEW,
+        visitorId,
+        tenantSlug: payload.tenantSlug,
+        rifaId,
+        source: payload.source,
+        utmSource: payload.utmSource,
+        utmCampaign: payload.utmCampaign
+      }).catch(() => {});
+    }
   });
 
   next();

@@ -76,6 +76,8 @@ admin.get('/carteira', requireOrganizador, organizadorController.carteiraForm);
 admin.post('/carteira', requireOrganizador, organizadorController.salvarCarteira);
 admin.post('/carteira/pin', requireOrganizador, organizadorController.salvarPin);
 admin.post('/carteira/saque', requireOrganizador, validarSaque, handleValidation, organizadorController.solicitarSaque);
+admin.post('/carteira/kyc', requireOrganizador, organizadorController.iniciarKyc);
+admin.get('/carteira/kyc/retorno', requireOrganizador, organizadorController.kycRetorno);
 admin.get('/config', requireOrganizador, organizadorController.configForm);
 admin.post('/config', requireOrganizador, organizadorController.salvarConfig);
 admin.post('/config/senha', requireOrganizador, organizadorController.alterarSenhaConta);

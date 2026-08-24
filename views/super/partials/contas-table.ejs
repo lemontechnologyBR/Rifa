@@ -93,6 +93,9 @@
               <span class="super-tenant-email">Conta · <%= o.createdAtFmt %></span>
             </td>
             <td>
+              <% if (o.tenant.saldoBloqueado) { %>
+                <span class="super-badge super-badge--saldo-bloqueado mb-1 inline-block">Saldo bloqueado</span>
+              <% } %>
               <span class="super-badge super-badge--<%= o.tenant.status === 'ativo' ? 'ativo' : 'suspenso' %>"><%= o.tenant.status %></span>
             </td>
             <td class="super-pix-cell">
@@ -125,7 +128,9 @@
               <% } %>
             </td>
             <td>
-              <% if (saldoDisp >= 50) { %>
+              <% if (o.tenant.saldoBloqueado) { %>
+                <span class="super-badge super-badge--saldo-bloqueado">Bloqueado</span>
+              <% } else if (saldoDisp >= 50) { %>
                 <span class="super-badge <%= saldoDisp >= 500 ? 'super-badge--saldo-ok' : 'super-badge--saldo-medio' %>">
                   R$ <%= saldoDisp.toFixed(2).replace('.', ',') %>
                 </span>
@@ -163,6 +168,15 @@
                   <input type="hidden" name="status" value="<%= o.tenant.status === 'ativo' ? 'suspenso' : 'ativo' %>">
                   <button type="submit" class="super-action-btn text-[11px] <%= o.tenant.status === 'ativo' ? '' : 'super-action-btn--ok' %>">
                     <%= o.tenant.status === 'ativo' ? 'Suspender' : 'Ativar' %>
+                  </button>
+                </form>
+                <form method="POST" action="/super/tenants/<%= o.tenant.id %>/saldo-bloqueado" class="inline"
+                  onsubmit="return confirm('<%= o.tenant.saldoBloqueado ? 'Desbloquear' : 'Bloquear' %> o saldo de <%= String(o.tenant.nome || '').replace(/'/g, "\\'") %>?')">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <input type="hidden" name="redirect" value="/super/sistemas<%= contaQs({ page: page }) %>">
+                  <input type="hidden" name="acao" value="<%= o.tenant.saldoBloqueado ? 'desbloquear' : 'bloquear' %>">
+                  <button type="submit" class="super-action-btn text-[11px] <%= o.tenant.saldoBloqueado ? 'super-action-btn--ok' : 'super-action-btn--danger' %>">
+                    <%= o.tenant.saldoBloqueado ? 'Desbloquear saldo' : 'Bloquear saldo' %>
                   </button>
                 </form>
                 <% if (totalRifas === 0) { %>

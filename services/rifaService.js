@@ -225,6 +225,18 @@ const RifaService = {
       : rifa.pacotesRapidos;
 
     const atualizada = await prisma.$transaction(async (tx) => {
+      let totalNumeros = rifa.totalNumeros;
+      if (rifa.status === 'ativa' && dados.total_numeros != null && String(dados.total_numeros).trim() !== '') {
+        const novoTotal = parseInt(dados.total_numeros, 10);
+        if (!Number.isFinite(novoTotal) || novoTotal < 1 || novoTotal > 10000) {
+          throw new Error('Total de cotas inválido (1 a 10.000).');
+        }
+        if (novoTotal !== rifa.totalNumeros) {
+          await this._sincronizarTotalNumeros(tx, Number(id), rifa.totalNumeros, novoTotal);
+          totalNumeros = novoTotal;
+        }
+      }
+
       const updated = await tx.rifa.update({
         where: { id: Number(id) },
         data: {
@@ -233,12 +245,13 @@ const RifaService = {
           imagemUrl: capaUrl,
           corPrimaria: dados.cor_primaria || null,
           valorCota: parseFloat(dados.valor_cota),
+          ...(totalNumeros !== rifa.totalNumeros ? { totalNumeros } : {}),
           dataSorteio: new Date(dados.data_sorteio),
           chavePix: dados.chave_pix || rifa.chavePix,
           metaMinimaPct: dados.meta_minima_pct ? parseFloat(dados.meta_minima_pct) : null,
           ...(rifa.status === 'ativa' ? { pacotesRapidos: pacotesJson } : {}),
           ...(dados.modalidade ? {
-            modalidade: (dados.modalidade === 'numeros' && rifa.totalNumeros <= 100) ? 'numeros' : 'cotas'
+            modalidade: (dados.modalidade === 'numeros' && totalNumeros <= 100) ? 'numeros' : 'cotas'
           } : {})
         }
       });
@@ -280,10 +293,66 @@ const RifaService = {
   },
 
   async excluir(id, adminUsuario, tenantId) {
+    const LogService = require('./logService');
     const rifa = await this.buscarPorId(id, tenantId);
     if (!rifa) throw new Error('Rifa não encontrada.');
-    await prisma.rifa.delete({ where: { id: Number(id) } });
+
+    const rifaId = Number(id);
+    const [vendidos, confirmadas] = await Promise.all([
+      prisma.numero.count({ where: { rifaId, status: 'vendido' } }),
+      prisma.reserva.count({ where: { rifaId, statusPagamento: 'confirmado' } })
+    ]);
+    if (vendidos > 0 || confirmadas > 0) {
+      throw new Error(
+        'Não é possível excluir: já existem cotas pagas neste sorteio. Mantenha o histórico ou encerre o sorteio.'
+      );
+    }
+
+    // Libera reservas pendentes antes do cascade
+    await prisma.reserva.deleteMany({
+      where: { rifaId, statusPagamento: { in: ['pendente', 'expirado', 'cancelado'] } }
+    });
+    await prisma.rifa.delete({ where: { id: rifaId } });
     await LogService.registrar(adminUsuario, 'excluir_rifa', `Rifa #${id} excluída`, tenantId);
+  },
+
+  /** Ajusta registros de Numero ao mudar o total de cotas (só rifa ativa). */
+  async _sincronizarTotalNumeros(tx, rifaId, totalAtual, novoTotal) {
+    if (novoTotal > totalAtual) {
+      await tx.numero.createMany({
+        data: Array.from({ length: novoTotal - totalAtual }, (_, i) => ({
+          rifaId,
+          numero: totalAtual + i + 1,
+          status: 'disponivel'
+        }))
+      });
+      return;
+    }
+
+    const ocupado = await tx.numero.findFirst({
+      where: {
+        rifaId,
+        numero: { gt: novoTotal },
+        status: { in: ['vendido', 'reservado'] }
+      },
+      orderBy: { numero: 'desc' },
+      select: { numero: true, status: true }
+    });
+    if (ocupado) {
+      throw new Error(
+        `Não dá para reduzir para ${novoTotal} cotas: o número ${ocupado.numero} está ${ocupado.status}. ` +
+        `O mínimo possível é ${ocupado.numero}.`
+      );
+    }
+
+    await tx.numero.deleteMany({
+      where: { rifaId, numero: { gt: novoTotal }, status: 'disponivel' }
+    });
+
+    const sobra = await tx.numero.count({ where: { rifaId, numero: { gt: novoTotal } } });
+    if (sobra > 0) {
+      throw new Error('Não foi possível reduzir as cotas: ainda há números acima do novo total.');
+    }
   },
 
   /** Sorteio com múltiplos prêmios e verificação de meta mínima */
