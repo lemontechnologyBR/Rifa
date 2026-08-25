@@ -156,7 +156,7 @@
           </div>
           <div><dt>Cota</dt><dd>R$ <span x-text="fmt(valorCota)"></span> · <span x-text="fmtInt(totalCotas)"></span> cotas</dd></div>
           <div><dt>Sorteio</dt><dd x-text="dataSorteio ? new Date(dataSorteio).toLocaleString('pt-BR') : '—'"></dd></div>
-          <% const taxaFixaRecebimento = typeof taxaFixaCota !== 'undefined' ? taxaFixaCota : 0; %>
+          <% const taxaFixaRecebimento = typeof taxaFixaCota !== 'undefined' ? taxaFixaCota : 0.5; %>
           <div><dt>Recebimento</dt><dd>Chave PIX da Carteira — comissão 5%<% if (taxaFixaRecebimento > 0) { %> + R$ <%= taxaFixaRecebimento.toFixed(2).replace('.', ',') %>/cota<% } %></dd></div>
         </dl>
         <%- include('rifa-simulacao', { full: true }) %>
