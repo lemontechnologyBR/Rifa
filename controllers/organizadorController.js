@@ -333,7 +333,9 @@ const organizadorController = {
     try {
       const CarteiraService = require('../services/carteiraService');
       const prisma = require('../lib/prisma');
-      const { saldoMigrado } = await CarteiraService.salvarConfig(req.tenant.id, req.body);
+      const { tenant: tenantAtualizado, saldoMigrado, chaveMudou, primeiraConfig } = await CarteiraService.salvarConfig(req.tenant.id, req.body);
+      // Mantém tenant da request alinhado após salvar
+      if (tenantAtualizado) Object.assign(req.tenant, tenantAtualizado);
       let msg = 'Carteira atualizada!';
       if (saldoMigrado > 0) {
         msg += ` Saldo de R$ ${saldoMigrado.toFixed(2).replace('.', ',')} migrado para a nova chave PIX.`;
@@ -342,6 +344,10 @@ const organizadorController = {
       if (totalRifas === 0) {
         msg = 'Carteira pronta! Agora crie seu primeiro sorteio.';
         return res.redirect(`/${req.tenant.slug}/admin/rifas?nova=1&msg=${encodeURIComponent(msg)}`);
+      }
+      if (primeiraConfig || req.body?.onboarding === '1') {
+        msg = 'PIX configurado! Agora compartilhe o link do seu sorteio.';
+        return res.redirect(`/${req.tenant.slug}/admin/rifas?msg=${encodeURIComponent(msg)}`);
       }
       res.redirect(`/${req.tenant.slug}/admin/carteira?msg=${encodeURIComponent(msg)}`);
     } catch (err) {
@@ -463,7 +469,12 @@ const organizadorController = {
     }
     try {
       const rifa = await RifaService.criar(rifaDadosFromRequest(req.body), req.session.organizadorNome, req.tenant.id);
-      const msg = 'Sorteio no ar! Copie o link e compartilhe no WhatsApp.';
+      const precisaPix = !paymentCtx.carteiraOk;
+      let msg = 'Sorteio no ar! Copie o link e compartilhe no WhatsApp.';
+      if (precisaPix) {
+        msg = 'Sorteio criado! Configure o PIX na Carteira para receber pagamentos.';
+        return res.redirect(`${ab}/carteira?onboarding=1&msg=${encodeURIComponent(msg)}`);
+      }
       res.redirect(`${ab}/rifas?msg=${encodeURIComponent(msg)}&compartilhar=${rifa.id}`);
     } catch (err) {
       res.render('admin/rifa-form', {

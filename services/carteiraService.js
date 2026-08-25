@@ -260,6 +260,7 @@ const CarteiraService = {
     }
 
     const chaveAntiga = tenant.pixChave;
+    const primeiraConfig = !String(chaveAntiga || '').trim();
     const chaveMudou = !!chaveAntiga && !chavesPixEquivalentes(chaveAntiga, pix);
     let saldoMigrado = 0;
 
@@ -282,7 +283,16 @@ const CarteiraService = {
       }
     });
 
-    return { tenant: atualizado, saldoMigrado, chaveMudou };
+    // Propaga PIX para rifas criadas antes da carteira (libera vendas)
+    await prisma.rifa.updateMany({
+      where: {
+        tenantId: Number(tenantId),
+        chavePix: ''
+      },
+      data: { chavePix: pix }
+    });
+
+    return { tenant: atualizado, saldoMigrado, chaveMudou, primeiraConfig };
   }
 };
 

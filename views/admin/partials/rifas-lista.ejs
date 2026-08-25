@@ -1,9 +1,5 @@
 <% if (rifas.length === 0) { %>
-  <%- include('primeira-rifa-cta', {
-    totalRifas: 0,
-    carteiraOk: typeof carteiraOk !== 'undefined' ? carteiraOk : true,
-    adminBase
-  }) %>
+  <% /* CTA de onboarding vem de partials/primeira-rifa-cta na página pai */ %>
 <% } else { %>
   <div class="space-y-3 mb-6">
     <% rifas.forEach(function(r) {

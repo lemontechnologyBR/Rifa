@@ -39,11 +39,6 @@
     this.premio3 = '';
   },
   openWizard() {
-    if (!this.carteiraOk) {
-      alert('Configure sua chave PIX na Carteira antes de criar sorteios.');
-      window.location.href = '<%= adminBase %>/carteira';
-      return;
-    }
     this.resetWizard();
     this.modalNovaRifa = true;
   },
@@ -103,6 +98,12 @@
         <span><%= erro %></span>
       </div>
     <% } %>
+
+    <%- include('partials/primeira-rifa-cta', {
+      totalRifas,
+      carteiraOk,
+      adminBase
+    }) %>
 
     <%- include('partials/rifas-lista') %>
 

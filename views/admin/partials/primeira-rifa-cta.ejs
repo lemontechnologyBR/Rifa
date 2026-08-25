@@ -1,7 +1,5 @@
 <% if (typeof totalRifas !== 'undefined' && totalRifas === 0) {
   const carteiraPronta = typeof carteiraOk !== 'undefined' && carteiraOk;
-  const ctaHref = carteiraPronta ? (adminBase + '/rifas?nova=1') : (adminBase + '/carteira');
-  const ctaLabel = carteiraPronta ? 'Criar minha primeira rifa' : 'Configurar carteira';
 %>
   <div class="admin-onboard mb-6">
     <div class="admin-onboard-icon">
@@ -9,28 +7,24 @@
     </div>
     <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-1">Crie sua primeira rifa</h3>
     <p class="text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-      <% if (carteiraPronta) { %>
-        Sua carteira está pronta. Em poucos minutos seu sorteio estará no ar para receber pagamentos.
-      <% } else { %>
-        Configure como você vai receber e depois publique seu primeiro sorteio.
-      <% } %>
+      Monte o sorteio agora. A chave PIX na Carteira você configura depois — só é necessária para receber vendas.
     </p>
-    <a href="<%= ctaHref %>" class="admin-btn-primary inline-flex items-center gap-2 px-6 py-3 text-sm mt-4">
-      <i data-lucide="plus" class="w-4 h-4"></i> <%= ctaLabel %>
+    <a href="<%= adminBase %>/rifas?nova=1" class="admin-btn-primary inline-flex items-center gap-2 px-6 py-3 text-sm mt-4">
+      <i data-lucide="plus" class="w-4 h-4"></i> Criar minha primeira rifa
     </a>
     <div class="admin-onboard-steps">
-      <a href="<%= adminBase %>/carteira" class="admin-onboard-step <%= carteiraPronta ? 'admin-onboard-step--done' : 'admin-onboard-step--active' %>">
-        <span class="admin-onboard-step-num"><% if (carteiraPronta) { %><i data-lucide="check" class="w-3 h-3"></i><% } else { %>1<% } %></span>
-        <div>
-          <p class="font-semibold text-sm">Configure a Carteira</p>
-          <p class="text-xs text-gray-500 dark:text-gray-400"><%= carteiraPronta ? 'PIX pronto' : 'Informe sua chave PIX' %></p>
-        </div>
-      </a>
-      <a href="<%= carteiraPronta ? (adminBase + '/rifas?nova=1') : (adminBase + '/carteira') %>" class="admin-onboard-step <%= carteiraPronta ? 'admin-onboard-step--active' : '' %>">
-        <span class="admin-onboard-step-num">2</span>
+      <a href="<%= adminBase %>/rifas?nova=1" class="admin-onboard-step admin-onboard-step--active">
+        <span class="admin-onboard-step-num">1</span>
         <div>
           <p class="font-semibold text-sm">Crie o sorteio</p>
           <p class="text-xs text-gray-500 dark:text-gray-400">Nome, valor da cota e data</p>
+        </div>
+      </a>
+      <a href="<%= adminBase %>/carteira" class="admin-onboard-step <%= carteiraPronta ? 'admin-onboard-step--done' : '' %>">
+        <span class="admin-onboard-step-num"><% if (carteiraPronta) { %><i data-lucide="check" class="w-3 h-3"></i><% } else { %>2<% } %></span>
+        <div>
+          <p class="font-semibold text-sm">Configure o PIX</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400"><%= carteiraPronta ? 'PIX pronto' : 'Para receber os pagamentos' %></p>
         </div>
       </a>
       <div class="admin-onboard-step admin-onboard-step--muted">
@@ -41,5 +35,13 @@
         </div>
       </div>
     </div>
+  </div>
+<% } else if (typeof carteiraOk !== 'undefined' && !carteiraOk) { %>
+  <div class="admin-alert admin-alert-warning mb-6">
+    <i data-lucide="wallet" class="w-4 h-4 shrink-0 mt-0.5"></i>
+    <span>
+      Seu sorteio está no ar, mas <strong>ainda não recebe PIX</strong>.
+      <a href="<%= adminBase %>/carteira<%= typeof onboarding !== 'undefined' && onboarding ? '?onboarding=1' : '' %>" class="underline font-semibold">Configure a Carteira</a> para liberar as vendas.
+    </span>
   </div>
 <% } %>

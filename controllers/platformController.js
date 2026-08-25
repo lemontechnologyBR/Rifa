@@ -155,7 +155,7 @@ const platformController = {
         });
       } catch (_) {}
 
-      res.redirect(`/${tenant.slug}/admin/carteira?onboarding=1`);
+      res.redirect(`/${tenant.slug}/admin/rifas?nova=1&onboarding=1`);
     } catch (err) {
       const appUrl = res.locals.baseUrl || process.env.APP_URL || '';
       res.render('platform/cadastro', {

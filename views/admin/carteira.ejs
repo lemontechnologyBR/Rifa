@@ -21,16 +21,11 @@
       <div class="admin-alert admin-alert-error"><i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i><span><%= erro %></span></div>
     <% } %>
     <% if (typeof onboarding !== 'undefined' && onboarding) { %>
-      <div class="admin-alert admin-alert-success mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div class="admin-alert admin-alert-success mb-4">
         <div class="flex items-start gap-2">
           <i data-lucide="party-popper" class="w-4 h-4 shrink-0 mt-0.5"></i>
-          <span><strong>Bem-vindo ao VouRifar!</strong> Cadastre sua chave PIX abaixo — em seguida você cria o primeiro sorteio.</span>
+          <span><strong>Quase lá!</strong> Cadastre sua chave PIX abaixo para liberar as vendas do seu sorteio.</span>
         </div>
-        <% if (typeof carteiraOk !== 'undefined' && carteiraOk) { %>
-          <a href="<%= adminBase %>/rifas?nova=1" class="admin-btn-primary inline-flex items-center gap-1.5 px-4 py-2 text-xs whitespace-nowrap shrink-0">
-            Já tenho PIX → criar rifa
-          </a>
-        <% } %>
       </div>
     <% } %>
 
@@ -432,6 +427,9 @@
           labelAtivo() { return this.tipos[this.tipo]?.label || 'Chave PIX'; }
         }">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <% if (typeof onboarding !== 'undefined' && onboarding) { %>
+          <input type="hidden" name="onboarding" value="1">
+        <% } %>
 
         <div class="admin-config-section-head">
           <div class="admin-config-section-icon pix"><img src="/img/pix.svg?v=2" alt="PIX" width="40" height="40"></div>

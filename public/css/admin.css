@@ -359,6 +359,18 @@
   color: #fca5a5;
 }
 
+.admin-alert-warning {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #92400e;
+}
+
+.dark .admin-alert-warning {
+  background: rgba(120, 53, 15, 0.25);
+  border-color: #92400e;
+  color: #fcd34d;
+}
+
 .admin-tip {
   display: flex;
   align-items: center;

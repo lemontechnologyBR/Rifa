@@ -122,16 +122,8 @@ const RifaService = {
       : serializePacotesRapidos(parsePacotesRapidosFromBody(dados));
 
     const tenant = await prisma.tenant.findUnique({ where: { id: Number(tenantId) } });
-    const PaymentService = require('./paymentService');
-
-    if (!PaymentService.isConfigured(tenant)) {
-      throw new Error('Configure sua chave PIX na Carteira antes de criar rifas.');
-    }
-
-    const pixFinal = chave_pix || tenant?.pixChave;
-    if (!pixFinal) {
-      throw new Error('Configure sua chave PIX na Carteira antes de criar rifas.');
-    }
+    // PIX opcional na criação: vendas só liberam quando a Carteira estiver configurada.
+    const pixFinal = String(chave_pix || tenant?.pixChave || '').trim();
 
     const rifa = await prisma.$transaction(async (tx) => {
       const nova = await tx.rifa.create({
