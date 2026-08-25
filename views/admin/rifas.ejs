@@ -113,10 +113,18 @@
   <script>
     lucide.createIcons();
 
-    function compartilharRifa(url) {
+    function compartilharRifa(url, titulo) {
+      var texto = (titulo ? titulo + ' — ' : '') + 'Participe do sorteio: ' + url;
+      if (navigator.share) {
+        navigator.share({ title: titulo || 'Sorteio', text: texto, url: url }).catch(function () {});
+        return;
+      }
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(url).then(function () {
-          alert('Link copiado!\n\n' + url);
+          var wa = 'https://wa.me/?text=' + encodeURIComponent(texto);
+          if (confirm('Link copiado!\n\nAbrir WhatsApp para compartilhar?')) {
+            window.open(wa, '_blank', 'noopener');
+          }
         }).catch(function () { prompt('Copie o link:', url); });
       } else {
         prompt('Copie o link do sorteio:', url);
@@ -125,9 +133,21 @@
 
     document.querySelectorAll('.btn-share').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        compartilharRifa(btn.dataset.url);
+        compartilharRifa(btn.dataset.url, btn.dataset.titulo);
       });
     });
+
+    (function () {
+      var id = new URLSearchParams(window.location.search).get('compartilhar');
+      if (!id) return;
+      var btn = document.querySelector('.btn-share[data-url*="/rifas/' + id + '"]');
+      if (btn) {
+        setTimeout(function () { compartilharRifa(btn.dataset.url, btn.dataset.titulo); }, 400);
+      }
+      var url = new URL(window.location.href);
+      url.searchParams.delete('compartilhar');
+      history.replaceState({}, '', url.pathname + url.search);
+    })();
   </script>
 </body>
 </html>

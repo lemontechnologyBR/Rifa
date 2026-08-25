@@ -85,6 +85,7 @@ function mapOrganizadorConta(o) {
     viaGoogle: !!o.googleId,
     nurtureD1: !!o.nurtureD1SentAt,
     nurtureD3: !!o.nurtureD3SentAt,
+    nurtureD7: !!o.nurtureD7SentAt,
     campanhaLeads: !!o.campanhaLeadsSentAt,
     pixInfo: pixRecebimentoInfo(o.tenant),
     totalSacadoFmt: fmtMoney(o.totalSacado)
@@ -296,7 +297,7 @@ const superAdminController = {
 
   async enviarNurtureOrganizador(req, res) {
     const OnboardingEmailService = require('../services/onboardingEmailService');
-    const tipo = req.body.tipo === 'd3' ? 'd3' : 'd1';
+    const tipo = req.body.tipo === 'd3' ? 'd3' : req.body.tipo === 'd7' ? 'd7' : 'd1';
     const redirect = req.body.redirect || '/super/sistemas';
     try {
       await OnboardingEmailService.enviarNurtureManual(req.params.id, tipo);

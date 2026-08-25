@@ -35,6 +35,7 @@
     }) %>
 
     <% const traf = typeof trafego !== 'undefined' && trafego ? trafego : { periodo: 30, resumo: {}, topFontes: [], dispositivos: [], topCampanhas: [], visitasUltimos7Dias: [] }; %>
+    <% if (totalRifas > 0) { %>
 
     <div class="admin-metrics">
       <article class="admin-metric-card">
@@ -328,16 +329,19 @@
       </div>
     </div>
 
+    <% } /* totalRifas > 0 */ %>
+
   <%- include('partials/layout-end') %>
 
   <script>
     lucide.createIcons();
 
+    <% if (totalRifas > 0) { %>
     const isDark = document.documentElement.classList.contains('dark');
     const gridColor = isDark ? 'rgba(148,163,184,0.15)' : 'rgba(0,0,0,0.06)';
     const labelColor = isDark ? '#94a3b8' : '#64748b';
 
-    <% if (totalVendas7d > 0) { %>
+    <% if (typeof totalVendas7d !== 'undefined' && totalVendas7d > 0) { %>
     const vendas7d = <%- JSON.stringify(metricas.vendasUltimos7Dias || []) %>;
     new Chart(document.getElementById('chartVendas7d'), {
       type: 'bar',
@@ -412,6 +416,7 @@
       }
     });
     <% } %>
+    <% } /* totalRifas > 0 charts */ %>
   </script>
 </body>
 </html>

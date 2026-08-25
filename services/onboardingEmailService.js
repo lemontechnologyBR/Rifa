@@ -1,11 +1,12 @@
 /**
- * E-mails de onboarding — nurture D+1/D+3 e campanha para leads quentes.
+ * E-mails de onboarding — nurture D+1/D+3/D+7 e campanha para leads quentes.
  */
 const prisma = require('../lib/prisma');
 const { enviarEmail } = require('../lib/emailService');
 const {
   templatePrimeiraRifaD1,
   templatePrimeiraRifaD3,
+  templatePrimeiraRifaD7,
   templateCampanhaLeadsQuentes
 } = require('../lib/emailTemplates');
 const PaymentService = require('./paymentService');
@@ -44,6 +45,11 @@ async function enviarNurture(org, tipo) {
     html = templatePrimeiraRifaD3({ organizador: org, tenantSlug: slug, carteiraOk });
     texto = `Olá, ${org.nome}! Publique seu primeiro sorteio: https://vourifar.com.br/${slug}/admin/rifas?nova=1`;
     campo = 'nurtureD3SentAt';
+  } else if (tipo === 'd7') {
+    assunto = 'Sua conta VouRifar ainda está pronta — falta o sorteio';
+    html = templatePrimeiraRifaD7({ organizador: org, tenantSlug: slug, carteiraOk });
+    texto = `Olá, ${org.nome}! Ainda dá tempo de criar seu sorteio: https://vourifar.com.br/${slug}/admin/rifas?nova=1`;
+    campo = 'nurtureD7SentAt';
   } else {
     return false;
   }
@@ -72,6 +78,10 @@ const OnboardingEmailService = {
           {
             nurtureD3SentAt: null,
             createdAt: { lte: new Date(agora - 72 * MS_HORA) }
+          },
+          {
+            nurtureD7SentAt: null,
+            createdAt: { lte: new Date(agora - 7 * 24 * MS_HORA) }
           }
         ]
       },
@@ -97,6 +107,9 @@ const OnboardingEmailService = {
         }
         if (!org.nurtureD3SentAt && idadeMs >= 72 * MS_HORA) {
           if (await enviarNurture(org, 'd3')) enviados++;
+        }
+        if (!org.nurtureD7SentAt && idadeMs >= 7 * 24 * MS_HORA) {
+          if (await enviarNurture(org, 'd7')) enviados++;
         }
       } catch (err) {
         console.error(`[Onboarding] Erro org #${org.id}:`, err.message);
@@ -187,9 +200,9 @@ const OnboardingEmailService = {
       }
     });
     if (!org) throw new Error('Organizador não encontrado.');
-    if (tipo !== 'd1' && tipo !== 'd3') throw new Error('Tipo de e-mail inválido.');
+    if (tipo !== 'd1' && tipo !== 'd3' && tipo !== 'd7') throw new Error('Tipo de e-mail inválido.');
 
-    const campo = tipo === 'd1' ? 'nurtureD1SentAt' : 'nurtureD3SentAt';
+    const campo = tipo === 'd1' ? 'nurtureD1SentAt' : tipo === 'd3' ? 'nurtureD3SentAt' : 'nurtureD7SentAt';
     if (org[campo]) throw new Error(`E-mail ${tipo.toUpperCase()} já foi enviado.`);
 
     const ok = await enviarNurture(org, tipo);

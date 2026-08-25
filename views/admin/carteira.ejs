@@ -21,9 +21,16 @@
       <div class="admin-alert admin-alert-error"><i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i><span><%= erro %></span></div>
     <% } %>
     <% if (typeof onboarding !== 'undefined' && onboarding) { %>
-      <div class="admin-alert admin-alert-success mb-4">
-        <i data-lucide="party-popper" class="w-4 h-4 shrink-0"></i>
-        <span><strong>Bem-vindo ao VouRifar!</strong> Primeiro passo: cadastre sua chave PIX abaixo para começar a vender.</span>
+      <div class="admin-alert admin-alert-success mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div class="flex items-start gap-2">
+          <i data-lucide="party-popper" class="w-4 h-4 shrink-0 mt-0.5"></i>
+          <span><strong>Bem-vindo ao VouRifar!</strong> Cadastre sua chave PIX abaixo — em seguida você cria o primeiro sorteio.</span>
+        </div>
+        <% if (typeof carteiraOk !== 'undefined' && carteiraOk) { %>
+          <a href="<%= adminBase %>/rifas?nova=1" class="admin-btn-primary inline-flex items-center gap-1.5 px-4 py-2 text-xs whitespace-nowrap shrink-0">
+            Já tenho PIX → criar rifa
+          </a>
+        <% } %>
       </div>
     <% } %>
 

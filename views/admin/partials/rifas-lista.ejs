@@ -1,37 +1,9 @@
 <% if (rifas.length === 0) { %>
-  <div class="admin-onboard">
-    <div class="admin-onboard-icon">
-      <i data-lucide="rocket" class="w-7 h-7"></i>
-    </div>
-    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-1">Comece seu primeiro sorteio</h3>
-    <p class="text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto">Em poucos minutos seus sorteios estarão no ar para receber PIX.</p>
-    <button type="button" @click="openWizard()" class="admin-btn-primary inline-flex items-center gap-2 px-6 py-3 text-sm mt-4">
-      <i data-lucide="plus" class="w-4 h-4"></i> Criar primeiro sorteio
-    </button>
-    <div class="admin-onboard-steps">
-      <div class="admin-onboard-step">
-        <span class="admin-onboard-step-num">1</span>
-        <div>
-          <p class="font-semibold text-sm">Configure a Carteira</p>
-          <p class="text-xs text-gray-500 dark:text-gray-400">Informe sua chave PIX na Carteira</p>
-        </div>
-      </div>
-      <div class="admin-onboard-step">
-        <span class="admin-onboard-step-num">2</span>
-        <div>
-          <p class="font-semibold text-sm">Crie o sorteio</p>
-          <p class="text-xs text-gray-500 dark:text-gray-400">Nome, valor da cota e sorteio</p>
-        </div>
-      </div>
-      <div class="admin-onboard-step">
-        <span class="admin-onboard-step-num">3</span>
-        <div>
-          <p class="font-semibold text-sm">Receba automaticamente</p>
-          <p class="text-xs text-gray-500 dark:text-gray-400">PIX confirmado pela plataforma</p>
-        </div>
-      </div>
-    </div>
-  </div>
+  <%- include('primeira-rifa-cta', {
+    totalRifas: 0,
+    carteiraOk: typeof carteiraOk !== 'undefined' ? carteiraOk : true,
+    adminBase
+  }) %>
 <% } else { %>
   <div class="space-y-3 mb-6">
     <% rifas.forEach(function(r) {

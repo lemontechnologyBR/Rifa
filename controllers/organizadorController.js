@@ -332,10 +332,16 @@ const organizadorController = {
   async salvarCarteira(req, res) {
     try {
       const CarteiraService = require('../services/carteiraService');
+      const prisma = require('../lib/prisma');
       const { saldoMigrado } = await CarteiraService.salvarConfig(req.tenant.id, req.body);
       let msg = 'Carteira atualizada!';
       if (saldoMigrado > 0) {
         msg += ` Saldo de R$ ${saldoMigrado.toFixed(2).replace('.', ',')} migrado para a nova chave PIX.`;
+      }
+      const totalRifas = await prisma.rifa.count({ where: { tenantId: req.tenant.id } });
+      if (totalRifas === 0) {
+        msg = 'Carteira pronta! Agora crie seu primeiro sorteio.';
+        return res.redirect(`/${req.tenant.slug}/admin/rifas?nova=1&msg=${encodeURIComponent(msg)}`);
       }
       res.redirect(`/${req.tenant.slug}/admin/carteira?msg=${encodeURIComponent(msg)}`);
     } catch (err) {
@@ -456,8 +462,9 @@ const organizadorController = {
       });
     }
     try {
-      await RifaService.criar(rifaDadosFromRequest(req.body), req.session.organizadorNome, req.tenant.id);
-      res.redirect(`${ab}/rifas?msg=Rifa criada com sucesso!`);
+      const rifa = await RifaService.criar(rifaDadosFromRequest(req.body), req.session.organizadorNome, req.tenant.id);
+      const msg = 'Sorteio no ar! Copie o link e compartilhe no WhatsApp.';
+      res.redirect(`${ab}/rifas?msg=${encodeURIComponent(msg)}&compartilhar=${rifa.id}`);
     } catch (err) {
       res.render('admin/rifa-form', {
         titulo: 'Nova Rifa', tenant: req.tenant, adminBase: ab, tenantBase: `/${req.tenant.slug}`,

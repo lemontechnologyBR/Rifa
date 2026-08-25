@@ -75,6 +75,7 @@ model Organizador {
   kycVerifiedAt        DateTime? @map("kyc_verified_at")
   nurtureD1SentAt  DateTime? @map("nurture_d1_sent_at")
   nurtureD3SentAt  DateTime? @map("nurture_d3_sent_at")
+  nurtureD7SentAt  DateTime? @map("nurture_d7_sent_at")
   campanhaLeadsSentAt DateTime? @map("campanha_leads_sent_at")
   createdAt        DateTime  @default(now()) @map("created_at")
 

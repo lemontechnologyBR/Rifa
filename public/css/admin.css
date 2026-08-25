@@ -536,6 +536,35 @@
   flex-shrink: 0;
 }
 
+a.admin-onboard-step {
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+a.admin-onboard-step:hover {
+  border-color: rgba(16, 185, 129, 0.5);
+  box-shadow: 0 2px 8px -2px rgba(16, 185, 129, 0.2);
+}
+
+.admin-onboard-step--done {
+  border-color: rgba(16, 185, 129, 0.45);
+  background: rgba(16, 185, 129, 0.12);
+}
+
+.admin-onboard-step--done .admin-onboard-step-num {
+  background: #059669;
+}
+
+.admin-onboard-step--active {
+  border-color: #10b981;
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.25);
+}
+
+.admin-onboard-step--muted {
+  opacity: 0.65;
+}
+
 /* —— Rifa cards —— */
 .admin-rifa-card {
   background: var(--admin-surface);

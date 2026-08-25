@@ -19,25 +19,25 @@
       <i data-lucide="plus" class="w-4 h-4"></i> <%= ctaLabel %>
     </a>
     <div class="admin-onboard-steps">
-      <div class="admin-onboard-step">
-        <span class="admin-onboard-step-num">1</span>
+      <a href="<%= adminBase %>/carteira" class="admin-onboard-step <%= carteiraPronta ? 'admin-onboard-step--done' : 'admin-onboard-step--active' %>">
+        <span class="admin-onboard-step-num"><% if (carteiraPronta) { %><i data-lucide="check" class="w-3 h-3"></i><% } else { %>1<% } %></span>
         <div>
           <p class="font-semibold text-sm">Configure a Carteira</p>
-          <p class="text-xs text-gray-500 dark:text-gray-400">Informe sua chave PIX</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400"><%= carteiraPronta ? 'PIX pronto' : 'Informe sua chave PIX' %></p>
         </div>
-      </div>
-      <div class="admin-onboard-step">
+      </a>
+      <a href="<%= carteiraPronta ? (adminBase + '/rifas?nova=1') : (adminBase + '/carteira') %>" class="admin-onboard-step <%= carteiraPronta ? 'admin-onboard-step--active' : '' %>">
         <span class="admin-onboard-step-num">2</span>
         <div>
           <p class="font-semibold text-sm">Crie o sorteio</p>
-          <p class="text-xs text-gray-500 dark:text-gray-400">Nome, valor da cota e data do sorteio</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">Nome, valor da cota e data</p>
         </div>
-      </div>
-      <div class="admin-onboard-step">
+      </a>
+      <div class="admin-onboard-step admin-onboard-step--muted">
         <span class="admin-onboard-step-num">3</span>
         <div>
           <p class="font-semibold text-sm">Compartilhe e venda</p>
-          <p class="text-xs text-gray-500 dark:text-gray-400">PIX confirmado automaticamente</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">WhatsApp, Instagram, link</p>
         </div>
       </div>
     </div>
