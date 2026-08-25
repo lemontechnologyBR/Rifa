@@ -262,7 +262,7 @@ async function bootstrap() {
     console.log(`Reservas/PIX expiram em ${TEMPO_RESERVA_MIN} min`);
     console.log(`Plataforma:  http://localhost:${PORT}`);
     console.log(`Demo loja:   http://localhost:${PORT}/demo`);
-    console.log(`Super Admin: http://localhost:${PORT}/super (admin / admin123)`);
+    console.log(`Super Admin: http://localhost:${PORT}/super`);
     console.log('');
   });
 }

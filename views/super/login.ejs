@@ -12,7 +12,7 @@
 
     <form method="POST" action="/super/login">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <input type="text" name="usuario" required autocomplete="username" placeholder="Usuário" class="super-login-field">
+      <input type="text" name="usuario" required autocomplete="username" placeholder="E-mail ou usuário" class="super-login-field">
       <input type="password" name="senha" required autocomplete="current-password" placeholder="Senha" class="super-login-field">
       <button type="submit" class="super-login-btn">Entrar</button>
     </form>

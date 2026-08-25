@@ -13,12 +13,29 @@ const AuthService = {
   },
 
   async garantirAdminPadrao() {
-    const existe = await prisma.admin.findUnique({ where: { usuario: 'admin' } });
-    if (!existe) {
-      await prisma.admin.create({
-        data: { usuario: 'admin', senhaHash: bcrypt.hashSync('admin123', 10) }
-      });
-      console.log('✅ Admin padrão criado (admin / admin123)');
+    const usuario = String(process.env.SUPER_ADMIN_USER || 'admin').trim();
+    const senha = process.env.SUPER_ADMIN_PASSWORD || 'admin123';
+    const senhaHash = bcrypt.hashSync(senha, 10);
+
+    const atual = await prisma.admin.findUnique({ where: { usuario } });
+    if (atual) {
+      if (process.env.SUPER_ADMIN_PASSWORD) {
+        await prisma.admin.update({
+          where: { id: atual.id },
+          data: { senhaHash }
+        });
+      }
+    } else {
+      await prisma.admin.create({ data: { usuario, senhaHash } });
+      console.log(`✅ Super admin criado (${usuario})`);
+    }
+
+    if (usuario !== 'admin') {
+      const legado = await prisma.admin.findUnique({ where: { usuario: 'admin' } });
+      if (legado) {
+        await prisma.admin.delete({ where: { id: legado.id } });
+        console.log('✅ Conta super admin legada (admin) removida');
+      }
     }
   },
 

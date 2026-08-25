@@ -21,7 +21,9 @@ function req(method, path, headers, body) {
   const csrf = csrfMatch ? csrfMatch[1] : null;
   console.log('csrf', csrf ? 'ok' : 'missing');
 
-  const body = `_csrf=${encodeURIComponent(csrf)}&usuario=admin&senha=admin123`;
+  const adminUser = process.env.SUPER_ADMIN_USER || 'admin';
+  const adminPass = process.env.SUPER_ADMIN_PASSWORD || 'admin123';
+  const body = `_csrf=${encodeURIComponent(csrf)}&usuario=${encodeURIComponent(adminUser)}&senha=${encodeURIComponent(adminPass)}`;
   const post = await req('POST', '/super/login', {
     'Content-Type': 'application/x-www-form-urlencoded',
     'Content-Length': Buffer.byteLength(body),

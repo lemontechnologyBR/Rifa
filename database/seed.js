@@ -11,13 +11,18 @@ const { gerarCodigoIndicacao, gerarCodigoPagamento } = require('../lib/helpers')
 async function main() {
   console.log('🌱 Iniciando seed...\n');
 
-  // Admin
+  // Super Admin
+  const adminUser = process.env.SUPER_ADMIN_USER || 'admin';
+  const adminPass = process.env.SUPER_ADMIN_PASSWORD || 'admin123';
   await prisma.admin.upsert({
-    where: { usuario: 'admin' },
-    update: {},
-    create: { usuario: 'admin', senhaHash: bcrypt.hashSync('admin123', 10) }
+    where: { usuario: adminUser },
+    update: { senhaHash: bcrypt.hashSync(adminPass, 10) },
+    create: { usuario: adminUser, senhaHash: bcrypt.hashSync(adminPass, 10) }
   });
-  console.log('✅ Admin: admin / admin123');
+  if (adminUser !== 'admin') {
+    await prisma.admin.deleteMany({ where: { usuario: 'admin' } });
+  }
+  console.log(`✅ Super admin: ${adminUser}`);
 
   // Usuários fake
   const usuariosData = [

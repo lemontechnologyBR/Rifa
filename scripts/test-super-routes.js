@@ -18,7 +18,9 @@ function req(method, path, headers, body) {
   const loginPage = await req('GET', '/super/login', {}, null);
   const cookie = (loginPage.headers['set-cookie'] || []).map((c) => c.split(';')[0]).join('; ');
   const csrf = loginPage.body.match(/name="_csrf" value="([^"]+)"/)[1];
-  const body = `_csrf=${encodeURIComponent(csrf)}&usuario=admin&senha=admin123`;
+  const adminUser = process.env.SUPER_ADMIN_USER || 'admin';
+  const adminPass = process.env.SUPER_ADMIN_PASSWORD || 'admin123';
+  const body = `_csrf=${encodeURIComponent(csrf)}&usuario=${encodeURIComponent(adminUser)}&senha=${encodeURIComponent(adminPass)}`;
   const post = await req('POST', '/super/login', {
     'Content-Type': 'application/x-www-form-urlencoded',
     'Content-Length': Buffer.byteLength(body),
