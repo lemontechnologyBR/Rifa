@@ -121,8 +121,16 @@ app.get('/sitemap.xml', async (req, res) => {
     const urls = [
       `<url><loc>${appUrl}/</loc><lastmod>${now}</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>`,
       `<url><loc>${appUrl}/cadastro</loc><lastmod>${now}</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>`,
+      `<url><loc>${appUrl}/ajuda</loc><lastmod>${now}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>`,
       `<url><loc>${appUrl}/acessar</loc><lastmod>${now}</lastmod><changefreq>monthly</changefreq><priority>0.5</priority></url>`,
     ];
+
+    try {
+      const KnowledgeBase = require('./lib/knowledgeBase');
+      for (const a of KnowledgeBase.ARTIGOS) {
+        urls.push(`<url><loc>${appUrl}/ajuda/${a.slug}</loc><lastmod>${now}</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>`);
+      }
+    } catch (_) {}
 
     for (const t of tenants) {
       const d = t.createdAt ? t.createdAt.toISOString().split('T')[0] : now;

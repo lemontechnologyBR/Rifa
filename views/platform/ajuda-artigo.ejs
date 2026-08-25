@@ -1,0 +1,79 @@
+<%- include('../partials/header') %>
+
+<link rel="stylesheet" href="/css/ajuda.css">
+
+<article class="ajuda-page ajuda-article">
+  <nav class="ajuda-breadcrumb" aria-label="Navegação">
+    <a href="/ajuda">Central de Ajuda</a>
+    <span>/</span>
+    <a href="/ajuda?para=<%= artigo.audiencia %>"><%= artigo.audiencia === 'organizador' ? 'Organizadores' : 'Participantes' %></a>
+    <span>/</span>
+    <span><%= artigo.titulo %></span>
+  </nav>
+
+  <header class="ajuda-article-head">
+    <span class="ajuda-card-tag"><%= artigo.audiencia === 'organizador' ? 'Organizador' : 'Participante' %></span>
+    <h1><%= artigo.titulo %></h1>
+    <p class="ajuda-lead"><%= artigo.resumo %></p>
+  </header>
+
+  <div class="ajuda-article-body">
+    <% (artigo.blocks || []).forEach(function (b) { %>
+      <% if (b.type === 'p') { %>
+        <p><%= b.text %></p>
+      <% } else if (b.type === 'ul') { %>
+        <ul>
+          <% (b.items || []).forEach(function (item) { %>
+            <li><%= item %></li>
+          <% }); %>
+        </ul>
+      <% } else if (b.type === 'ol') { %>
+        <ol>
+          <% (b.items || []).forEach(function (item) { %>
+            <li><%= item %></li>
+          <% }); %>
+        </ol>
+      <% } else if (b.type === 'steps') { %>
+        <ol class="ajuda-steps">
+          <% (b.items || []).forEach(function (item, i) { %>
+            <li>
+              <span class="ajuda-step-num"><%= i + 1 %></span>
+              <span><%= item %></span>
+            </li>
+          <% }); %>
+        </ol>
+      <% } else if (b.type === 'callout') { %>
+        <aside class="ajuda-callout">
+          <% if (b.title) { %><strong><%= b.title %></strong><% } %>
+          <p><%= b.text %></p>
+        </aside>
+      <% } %>
+    <% }); %>
+  </div>
+
+  <% if (relacionados && relacionados.length) { %>
+    <section class="ajuda-related">
+      <h2>Leia também</h2>
+      <div class="ajuda-grid">
+        <% relacionados.forEach(function (a) { %>
+          <a href="/ajuda/<%= a.slug %>" class="ajuda-card">
+            <h3><%= a.titulo %></h3>
+            <p><%= a.resumo %></p>
+          </a>
+        <% }); %>
+      </div>
+    </section>
+  <% } %>
+
+  <div class="ajuda-support">
+    <div>
+      <h2>Não resolveu?</h2>
+      <p>Abra o chat ou volte à <a href="/ajuda">lista de artigos</a>.</p>
+    </div>
+    <button type="button" class="ajuda-support-btn" onclick="return window.vourifarOpenSupport ? window.vourifarOpenSupport() : true;">
+      Falar com suporte
+    </button>
+  </div>
+</article>
+
+<%- include('../partials/footer', { platformLanding: true }) %>

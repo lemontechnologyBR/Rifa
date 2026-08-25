@@ -6,6 +6,7 @@ const AuthService = require('../services/authService');
 const GoogleAuthService = require('../services/googleAuthService');
 const { slugify } = require('../lib/reservedSlugs');
 const { platformLandingMeta, cadastroMeta, platformFaq } = require('../lib/seoMeta');
+const KnowledgeBase = require('../lib/knowledgeBase');
 
 const platformController = {
   landing(req, res) {
@@ -15,6 +16,54 @@ const platformController = {
       bodyClass: 'platform-landing',
       faqItems: platformFaq(),
       ...platformLandingMeta(appUrl)
+    });
+  },
+
+  ajudaIndex(req, res) {
+    const appUrl = res.locals.baseUrl || process.env.APP_URL || '';
+    const audiencia = req.query.para === 'comprador' || req.query.para === 'organizador'
+      ? req.query.para
+      : null;
+    const q = req.query.q || '';
+    const artigos = KnowledgeBase.listarArtigos({ audiencia, q });
+    res.render('platform/ajuda', {
+      titulo: 'Central de Ajuda',
+      bodyClass: 'platform-landing',
+      platformLanding: true,
+      categorias: KnowledgeBase.CATEGORIAS,
+      artigos,
+      filtroAudiencia: audiencia,
+      busca: q,
+      csrfToken: res.locals.csrfToken,
+      ...KnowledgeBase.ajudaIndexMeta(appUrl)
+    });
+  },
+
+  ajudaArtigo(req, res) {
+    const appUrl = res.locals.baseUrl || process.env.APP_URL || '';
+    const artigo = KnowledgeBase.buscarArtigo(req.params.slug);
+    if (!artigo) {
+      return res.status(404).render('platform/ajuda', {
+        titulo: 'Central de Ajuda',
+        bodyClass: 'platform-landing',
+        platformLanding: true,
+        categorias: KnowledgeBase.CATEGORIAS,
+        artigos: KnowledgeBase.listarArtigos({}),
+        filtroAudiencia: null,
+        busca: '',
+        erro: 'Artigo não encontrado. Veja os tópicos abaixo.',
+        csrfToken: res.locals.csrfToken,
+        ...KnowledgeBase.ajudaIndexMeta(appUrl)
+      });
+    }
+    res.render('platform/ajuda-artigo', {
+      titulo: artigo.titulo,
+      bodyClass: 'platform-landing',
+      platformLanding: true,
+      artigo,
+      relacionados: KnowledgeBase.artigosRelacionados(artigo),
+      csrfToken: res.locals.csrfToken,
+      ...KnowledgeBase.ajudaArtigoMeta(artigo, appUrl)
     });
   },
 

@@ -6,6 +6,8 @@ const apiController = require('../controllers/apiController');
 const { authLimiter } = require('../middleware/rateLimit');
 
 router.get('/', platformController.landing);
+router.get('/ajuda', platformController.ajudaIndex);
+router.get('/ajuda/:slug', platformController.ajudaArtigo);
 router.get('/acessar', platformController.acessarForm);
 router.get('/acessar/auth/google', googleAuthController.iniciarAcessar);
 router.post('/acessar', authLimiter, platformController.acessar);

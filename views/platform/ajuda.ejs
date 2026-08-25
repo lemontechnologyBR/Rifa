@@ -1,0 +1,83 @@
+<%- include('../partials/header') %>
+
+<link rel="stylesheet" href="/css/ajuda.css">
+
+<div class="ajuda-page">
+  <div class="ajuda-hero">
+    <p class="ajuda-kicker">Central de Ajuda</p>
+    <h1>Como podemos ajudar?</h1>
+    <p class="ajuda-lead">Guias curtos para organizadores e participantes — sem enrolação.</p>
+    <form method="GET" action="/ajuda" class="ajuda-search">
+      <% if (filtroAudiencia) { %>
+        <input type="hidden" name="para" value="<%= filtroAudiencia %>">
+      <% } %>
+      <i data-lucide="search" class="w-4 h-4"></i>
+      <input type="search" name="q" value="<%= busca || '' %>" placeholder="Buscar: PIX, saque, reserva, comissão…" aria-label="Buscar na ajuda">
+      <button type="submit">Buscar</button>
+    </form>
+    <div class="ajuda-filters">
+      <a href="/ajuda" class="<%= !filtroAudiencia ? 'is-active' : '' %>">Todos</a>
+      <a href="/ajuda?para=organizador<%= busca ? '&q=' + encodeURIComponent(busca) : '' %>" class="<%= filtroAudiencia === 'organizador' ? 'is-active' : '' %>">Organizadores</a>
+      <a href="/ajuda?para=comprador<%= busca ? '&q=' + encodeURIComponent(busca) : '' %>" class="<%= filtroAudiencia === 'comprador' ? 'is-active' : '' %>">Participantes</a>
+    </div>
+  </div>
+
+  <% if (typeof erro !== 'undefined' && erro) { %>
+    <div class="ajuda-banner"><%= erro %></div>
+  <% } %>
+
+  <% if (!artigos.length) { %>
+    <div class="ajuda-empty">
+      <p>Nenhum artigo encontrado<%= busca ? ' para “' + busca + '”' : '' %>.</p>
+      <a href="/ajuda">Ver todos os tópicos</a>
+    </div>
+  <% } else if (!filtroAudiencia && !busca) { %>
+    <% categorias.forEach(function (cat) {
+      const itens = artigos.filter(function (a) { return a.audiencia === cat.id; });
+      if (!itens.length) return;
+    %>
+      <section class="ajuda-section">
+        <div class="ajuda-section-head">
+          <h2><%= cat.titulo %></h2>
+          <p><%= cat.descricao %></p>
+        </div>
+        <div class="ajuda-grid">
+          <% itens.forEach(function (a) { %>
+            <a href="/ajuda/<%= a.slug %>" class="ajuda-card">
+              <span class="ajuda-card-tag"><%= a.audiencia === 'organizador' ? 'Organizador' : 'Participante' %></span>
+              <h3><%= a.titulo %></h3>
+              <p><%= a.resumo %></p>
+            </a>
+          <% }); %>
+        </div>
+      </section>
+    <% }); %>
+  <% } else { %>
+    <section class="ajuda-section">
+      <div class="ajuda-section-head">
+        <h2><%= artigos.length %> resultado<%= artigos.length === 1 ? '' : 's' %></h2>
+      </div>
+      <div class="ajuda-grid">
+        <% artigos.forEach(function (a) { %>
+          <a href="/ajuda/<%= a.slug %>" class="ajuda-card">
+            <span class="ajuda-card-tag"><%= a.audiencia === 'organizador' ? 'Organizador' : 'Participante' %></span>
+            <h3><%= a.titulo %></h3>
+            <p><%= a.resumo %></p>
+          </a>
+        <% }); %>
+      </div>
+    </section>
+  <% } %>
+
+  <div class="ajuda-support">
+    <div>
+      <h2>Ainda com dúvida?</h2>
+      <p>Fale com a gente pelo chat da plataforma — estamos online para ajudar.</p>
+    </div>
+    <button type="button" class="ajuda-support-btn" onclick="return window.vourifarOpenSupport ? window.vourifarOpenSupport() : true;">
+      Abrir chat de suporte
+    </button>
+  </div>
+</div>
+
+<%- include('../partials/footer', { platformLanding: true }) %>
