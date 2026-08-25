@@ -22,7 +22,8 @@ function cartPaymentContext(tenant) {
     carteiraOk: PaymentService.isConfigured(tenant),
     gateway: provider,
     organizadorPercentual: ORGANIZADOR_PERCENTUAL_WOOVI,
-    taxaFixaCota: provider === 'woovi' ? TAXA_FIXA_COTA_WOOVI : 0
+    // Sempre exibe a taxa real da plataforma (5% + R$ 0,50), mesmo antes do PIX.
+    taxaFixaCota: TAXA_FIXA_COTA_WOOVI
   };
 }
 

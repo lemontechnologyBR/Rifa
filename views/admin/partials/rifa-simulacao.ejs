@@ -8,8 +8,8 @@
   <div class="grid grid-cols-2 gap-3 mb-3">
     <div class="admin-sim-card admin-sim-card-you">
       <p class="admin-sim-card-label">Você recebe / cota</p>
-      <p class="admin-sim-card-value">R$ <span x-text="fmt(valorCota * <%= typeof organizadorPercentual !== 'undefined' ? organizadorPercentual : 0.95 %> - <%= typeof taxaFixaCota !== 'undefined' ? taxaFixaCota : 0 %>)"></span></p>
-      <p class="admin-sim-card-sub">após comissão 5%<% if (typeof taxaFixaCota !== 'undefined' && taxaFixaCota > 0) { %> + R$ <%= taxaFixaCota.toFixed(2).replace('.', ',') %>/cota<% } %></p>
+      <p class="admin-sim-card-value">R$ <span x-text="fmt(valorCota * <%= typeof organizadorPercentual !== 'undefined' ? organizadorPercentual : 0.95 %> - <%= typeof taxaFixaCota !== 'undefined' ? taxaFixaCota : 0.5 %>)"></span></p>
+      <p class="admin-sim-card-sub">após comissão 5%<% if ((typeof taxaFixaCota !== 'undefined' ? taxaFixaCota : 0.5) > 0) { %> + R$ <%= (typeof taxaFixaCota !== 'undefined' ? taxaFixaCota : 0.5).toFixed(2).replace('.', ',') %>/cota<% } %></p>
     </div>
     <div class="admin-sim-card">
       <p class="admin-sim-card-label">Comprador paga / cota</p>
@@ -33,7 +33,7 @@
       <span class="font-semibold">R$ <span x-text="fmt(volumeCompradores)"></span></span>
     </div>
     <div class="flex justify-between text-xs text-gray-400 pt-1 border-t border-emerald-100 dark:border-emerald-900">
-      <span>Comissão plataforma<% if (typeof taxaFixaCota !== 'undefined' && taxaFixaCota > 0) { %> (5% + R$ <%= taxaFixaCota.toFixed(2).replace('.', ',') %>/cota)<% } else { %> (5% do arrecadado)<% } %></span>
+      <span>Comissão plataforma<% if ((typeof taxaFixaCota !== 'undefined' ? taxaFixaCota : 0.5) > 0) { %> (5% + R$ <%= (typeof taxaFixaCota !== 'undefined' ? taxaFixaCota : 0.5).toFixed(2).replace('.', ',') %>/cota)<% } else { %> (5% do arrecadado)<% } %></span>
       <span>R$ <span x-text="fmt(taxaPlataformaTotal)"></span></span>
     </div>
   </div>
@@ -54,7 +54,7 @@
       <div class="admin-sim-bar-you" x-bind:style="`width:${volumeCompradores > 0 ? (faturamentoTotal / volumeCompradores * 100) : 95}%`"></div>
       <div class="admin-sim-bar-fee" x-bind:style="`width:${volumeCompradores > 0 ? (taxaPlataformaTotal / volumeCompradores * 100) : 5}%`"></div>
     </div>
-    <p class="text-[10px] text-gray-400 mt-1.5">Comissão plataforma<% if (typeof taxaFixaCota !== 'undefined' && taxaFixaCota > 0) { %>: 5% + R$ <%= taxaFixaCota.toFixed(2).replace('.', ',') %> por cota<% } else { %>: 5%<% } %></p>
+    <p class="text-[10px] text-gray-400 mt-1.5">Comissão plataforma<% if ((typeof taxaFixaCota !== 'undefined' ? taxaFixaCota : 0.5) > 0) { %>: 5% + R$ <%= (typeof taxaFixaCota !== 'undefined' ? taxaFixaCota : 0.5).toFixed(2).replace('.', ',') %> por cota<% } else { %>: 5%<% } %></p>
   </div>
   <% } %>
 </div>

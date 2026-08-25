@@ -18,7 +18,7 @@
   get podeGrade() { return this.totalCotas >= 1 && this.totalCotas <= 100; },
   carteiraOk: <%= typeof carteiraOk !== 'undefined' ? carteiraOk : 'false' %>,
   organizadorPercentual: <%= typeof organizadorPercentual !== 'undefined' ? organizadorPercentual : 0.95 %>,
-  taxaFixaCota: <%= typeof taxaFixaCota !== 'undefined' ? taxaFixaCota : 0 %>,
+  taxaFixaCota: <%= typeof taxaFixaCota !== 'undefined' ? taxaFixaCota : 0.5 %>,
   get taxaCota() { return Math.max(0, this.valorCota) * (1 - this.organizadorPercentual) + this.taxaFixaCota; },
   get compradorPaga() { return Math.max(0, this.valorCota); },
   get faturamentoTotal() { return Math.max(0, (this.valorCota * this.organizadorPercentual - this.taxaFixaCota)) * Math.max(0, this.totalCotas); },
