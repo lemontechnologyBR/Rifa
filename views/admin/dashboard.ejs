@@ -35,6 +35,8 @@
     }) %>
 
     <% const traf = typeof trafego !== 'undefined' && trafego ? trafego : { periodo: 30, resumo: {}, topFontes: [], dispositivos: [], topCampanhas: [], visitasUltimos7Dias: [] }; %>
+    <% const totalVendas7d = (metricas.vendasUltimos7Dias || []).reduce(function (s, v) { return s + (v.cotas || 0); }, 0); %>
+    <% const totalVisitas7d = (traf.visitasUltimos7Dias || []).reduce(function (s, v) { return s + (v.views || 0); }, 0); %>
     <% if (totalRifas > 0) { %>
 
     <div class="admin-metrics">
@@ -97,7 +99,6 @@
             Cotas vendidas — últimos 7 dias
           </h2>
         </div>
-        <% const totalVendas7d = (metricas.vendasUltimos7Dias || []).reduce(function (s, v) { return s + (v.cotas || 0); }, 0); %>
         <% if (totalVendas7d === 0) { %>
           <div class="admin-empty-chart">
             <i data-lucide="bar-chart-2" class="w-10 h-10 opacity-30"></i>
@@ -297,7 +298,6 @@
             Visitas na loja — 7 dias
           </h2>
         </div>
-        <% const totalVisitas7d = (traf.visitasUltimos7Dias || []).reduce(function (s, v) { return s + (v.views || 0); }, 0); %>
         <% if (totalVisitas7d === 0) { %>
           <div class="admin-empty-chart h-40">
             <p class="text-sm text-gray-400">Compartilhe sua loja para gerar estatísticas</p>
@@ -341,7 +341,7 @@
     const gridColor = isDark ? 'rgba(148,163,184,0.15)' : 'rgba(0,0,0,0.06)';
     const labelColor = isDark ? '#94a3b8' : '#64748b';
 
-    <% if (typeof totalVendas7d !== 'undefined' && totalVendas7d > 0) { %>
+    <% if (totalVendas7d > 0) { %>
     const vendas7d = <%- JSON.stringify(metricas.vendasUltimos7Dias || []) %>;
     new Chart(document.getElementById('chartVendas7d'), {
       type: 'bar',
