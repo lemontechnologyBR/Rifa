@@ -319,10 +319,11 @@
 
   function formatNumerosResumo(numeros) {
     const sorted = [...numeros].sort((a, b) => a - b);
+    const fmtN = (n) => String(n).padStart(2, '0');
     if (sorted.length <= 15) {
-      return `<strong>${sorted.length}</strong> cota(s) — números: <strong>${sorted.join(', ')}</strong>`;
+      return `<strong>${sorted.length}</strong> cota(s) — números: <strong>${sorted.map(fmtN).join(', ')}</strong>`;
     }
-    const preview = sorted.slice(0, 12).join(', ');
+    const preview = sorted.slice(0, 12).map(fmtN).join(', ');
     return `<strong>${sorted.length}</strong> cota(s) atribuídas automaticamente<br><span class="text-xs text-gray-500">${preview}… e mais ${sorted.length - 12}</span>`;
   }
 
@@ -680,10 +681,10 @@
         btn.removeAttribute('style');
         if (selecionadosGrade.has(num)) {
           btn.className = 'grade-num-btn selecionado';
-          btn.setAttribute('aria-label', `Número ${String(num - 1).padStart(2, '0')} — selecionado`);
+          btn.setAttribute('aria-label', `Número ${String(num).padStart(2, '0')} — selecionado`);
         } else {
           btn.className = `grade-num-btn ${st}`;
-          const label = String(num - 1).padStart(2, '0');
+          const label = String(num).padStart(2, '0');
           if (st === 'vendido') {
             btn.setAttribute('aria-label', `Número ${label} — pago`);
             btn.title = 'Pago';

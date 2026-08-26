@@ -606,12 +606,15 @@
 
       <!-- Grid de números -->
       <div id="grade-numeros" style="display:grid;grid-template-columns:repeat(10,1fr);gap:5px;margin-bottom:16px;">
-        <% for(let i=0; i < rifa.totalNumeros; i++) { %>
+        <% for(let i=0; i < rifa.totalNumeros; i++) {
+          const numExibir = i + 1;
+          const labelNum = String(numExibir).padStart(2, '0');
+        %>
         <button type="button"
           class="grade-num-btn disponivel"
-          data-num="<%= i+1 %>"
-          aria-label="Número <%= String(i).padStart(2,'0') %>">
-          <%= String(i).padStart(2,'0') %>
+          data-num="<%= numExibir %>"
+          aria-label="Número <%= labelNum %>">
+          <%= labelNum %>
         </button>
         <% } %>
       </div>
