@@ -24,7 +24,6 @@ function validarCSRF(req, res, next) {
   // Webhook e APIs externas não usam CSRF de sessão
   if (req.originalUrl.includes('/api/pagamentos/webhook')) return next();
   if (req.originalUrl.includes('/api/pagamentos/woovi')) return next();
-  if (req.originalUrl.includes('/api/pagamentos/sincronizar')) return next();
   if (req.originalUrl.includes('/webhooks/woovi')) return next();
   if (req.originalUrl.includes('/webhooks/didit')) return next();
 

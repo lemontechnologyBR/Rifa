@@ -414,13 +414,27 @@ const WooviService = {
 
   /** Consulta status de uma cobrança na API Woovi. Retorna 'COMPLETED', 'ACTIVE', 'EXPIRED', etc. */
   async consultarStatus(correlationID) {
-    if (!this.isPlatformConfigured()) return null;
+    const charge = await this.consultarCobranca(correlationID);
+    return charge?.status || null;
+  },
+
+  /**
+   * Detalhe da cobrança na API (status + valor em centavos).
+   * Usado para confirmar webhooks/sync sem confiar só no payload.
+   */
+  async consultarCobranca(correlationID) {
+    if (!this.isPlatformConfigured() || !correlationID) return null;
     try {
       const data = await this._request(`/charge/${encodeURIComponent(correlationID)}`);
       const charge = data?.charge || data;
-      return charge?.status || null;
+      if (!charge) return null;
+      return {
+        status: charge.status || null,
+        valueCents: Number(charge.value ?? charge.paymentValue ?? NaN),
+        correlationID: charge.correlationID || correlationID
+      };
     } catch (err) {
-      console.error(`[Woovi] consultarStatus(${correlationID}):`, err.message);
+      console.error(`[Woovi] consultarCobranca(${correlationID}):`, err.message);
       return null;
     }
   },

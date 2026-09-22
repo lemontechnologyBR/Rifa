@@ -247,7 +247,6 @@ const apiController = {
     }
 
     const WooviService = require('../services/wooviService');
-    const PaymentService = require('../services/paymentService');
     const ip = req.ip || req.headers['x-forwarded-for'] || 'unknown';
 
     const signature = req.headers['x-webhook-signature']
@@ -292,36 +291,32 @@ const apiController = {
         return res.json({ ok: true, ignored: true });
       }
 
-      // Segunda linha de defesa: só confirma se a API Woovi reportar pagamento.
-      const statusApi = await WooviService.consultarStatus(correlationID);
-      if (!PaymentService.pagamentoConfirmado(statusApi)) {
-        console.warn(
-          `[Webhook Woovi] correlationID=${correlationID} status API="${statusApi}" — não confirmado`
-        );
-        return res.json({ ok: true, pending: true });
-      }
-
       const reserva = await ReservaService.confirmarViaGateway(correlationID);
       console.log(`[Webhook Woovi] Reserva #${reserva.id} confirmada via correlationID=${correlationID}`);
       return res.json({ ok: true, reservaId: reserva.id });
     } catch (err) {
-      if (!err.message.includes('não encontrada') && !err.message.includes('confirmado') && !err.message.includes('pendente')) {
+      if (!err.message.includes('não encontrada') && !err.message.includes('confirmado') && !err.message.includes('pendente') && !err.message.includes('não confere') && !err.message.includes('ainda não confirmado')) {
         console.error('[Webhook Woovi] Erro:', err.message);
       }
       return res.json({ ok: true });
     }
   },
 
-  /** Verifica pagamentos pendentes no gateway e confirma automaticamente */
+  /** Verifica pagamentos pendentes do tenant (organizador autenticado). */
   async sincronizarPagamentos(req, res) {
     try {
       const PaymentService = require('../services/paymentService');
       const prisma = require('../lib/prisma');
+      const tenantId = req.tenant?.id;
+      if (!tenantId) {
+        return res.status(400).json({ erro: 'Tenant ausente.' });
+      }
 
       const pendentes = await prisma.reserva.findMany({
         where: {
           statusPagamento: 'pendente',
-          wooviCorrelationId: { not: null }
+          wooviCorrelationId: { not: null },
+          rifa: { tenantId }
         },
         take: 20,
         orderBy: { createdAt: 'desc' }

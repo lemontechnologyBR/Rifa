@@ -303,6 +303,22 @@ const ReservaService = {
     if (atualizada.statusPagamento === 'confirmado') return atualizada;
     if (atualizada.statusPagamento !== 'pendente') throw new Error('Reserva não está pendente.');
 
+    // Confirma só se a API Woovi disser COMPLETED e o valor bater com a reserva.
+    const WooviService = require('./wooviService');
+    const PaymentService = require('./paymentService');
+    const charge = await WooviService.consultarCobranca(atualizada.wooviCorrelationId || ref);
+    if (!PaymentService.pagamentoConfirmado(charge?.status)) {
+      throw new Error(`Pagamento ainda não confirmado no gateway (${charge?.status || 'desconhecido'}).`);
+    }
+    const esperadoCents = Math.round(Number(atualizada.valorTotal) * 100);
+    const pagoCents = Number(charge?.valueCents);
+    if (!Number.isFinite(pagoCents) || Math.abs(esperadoCents - pagoCents) > 1) {
+      console.warn(
+        `[Gateway] valor diverge reserva=#${atualizada.id} esperado=${esperadoCents}c pago=${pagoCents}c`
+      );
+      throw new Error('Valor do pagamento não confere com a reserva.');
+    }
+
     await this._confirmarInterno(atualizada.id);
     await this._posConfirmacao(atualizada);
     const origem = PaymentService.getProvider() || 'gateway';
