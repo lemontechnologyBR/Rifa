@@ -18,10 +18,26 @@ const authLimiter = rateLimit({
   message: { erro: 'Muitas tentativas de login. Aguarde 15 minutos.' }
 });
 
+const signupLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { erro: 'Muitos cadastros deste IP. Aguarde 15 minutos.' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+const webhookLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  message: { erro: 'Limite de webhooks atingido.' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
 const compraLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 30,
   message: { erro: 'Limite de requisições de compra atingido.' }
 });
 
-module.exports = { apiLimiter, authLimiter, compraLimiter };
+module.exports = { apiLimiter, authLimiter, signupLimiter, webhookLimiter, compraLimiter };

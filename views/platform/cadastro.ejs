@@ -117,6 +117,10 @@
 
           <form method="POST" action="/cadastro" class="space-y-4" @submit="if(!validStep1() || !validStep2()) { $event.preventDefault(); alert('Revise os dados antes de continuar.'); }">
             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <div class="absolute -left-[9999px]" aria-hidden="true">
+              <label>Website</label>
+              <input type="text" name="website" tabindex="-1" autocomplete="off">
+            </div>
             <% if (viaGoogle) { %><input type="hidden" name="via_google" value="1"><% } %>
             <input type="hidden" name="nome" :value="nome">
             <input type="hidden" name="email" :value="email">

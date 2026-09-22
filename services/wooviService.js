@@ -3,7 +3,13 @@
  * Baseado no padrão do projeto TIP PAGE.
  * App ID fica no .env; organizador informa apenas a chave PIX na Carteira.
  */
+const crypto = require('crypto');
+
 const WOOVI_API = process.env.WOOVI_API_BASE || 'https://api.woovi.com/api/v1';
+
+/** Cache de chaves públicas RSA do webhook (TTL 1h). */
+let _webhookKeysCache = { keys: null, fetchedAt: 0 };
+const WEBHOOK_KEYS_TTL_MS = 60 * 60 * 1000;
 
 // Woovi exige que split.value < charge.value - taxa_woovi.
 // Taxa estimada: ~0,8% com mínimo de R$0,50 (igual ao TIP PAGE).
@@ -417,6 +423,111 @@ const WooviService = {
       console.error(`[Woovi] consultarStatus(${correlationID}):`, err.message);
       return null;
     }
+  },
+
+  /**
+   * Busca chaves públicas RSA usadas para assinar webhooks.
+   * Endpoint aberto — https://developers.woovi.com/docs/webhook/seguranca/webhook-public-keys
+   */
+  async getWebhookPublicKeys() {
+    const now = Date.now();
+    if (_webhookKeysCache.keys && (now - _webhookKeysCache.fetchedAt) < WEBHOOK_KEYS_TTL_MS) {
+      return _webhookKeysCache.keys;
+    }
+
+    try {
+      const res = await fetch(`${WOOVI_API}/webhook/public-keys`, {
+        headers: { Accept: 'application/json' }
+      });
+      const raw = await res.text();
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+
+      let data;
+      try { data = JSON.parse(raw); } catch (_) { data = {}; }
+
+      const list = Array.isArray(data?.public_keys)
+        ? data.public_keys
+        : (Array.isArray(data?.publicKeys) ? data.publicKeys : []);
+
+      const keys = list
+        .map((item) => {
+          const pem = item?.key || item?.public_key || item?.publicKey || item;
+          if (typeof pem !== 'string' || !pem.includes('BEGIN')) return null;
+          return pem;
+        })
+        .filter(Boolean);
+
+      if (!keys.length) {
+        throw new Error('lista vazia');
+      }
+
+      _webhookKeysCache = { keys, fetchedAt: now };
+      return keys;
+    } catch (err) {
+      if (_webhookKeysCache.keys?.length) {
+        console.warn(`[Woovi] usando chaves públicas em cache após falha: ${err.message}`);
+        return _webhookKeysCache.keys;
+      }
+      throw new Error(`Falha ao buscar chaves públicas Woovi: ${err.message}`);
+    }
+  },
+
+  /**
+   * Valida x-webhook-signature (RSA-SHA256 sobre o corpo bruto).
+   * Opcionalmente valida HMAC x-openpix-signature se WOOVI_WEBHOOK_SECRET estiver definido.
+   */
+  async verificarAssinaturaWebhook({ rawBody, signature, hmacSignature }) {
+    if (!rawBody || !Buffer.isBuffer(rawBody) && typeof rawBody !== 'string') {
+      return { ok: false, reason: 'corpo ausente' };
+    }
+    if (!signature) {
+      return { ok: false, reason: 'x-webhook-signature ausente' };
+    }
+
+    const bodyBuf = Buffer.isBuffer(rawBody) ? rawBody : Buffer.from(rawBody);
+
+    let keys;
+    try {
+      keys = await this.getWebhookPublicKeys();
+    } catch (err) {
+      console.error('[Woovi] chaves públicas:', err.message);
+      return { ok: false, reason: 'falha ao obter chaves públicas' };
+    }
+
+    const rsaOk = keys.some((publicKey) => {
+      try {
+        const verify = crypto.createVerify('sha256');
+        verify.update(bodyBuf);
+        verify.end();
+        return verify.verify(publicKey, signature, 'base64');
+      } catch (_) {
+        return false;
+      }
+    });
+
+    if (!rsaOk) {
+      return { ok: false, reason: 'assinatura RSA inválida' };
+    }
+
+    const secret = String(process.env.WOOVI_WEBHOOK_SECRET || '').trim();
+    if (secret) {
+      if (!hmacSignature) {
+        return { ok: false, reason: 'x-openpix-signature ausente' };
+      }
+      const expected = crypto
+        .createHmac('sha1', secret)
+        .update(bodyBuf)
+        .digest('base64');
+      const a = Buffer.from(String(hmacSignature));
+      const b = Buffer.from(expected);
+      if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+        return { ok: false, reason: 'HMAC inválido' };
+      }
+    }
+
+    return { ok: true };
   },
 
   /**

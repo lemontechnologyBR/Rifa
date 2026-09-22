@@ -245,16 +245,35 @@ const apiController = {
     if (process.env.WOOVI_ENABLED !== 'true') {
       return res.status(410).json({ ok: false, erro: 'Woovi desativada.' });
     }
-    res.json({ ok: true });
+
+    const WooviService = require('../services/wooviService');
+    const PaymentService = require('../services/paymentService');
+    const ip = req.ip || req.headers['x-forwarded-for'] || 'unknown';
+
+    const signature = req.headers['x-webhook-signature']
+      || req.headers['X-Webhook-Signature'];
+    const hmacSignature = req.headers['x-openpix-signature']
+      || req.headers['X-OpenPix-Signature'];
+
+    const check = await WooviService.verificarAssinaturaWebhook({
+      rawBody: req.rawBody,
+      signature,
+      hmacSignature
+    });
+
+    if (!check.ok) {
+      console.warn(`[Webhook Woovi] rejeitado ip=${ip} motivo=${check.reason}`);
+      return res.status(401).json({ ok: false, erro: 'Assinatura inválida.' });
+    }
+
     try {
-      const WooviService = require('../services/wooviService');
       const SaqueService = require('../services/saqueService');
       const event = String(req.body?.event || req.body?.type || '');
-      console.log(`[Webhook Woovi] evento="${event}" body=${JSON.stringify(req.body).slice(0, 300)}`);
+      console.log(`[Webhook Woovi] ok ip=${ip} evento="${event}"`);
 
       if (event.toUpperCase().includes('MOVEMENT_')) {
         await SaqueService.processarEventoWoovi(req.body);
-        return;
+        return res.json({ ok: true });
       }
 
       const eventosConfirmacao = [
@@ -264,20 +283,32 @@ const apiController = {
       ];
       if (event && !eventosConfirmacao.some((e) => event.toUpperCase().includes(e.split(':').pop()))) {
         console.log(`[Webhook Woovi] evento ignorado: ${event}`);
-        return;
+        return res.json({ ok: true, ignored: true });
       }
 
       const correlationID = WooviService.extrairCorrelationId(req.body);
       if (!correlationID) {
-        console.warn('[Webhook Woovi] Payload sem correlationID:', JSON.stringify(req.body).slice(0, 200));
-        return;
+        console.warn('[Webhook Woovi] Payload sem correlationID');
+        return res.json({ ok: true, ignored: true });
       }
+
+      // Segunda linha de defesa: só confirma se a API Woovi reportar pagamento.
+      const statusApi = await WooviService.consultarStatus(correlationID);
+      if (!PaymentService.pagamentoConfirmado(statusApi)) {
+        console.warn(
+          `[Webhook Woovi] correlationID=${correlationID} status API="${statusApi}" — não confirmado`
+        );
+        return res.json({ ok: true, pending: true });
+      }
+
       const reserva = await ReservaService.confirmarViaGateway(correlationID);
       console.log(`[Webhook Woovi] Reserva #${reserva.id} confirmada via correlationID=${correlationID}`);
+      return res.json({ ok: true, reservaId: reserva.id });
     } catch (err) {
-      if (!err.message.includes('não encontrada') && !err.message.includes('confirmado')) {
+      if (!err.message.includes('não encontrada') && !err.message.includes('confirmado') && !err.message.includes('pendente')) {
         console.error('[Webhook Woovi] Erro:', err.message);
       }
+      return res.json({ ok: true });
     }
   },
 

@@ -3,7 +3,35 @@
  */
 const bcrypt = require('bcrypt');
 const prisma = require('../lib/prisma');
-const { gerarCodigoIndicacao, limparTelefone, limparCpf, cpfValido } = require('../lib/helpers');
+const { gerarCodigoIndicacao, limparTelefone, limparCpf, cpfValido, gerarTokenRecuperacao } = require('../lib/helpers');
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const NOME_RE = /^[\p{L}\p{M}\s'.-]{2,80}$/u;
+
+function assertNomeValido(nome) {
+  const n = String(nome || '').trim().replace(/\s+/g, ' ');
+  if (!NOME_RE.test(n)) {
+    throw new Error('Nome inválido. Use apenas letras e espaços (2 a 80 caracteres).');
+  }
+  if (/https?:\/\/|www\.|@|<script/i.test(n)) {
+    throw new Error('Nome inválido.');
+  }
+  return n;
+}
+
+function assertEmailValido(email) {
+  const e = String(email || '').trim().toLowerCase();
+  if (!EMAIL_RE.test(e) || e.length > 160) {
+    throw new Error('E-mail inválido.');
+  }
+  return e;
+}
+
+function tokenConfirmacaoEmail() {
+  const token = gerarTokenRecuperacao();
+  const expira = new Date(Date.now() + 48 * 60 * 60 * 1000);
+  return { token, expira };
+}
 
 const AuthService = {
   async loginAdmin(usuario, senha) {
@@ -39,23 +67,57 @@ const AuthService = {
     }
   },
 
+  /**
+   * Contas antigas (sem token de confirmação pendente) passam a valer como verificadas.
+   * Novos cadastros com token pendente não são afetados.
+   */
+  async garantirEmailsVerificadosLegados() {
+    try {
+      const r = await prisma.organizador.updateMany({
+        where: {
+          emailVerifiedAt: null,
+          emailConfirmToken: null
+        },
+        data: { emailVerifiedAt: new Date() }
+      });
+      if (r.count > 0) {
+        console.log(`✅ ${r.count} organizador(es) legado(s) marcados com e-mail verificado`);
+      }
+    } catch (err) {
+      console.warn('[Auth] garantirEmailsVerificadosLegados:', err.message);
+    }
+  },
+
+  emailVerificado(org) {
+    return !!(org && org.emailVerifiedAt);
+  },
+
   async registrarOrganizador({ tenantId, nome, email, senha }) {
-    const existente = await prisma.organizador.findUnique({ where: { email: email.toLowerCase() } });
+    const nomeOk = assertNomeValido(nome);
+    const emailOk = assertEmailValido(email);
+    const existente = await prisma.organizador.findUnique({ where: { email: emailOk } });
     if (existente) throw new Error('E-mail já cadastrado.');
+
+    const { token, expira } = tokenConfirmacaoEmail();
 
     return prisma.organizador.create({
       data: {
         tenantId: Number(tenantId),
-        nome,
-        email: email.toLowerCase(),
-        senhaHash: bcrypt.hashSync(senha, 10)
+        nome: nomeOk,
+        email: emailOk,
+        senhaHash: bcrypt.hashSync(senha, 10),
+        emailVerifiedAt: null,
+        emailConfirmToken: token,
+        emailConfirmExpira: expira
       },
       include: { tenant: true }
     });
   },
 
   async registrarOrganizadorGoogle({ tenantId, nome, email, googleId }) {
-    const existente = await prisma.organizador.findUnique({ where: { email: email.toLowerCase() } });
+    const nomeOk = assertNomeValido(nome || 'Organizador');
+    const emailOk = assertEmailValido(email);
+    const existente = await prisma.organizador.findUnique({ where: { email: emailOk } });
     if (existente) throw new Error('E-mail já cadastrado.');
 
     const googleEmUso = await prisma.organizador.findUnique({ where: { googleId } });
@@ -64,12 +126,57 @@ const AuthService = {
     return prisma.organizador.create({
       data: {
         tenantId: Number(tenantId),
-        nome,
-        email: email.toLowerCase(),
-        googleId
+        nome: nomeOk,
+        email: emailOk,
+        googleId,
+        emailVerifiedAt: new Date(),
+        emailConfirmToken: null,
+        emailConfirmExpira: null
       },
       include: { tenant: true }
     });
+  },
+
+  async confirmarEmailPorToken(token) {
+    const t = String(token || '').trim();
+    if (!t || t.length < 32) throw new Error('Link de confirmação inválido.');
+
+    const org = await prisma.organizador.findUnique({
+      where: { emailConfirmToken: t },
+      include: { tenant: true }
+    });
+    if (!org) throw new Error('Link de confirmação inválido ou já utilizado.');
+    if (org.emailConfirmExpira && org.emailConfirmExpira < new Date()) {
+      throw new Error('Link de confirmação expirado. Solicite um novo e-mail.');
+    }
+
+    return prisma.organizador.update({
+      where: { id: org.id },
+      data: {
+        emailVerifiedAt: new Date(),
+        emailConfirmToken: null,
+        emailConfirmExpira: null
+      },
+      include: { tenant: true }
+    });
+  },
+
+  async reenviarConfirmacaoEmail(email) {
+    const emailOk = assertEmailValido(email);
+    const org = await prisma.organizador.findUnique({
+      where: { email: emailOk },
+      include: { tenant: true }
+    });
+    if (!org) return null;
+    if (org.emailVerifiedAt) return { jaVerificado: true, org };
+
+    const { token, expira } = tokenConfirmacaoEmail();
+    const atualizado = await prisma.organizador.update({
+      where: { id: org.id },
+      data: { emailConfirmToken: token, emailConfirmExpira: expira },
+      include: { tenant: true }
+    });
+    return { jaVerificado: false, org: atualizado };
   },
 
   async loginOrganizador(email, senha, tenantId) {
@@ -79,6 +186,12 @@ const AuthService = {
     });
     if (!org || !org.senhaHash || !bcrypt.compareSync(senha, org.senhaHash)) return null;
     if (org.tenant.status === 'suspenso') throw new Error('Este sistema de rifas está suspenso.');
+    if (!org.emailVerifiedAt) {
+      const err = new Error('Confirme seu e-mail antes de acessar o painel.');
+      err.code = 'EMAIL_NAO_VERIFICADO';
+      err.email = org.email;
+      throw err;
+    }
     return org;
   },
 
@@ -101,15 +214,25 @@ const AuthService = {
       throw new Error('Este sistema de rifas está suspenso.');
     }
 
+    const patch = {};
     if (!org.googleId) {
       const googleEmUso = await prisma.organizador.findUnique({ where: { googleId } });
       if (googleEmUso && googleEmUso.id !== org.id) {
         throw new Error('Esta conta Google já está vinculada a outro organizador.');
       }
+      patch.googleId = googleId;
+      patch.nome = org.nome || nome;
+    }
+    if (!org.emailVerifiedAt) {
+      patch.emailVerifiedAt = new Date();
+      patch.emailConfirmToken = null;
+      patch.emailConfirmExpira = null;
+    }
 
+    if (Object.keys(patch).length) {
       org = await prisma.organizador.update({
         where: { id: org.id },
-        data: { googleId, nome: org.nome || nome },
+        data: patch,
         include: { tenant: true }
       });
     }
@@ -124,6 +247,12 @@ const AuthService = {
     });
     if (!org || !org.senhaHash || !bcrypt.compareSync(senha, org.senhaHash)) return null;
     if (org.tenant.status === 'suspenso') throw new Error('Este sistema de rifas está suspenso.');
+    if (!org.emailVerifiedAt) {
+      const err = new Error('Confirme seu e-mail antes de acessar o painel.');
+      err.code = 'EMAIL_NAO_VERIFICADO';
+      err.email = org.email;
+      throw err;
+    }
     return org;
   },
 
@@ -138,15 +267,25 @@ const AuthService = {
       throw new Error('Este sistema de rifas está suspenso.');
     }
 
+    const patch = {};
     if (!org.googleId) {
       const googleEmUso = await prisma.organizador.findUnique({ where: { googleId } });
       if (googleEmUso && googleEmUso.id !== org.id) {
         throw new Error('Esta conta Google já está vinculada a outro organizador.');
       }
+      patch.googleId = googleId;
+      patch.nome = org.nome || nome;
+    }
+    if (!org.emailVerifiedAt) {
+      patch.emailVerifiedAt = new Date();
+      patch.emailConfirmToken = null;
+      patch.emailConfirmExpira = null;
+    }
 
+    if (Object.keys(patch).length) {
       org = await prisma.organizador.update({
         where: { id: org.id },
-        data: { googleId, nome: org.nome || nome },
+        data: patch,
         include: { tenant: true }
       });
     }
@@ -167,7 +306,7 @@ const AuthService = {
     if (!cpfValido(cpfLimpo)) throw new Error('CPF inválido.');
 
     const emailNorm = String(email || '').trim().toLowerCase();
-    if (!emailNorm || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNorm)) {
+    if (!emailNorm || !EMAIL_RE.test(emailNorm)) {
       throw new Error('E-mail inválido.');
     }
 

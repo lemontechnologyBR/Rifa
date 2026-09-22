@@ -44,19 +44,36 @@ async function resolveTenant(req, res, next) {
   }
 }
 
-function requireOrganizador(req, res, next) {
+async function requireOrganizador(req, res, next) {
   if (
-    req.session?.organizadorId &&
-    req.session?.tenantId === req.tenant?.id
+    !(req.session?.organizadorId &&
+    req.session?.tenantId === req.tenant?.id)
   ) {
-    res.locals.organizadorLogado = true;
-    return next();
+    if (req.xhr || req.headers.accept?.includes('application/json')) {
+      return res.status(401).json({ erro: 'Faça login como organizador.' });
+    }
+    return res.redirect(`/${req.tenant.slug}/admin/login`);
   }
 
-  if (req.xhr || req.headers.accept?.includes('application/json')) {
-    return res.status(401).json({ erro: 'Faça login como organizador.' });
+  try {
+    const org = await prisma.organizador.findUnique({
+      where: { id: req.session.organizadorId },
+      select: { emailVerifiedAt: true, email: true }
+    });
+
+    if (!org?.emailVerifiedAt) {
+      const email = encodeURIComponent(org?.email || '');
+      if (req.xhr || req.headers.accept?.includes('application/json')) {
+        return res.status(403).json({ erro: 'Confirme seu e-mail para continuar.', emailNaoVerificado: true });
+      }
+      return res.redirect(`/verificar-email?email=${email}`);
+    }
+
+    res.locals.organizadorLogado = true;
+    return next();
+  } catch (err) {
+    return next(err);
   }
-  return res.redirect(`/${req.tenant.slug}/admin/login`);
 }
 
 function carregarOrganizador(req, res, next) {

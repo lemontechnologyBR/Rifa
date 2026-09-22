@@ -65,6 +65,9 @@ model Organizador {
   email            String    @unique
   senhaHash        String?   @map("senha_hash")
   googleId         String?   @unique @map("google_id")
+  emailVerifiedAt  DateTime? @map("email_verified_at")
+  emailConfirmToken String?  @unique @map("email_confirm_token")
+  emailConfirmExpira DateTime? @map("email_confirm_expira")
   tokenRecuperacao String?   @map("token_recuperacao")
   tokenExpira      DateTime? @map("token_expira")
   pinHash              String?   @map("pin_hash")

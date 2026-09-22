@@ -50,7 +50,7 @@ api.post('/rifas/:id/comentarios', validarComentario, handleValidation, apiContr
 api.get('/rifas/:id/numeros', apiController.statusNumeros);
 api.get('/rifas/:id/carrinho', apiController.carrinho);
 api.post('/pagamentos/webhook', validarWebhook, handleValidation, apiController.webhookPagamento);
-api.post('/pagamentos/woovi', apiController.webhookWoovi);
+api.post('/pagamentos/woovi', require('../middleware/rateLimit').webhookLimiter, apiController.webhookWoovi);
 api.post('/pagamentos/sincronizar', apiController.sincronizarPagamentos);
 api.get('/reservas/:id/status', apiController.statusReserva);
 router.use('/api', api);

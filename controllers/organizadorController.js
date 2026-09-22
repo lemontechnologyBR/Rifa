@@ -63,6 +63,9 @@ const organizadorController = {
       req.session.organizadorNome = org.nome;
       res.redirect(`/${req.tenant.slug}/admin`);
     } catch (err) {
+      if (err.code === 'EMAIL_NAO_VERIFICADO') {
+        return res.redirect(`/verificar-email?email=${encodeURIComponent(err.email || req.body.email || '')}`);
+      }
       res.render('admin/login', {
         titulo: `Login — ${req.tenant.nome}`,
         tenant: req.tenant,

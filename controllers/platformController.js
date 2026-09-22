@@ -108,6 +108,9 @@ const platformController = {
 
       res.redirect(`/${org.tenant.slug}/admin`);
     } catch (err) {
+      if (err.code === 'EMAIL_NAO_VERIFICADO') {
+        return res.redirect(`/verificar-email?email=${encodeURIComponent(err.email || email || '')}`);
+      }
       res.render('platform/acessar', {
         titulo: 'Acessar painel',
         bodyClass: 'platform-landing',
@@ -116,6 +119,74 @@ const platformController = {
         googleEnabled: GoogleAuthService.isConfigured(),
         csrfToken: res.locals.csrfToken
       });
+    }
+  },
+
+  verificarEmailForm(req, res) {
+    res.render('platform/verificar-email', {
+      titulo: 'Confirme seu e-mail',
+      bodyClass: 'platform-landing',
+      seoTitle: 'Confirmar e-mail — VouRifar',
+      seoNoIndex: true,
+      email: req.query.email || '',
+      msg: req.query.msg ? decodeURIComponent(String(req.query.msg).replace(/\+/g, ' ')) : null,
+      erro: req.query.erro ? decodeURIComponent(String(req.query.erro).replace(/\+/g, ' ')) : null,
+      csrfToken: res.locals.csrfToken
+    });
+  },
+
+  async confirmarEmail(req, res) {
+    try {
+      const org = await AuthService.confirmarEmailPorToken(req.query.token);
+      req.session.organizadorId = org.id;
+      req.session.tenantId = org.tenantId;
+      req.session.tenantSlug = org.tenant.slug;
+      req.session.organizadorNome = org.nome;
+
+      setImmediate(async () => {
+        try {
+          const { enviarEmail } = require('../lib/emailService');
+          const { templateBoasVindas } = require('../lib/emailTemplates');
+          await enviarEmail({
+            para: org.email,
+            assunto: 'Bem-vindo à VouRifar!',
+            html: templateBoasVindas({ organizador: org, tenantSlug: org.tenant.slug }),
+            texto: `Olá ${org.nome}! Sua conta foi confirmada. Acesse ${process.env.APP_URL || 'https://vourifar.com.br'}/${org.tenant.slug}/admin`
+          });
+        } catch (e) {
+          console.error('[Email] Falha boas-vindas pós-confirmação:', e.message);
+        }
+      });
+
+      return res.redirect(`/${org.tenant.slug}/admin/rifas?nova=1&onboarding=1&msg=${encodeURIComponent('E-mail confirmado! Bem-vindo.')}`);
+    } catch (err) {
+      return res.redirect(`/verificar-email?erro=${encodeURIComponent(err.message)}`);
+    }
+  },
+
+  async reenviarConfirmacaoEmail(req, res) {
+    const email = String(req.body.email || '').trim().toLowerCase();
+    try {
+      const result = await AuthService.reenviarConfirmacaoEmail(email);
+      if (result?.jaVerificado) {
+        return res.redirect(`/acessar?msg=${encodeURIComponent('E-mail já confirmado. Faça login.')}`);
+      }
+      if (result?.org) {
+        const { enviarEmail } = require('../lib/emailService');
+        const { templateConfirmacaoEmail } = require('../lib/emailTemplates');
+        await enviarEmail({
+          para: result.org.email,
+          assunto: 'Confirme seu e-mail — VouRifar',
+          html: templateConfirmacaoEmail({
+            organizador: result.org,
+            token: result.org.emailConfirmToken
+          }),
+          texto: `Confirme seu e-mail: ${process.env.APP_URL || 'https://vourifar.com.br'}/confirmar-email?token=${result.org.emailConfirmToken}`
+        });
+      }
+      return res.redirect(`/verificar-email?email=${encodeURIComponent(email)}&msg=${encodeURIComponent('Se o e-mail existir, enviamos um novo link de confirmação.')}`);
+    } catch (err) {
+      return res.redirect(`/verificar-email?email=${encodeURIComponent(email)}&erro=${encodeURIComponent(err.message)}`);
     }
   },
 
@@ -140,12 +211,18 @@ const platformController = {
   },
 
   async cadastro(req, res) {
-    const { nome_loja, slug, nome, email, senha, confirmar_senha, via_google } = req.body;
+    const { nome_loja, slug, nome, email, senha, confirmar_senha, via_google, website } = req.body;
     const googleProfile = req.session.googleCadastro;
     const useGoogle = via_google === '1' && googleProfile;
     const dados = { nome_loja, slug, nome, email: useGoogle ? googleProfile.email : email };
 
     try {
+      // Honeypot anti-bot — campo oculto deve ficar vazio
+      if (website) {
+        console.warn(`[Cadastro] honeypot preenchido ip=${req.ip}`);
+        return res.redirect('/verificar-email?msg=' + encodeURIComponent('Se o e-mail for válido, enviaremos a confirmação.'));
+      }
+
       if (useGoogle) {
         if (googleProfile.email !== String(email || '').toLowerCase()) {
           throw new Error('E-mail não confere com a conta Google.');
@@ -176,26 +253,6 @@ const platformController = {
 
       delete req.session.googleCadastro;
 
-      req.session.organizadorId = organizador.id;
-      req.session.tenantId = tenant.id;
-      req.session.tenantSlug = tenant.slug;
-      req.session.organizadorNome = organizador.nome;
-
-      setImmediate(async () => {
-        try {
-          const { enviarEmail } = require('../lib/emailService');
-          const { templateBoasVindas } = require('../lib/emailTemplates');
-          await enviarEmail({
-            para: organizador.email,
-            assunto: 'Bem-vindo à VouRifar! 🎉',
-            html: templateBoasVindas({ organizador, tenantSlug: tenant.slug }),
-            texto: `Olá ${organizador.nome}! Sua conta na VouRifar foi criada. Acesse seu painel em ${process.env.APP_URL || 'https://vourifar.com.br'}/${tenant.slug}/admin`
-          });
-        } catch (e) {
-          console.error('[Email] Falha ao enviar boas-vindas:', e.message);
-        }
-      });
-
       try {
         const AnalyticsService = require('../services/analyticsService');
         AnalyticsService.trackFromRequest(req, res, AnalyticsService.EVENTOS.SIGNUP, {
@@ -204,7 +261,50 @@ const platformController = {
         });
       } catch (_) {}
 
-      res.redirect(`/${tenant.slug}/admin/rifas?nova=1&onboarding=1`);
+      if (useGoogle) {
+        req.session.organizadorId = organizador.id;
+        req.session.tenantId = tenant.id;
+        req.session.tenantSlug = tenant.slug;
+        req.session.organizadorNome = organizador.nome;
+
+        setImmediate(async () => {
+          try {
+            const { enviarEmail } = require('../lib/emailService');
+            const { templateBoasVindas } = require('../lib/emailTemplates');
+            await enviarEmail({
+              para: organizador.email,
+              assunto: 'Bem-vindo à VouRifar!',
+              html: templateBoasVindas({ organizador, tenantSlug: tenant.slug }),
+              texto: `Olá ${organizador.nome}! Sua conta na VouRifar foi criada. Acesse ${process.env.APP_URL || 'https://vourifar.com.br'}/${tenant.slug}/admin`
+            });
+          } catch (e) {
+            console.error('[Email] Falha ao enviar boas-vindas:', e.message);
+          }
+        });
+
+        return res.redirect(`/${tenant.slug}/admin/rifas?nova=1&onboarding=1`);
+      }
+
+      // Cadastro por e-mail/senha: exige confirmação antes do login
+      setImmediate(async () => {
+        try {
+          const { enviarEmail } = require('../lib/emailService');
+          const { templateConfirmacaoEmail } = require('../lib/emailTemplates');
+          await enviarEmail({
+            para: organizador.email,
+            assunto: 'Confirme seu e-mail — VouRifar',
+            html: templateConfirmacaoEmail({
+              organizador,
+              token: organizador.emailConfirmToken
+            }),
+            texto: `Olá ${organizador.nome}! Confirme seu e-mail: ${process.env.APP_URL || 'https://vourifar.com.br'}/confirmar-email?token=${organizador.emailConfirmToken}`
+          });
+        } catch (e) {
+          console.error('[Email] Falha ao enviar confirmação:', e.message);
+        }
+      });
+
+      return res.redirect(`/verificar-email?email=${encodeURIComponent(organizador.email)}`);
     } catch (err) {
       const appUrl = res.locals.baseUrl || process.env.APP_URL || '';
       res.render('platform/cadastro', {

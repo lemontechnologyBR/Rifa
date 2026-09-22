@@ -77,7 +77,14 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false
 }));
 
-app.use(express.json());
+app.use(express.json({
+  verify: (req, res, buf) => {
+    const url = req.originalUrl || req.url || '';
+    if (url.includes('/webhooks/') || url.includes('/pagamentos/woovi')) {
+      req.rawBody = Buffer.from(buf);
+    }
+  }
+}));
 app.use(express.urlencoded({ extended: true }));
 
 app.get('/manifest.webmanifest', pwaController.platformManifest);
@@ -238,6 +245,7 @@ app.use((err, req, res, next) => {
 
 async function bootstrap() {
   await AuthService.garantirAdminPadrao();
+  await AuthService.garantirEmailsVerificadosLegados();
 
   const ReservaService = require('./services/reservaService');
   const AnalyticsService = require('./services/analyticsService');
