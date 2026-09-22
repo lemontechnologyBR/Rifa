@@ -12,6 +12,7 @@ RUN npm ci
 COPY . .
 
 RUN npx prisma generate \
+  && sed -i 's/\r$//' scripts/docker-entrypoint.sh \
   && chmod +x scripts/docker-entrypoint.sh \
   && mkdir -p /tmp/sessions
 

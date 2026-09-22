@@ -4,7 +4,7 @@ set -e
 mkdir -p /app/database /app/public/uploads/rifas
 
 echo "[docker] Aplicando schema do banco..."
-# --accept-data-loss: necessário ao remover colunas legadas (ex.: Mercado Pago OAuth).
+# --accept-data-loss: necessÃ¡rio ao remover colunas legadas (ex.: Mercado Pago OAuth).
 # Backup do volume SQLite deve ser feito ANTES do deploy na VPS.
 npx prisma db push --skip-generate --accept-data-loss
 
@@ -24,11 +24,11 @@ if [ "$NODE_ENV" = "production" ]; then
   esac
   case "$APP_URL" in
     http://localhost:*|https://localhost:*|""|http://127.0.0.1:*)
-      echo "[docker] AVISO: APP_URL ainda aponta para localhost. Use o domínio HTTPS real."
+      echo "[docker] AVISO: APP_URL ainda aponta para localhost. Use o domÃ­nio HTTPS real."
       ;;
   esac
   if [ "$WOOVI_ENABLED" != "true" ] || [ -z "$WOOVI_APP_ID" ]; then
-    echo "[docker] AVISO: Woovi não configurado (WOOVI_ENABLED/WOOVI_APP_ID). PIX ficará indisponível."
+    echo "[docker] AVISO: Woovi nÃ£o configurado (WOOVI_ENABLED/WOOVI_APP_ID). PIX ficarÃ¡ indisponÃ­vel."
   fi
 fi
 
