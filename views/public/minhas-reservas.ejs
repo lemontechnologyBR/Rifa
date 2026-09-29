@@ -5,17 +5,17 @@
 <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-safe">
 
   <div class="text-center mb-8 animate-fade-up">
-
-    <div class="w-14 h-14 rounded-2xl btn-brand flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-500/30">
-
-      <i data-lucide="clipboard-list" class="w-7 h-7 text-white"></i>
-
-    </div>
-
-    <h1 class="text-2xl sm:text-3xl font-extrabold dark:text-white mb-2">Minhas Reservas</h1>
-
-    <p class="text-gray-500 dark:text-gray-400">Informe o CPF usado na compra para consultar reservas e comprovantes.</p>
-
+    <% const titulosLogo = (typeof tenant !== 'undefined' && tenant && tenant.logoUrl) ? tenant.logoUrl : null; %>
+    <% const titulosNome = (typeof tenant !== 'undefined' && tenant) ? tenant.nome : 'VouRifar'; %>
+    <% const titulosCor = (typeof tenant !== 'undefined' && tenant && tenant.corPrimaria) ? tenant.corPrimaria : '#10b981'; %>
+    <% if (titulosLogo) { %>
+      <img src="<%= titulosLogo %>" alt="<%= titulosNome %>" class="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl object-cover mx-auto mb-4 shadow-lg ring-4 ring-black/5 dark:ring-white/10">
+    <% } else { %>
+      <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-lg text-white text-3xl font-extrabold" style="background:<%= titulosCor %>"><%= String(titulosNome).charAt(0).toUpperCase() %></div>
+    <% } %>
+    <p class="text-sm font-semibold mb-1" style="color:<%= titulosCor %>"><%= titulosNome %></p>
+    <h1 class="text-2xl sm:text-3xl font-extrabold dark:text-white mb-2">Meus Títulos</h1>
+    <p class="text-gray-500 dark:text-gray-400">Informe o CPF usado na compra para consultar seus títulos e comprovantes.</p>
   </div>
 
 

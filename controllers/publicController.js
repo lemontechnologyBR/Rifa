@@ -161,7 +161,7 @@ const publicController = {
 
   minhasReservas(req, res) {
     res.render('public/minhas-reservas', {
-      titulo: 'Minhas Reservas',
+      titulo: 'Meus Títulos',
       seoNoIndex: true,
       resultado: null, cpf: '', erro: null, csrfToken: res.locals.csrfToken,
       ...tenantLocals(req)
@@ -172,12 +172,12 @@ const publicController = {
     try {
       const resultado = await ReservaService.buscarPorCpf(req.body.cpf, req.tenant.id);
       res.render('public/minhas-reservas', {
-        titulo: 'Minhas Reservas', resultado, cpf: req.body.cpf, erro: null, csrfToken: res.locals.csrfToken,
+        titulo: 'Meus Títulos', resultado, cpf: req.body.cpf, erro: null, csrfToken: res.locals.csrfToken,
         ...tenantLocals(req)
       });
     } catch (err) {
       res.render('public/minhas-reservas', {
-        titulo: 'Minhas Reservas', resultado: null, cpf: req.body.cpf || '', erro: err.message, csrfToken: res.locals.csrfToken,
+        titulo: 'Meus Títulos', resultado: null, cpf: req.body.cpf || '', erro: err.message, csrfToken: res.locals.csrfToken,
         ...tenantLocals(req)
       });
     }

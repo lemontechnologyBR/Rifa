@@ -26,10 +26,12 @@ async function resolveTenant(req, res, next) {
     res.locals.adminBase = `/${tenant.slug}/admin`;
     res.locals.apiBase = `/${tenant.slug}/api`;
     res.locals.pwaManifestUrl = `/${tenant.slug}/manifest.webmanifest`;
+    res.locals.pwaAdminManifestUrl = `/${tenant.slug}/admin/manifest.webmanifest`;
     res.locals.pwaSwUrl = '/sw.js';
     res.locals.pwaScope = '/';
-    res.locals.pwaIconUrl = '/img/pwa/icon-192.png';
+    res.locals.pwaIconUrl = tenant.logoUrl || '/img/pwa/icon-192.png';
     res.locals.pwaShortName = String(tenant.nome || 'Rifas').trim().slice(0, 12);
+    res.locals.pwaAdminShortName = String(`Painel ${tenant.nome || ''}`.trim()).slice(0, 12) || 'Painel';
 
     const organizador = await prisma.organizador.findFirst({
       where: { tenantId: tenant.id },

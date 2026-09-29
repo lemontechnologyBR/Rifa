@@ -3,7 +3,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="csrf-token" content="<%= csrfToken %>">
 <title><%= (typeof titulo !== 'undefined' ? titulo : 'Painel') %> | VouRifar</title>
-  <link rel="icon" href="/img/vourifar-icon.png" type="image/png" sizes="32x32">
+  <link rel="icon" href="<%= (typeof pwaIconUrl !== 'undefined' && pwaIconUrl) ? pwaIconUrl : '/img/vourifar-icon.png' %>" type="image/png" sizes="32x32">
+  <% if (typeof tenant !== 'undefined' && tenant) { %>
+  <link rel="manifest" href="<%= (typeof pwaAdminManifestUrl !== 'undefined' && pwaAdminManifestUrl) ? pwaAdminManifestUrl : ('/' + tenant.slug + '/admin/manifest.webmanifest') %>">
+  <meta name="theme-color" content="<%= tenant.corPrimaria || '#10b981' %>">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="<%= typeof pwaAdminShortName !== 'undefined' ? pwaAdminShortName : 'Painel' %>">
+  <link rel="apple-touch-icon" href="<%= (typeof pwaIconUrl !== 'undefined' && pwaIconUrl) ? pwaIconUrl : '/img/pwa/icon-192.png' %>">
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register(<%- JSON.stringify((typeof pwaSwUrl !== 'undefined' && pwaSwUrl) ? pwaSwUrl : '/sw.js') %>, {
+        scope: '/'
+      }).catch(function (err) {
+        console.error('[PWA admin] SW:', err);
+      });
+    }
+  </script>
+  <% } %>
 <script>
   function toggleAdminTheme() {
     if (window.VouRifarTheme) window.VouRifarTheme.toggle();
@@ -19,7 +37,7 @@
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-<link rel="stylesheet" href="/css/admin.css?v=20260728" id="css-admin">
+<link rel="stylesheet" href="/css/admin.css?v=20260729" id="css-admin">
 <script>
 (function () {
   var tunnel = /ngrok-free\.(app|dev)|\.ngrok\.io|\.ngrok-free\.app/i.test(location.hostname);

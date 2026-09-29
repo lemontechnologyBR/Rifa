@@ -57,6 +57,8 @@ router.use('/api', api);
 
 // --- Admin organizador ---
 const admin = express.Router();
+admin.get('/manifest.webmanifest', pwaController.tenantAdminManifest);
+admin.get('/pwa-check', pwaController.audit);
 admin.use(carregarOrganizador);
 admin.get('/login', organizadorController.loginForm);
 admin.get('/auth/google', googleAuthController.iniciarLoginTenant);
@@ -81,6 +83,7 @@ admin.get('/carteira/kyc/retorno', requireOrganizador, organizadorController.kyc
 admin.get('/config', requireOrganizador, organizadorController.configForm);
 admin.post('/config', requireOrganizador, organizadorController.salvarConfig);
 admin.post('/config/senha', requireOrganizador, organizadorController.alterarSenhaConta);
+admin.post('/config/excluir-conta', requireOrganizador, organizadorController.excluirConta);
 admin.get('/logs', requireOrganizador, organizadorController.logs);
 admin.post('/upload/imagem-rifa', requireOrganizador, handleUploadRifaImagem, organizadorController.uploadImagemRifa);
 admin.get('/rifas/nova', requireOrganizador, organizadorController.novaRifaForm);

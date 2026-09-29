@@ -463,6 +463,21 @@ const organizadorController = {
     }
   },
 
+  async excluirConta(req, res) {
+    try {
+      const OrganizadorService = require('../services/organizadorService');
+      await OrganizadorService.excluirConta(req.session.organizadorId, req.tenant.id, {
+        confirmacao: req.body.confirmacao,
+        senha: req.body.senha
+      });
+      req.session.destroy(() => {
+        res.redirect(`/acessar?msg=${encodeURIComponent('Sua conta e loja foram excluídas permanentemente.')}`);
+      });
+    } catch (err) {
+      res.redirect(`/${req.tenant.slug}/admin/config?erro=${encodeURIComponent(err.message)}`);
+    }
+  },
+
   novaRifaForm(req, res) {
     res.redirect(`/${req.tenant.slug}/admin/rifas?nova=1`);
   },

@@ -1,24 +1,31 @@
 /**
  * Job de sincronização automática de pagamentos PIX.
  * Confirma reservas cujo pagamento já foi aprovado mas o webhook ainda não chegou.
+ * Inclui PIX pago após a reserva expirar (dá baixa em vez de deixar órfão).
  */
 const prisma = require('../lib/prisma');
 const PaymentService = require('../services/paymentService');
 const ReservaService = require('../services/reservaService');
 
 const INTERVALO_MS = 2 * 60 * 1000;
+/** Janela para reprocessar expiradas com cobrança Woovi (dias). */
+const DIAS_EXPIRADA_RETROATIVA = 14;
 
 async function sincronizar() {
   if (!PaymentService.isPlatformConfigured()) return;
 
-  let pendentes;
+  let candidatas;
   try {
-    pendentes = await prisma.reserva.findMany({
+    const desde = new Date(Date.now() - DIAS_EXPIRADA_RETROATIVA * 24 * 60 * 60 * 1000);
+    candidatas = await prisma.reserva.findMany({
       where: {
-        statusPagamento: 'pendente',
-        wooviCorrelationId: { not: null }
+        wooviCorrelationId: { not: null },
+        OR: [
+          { statusPagamento: 'pendente' },
+          { statusPagamento: 'expirado', createdAt: { gte: desde } }
+        ]
       },
-      take: 30,
+      take: 40,
       orderBy: { createdAt: 'desc' }
     });
   } catch (e) {
@@ -26,19 +33,25 @@ async function sincronizar() {
     return;
   }
 
-  if (!pendentes.length) return;
+  if (!candidatas.length) return;
 
   let confirmados = 0;
-  for (const reserva of pendentes) {
+  for (const reserva of candidatas) {
     try {
       const status = await PaymentService.consultarStatus(reserva.wooviCorrelationId);
       if (PaymentService.pagamentoConfirmado(status)) {
         await ReservaService.confirmarViaGateway(reserva.wooviCorrelationId);
-        console.log(`[SyncPIX] Reserva #${reserva.id} confirmada automaticamente (status: ${status})`);
+        console.log(
+          `[SyncPIX] Reserva #${reserva.id} confirmada automaticamente (status: ${status}, era: ${reserva.statusPagamento})`
+        );
         confirmados++;
       }
     } catch (e) {
-      if (!e.message.includes('confirmado') && !e.message.includes('expirad')) {
+      if (
+        !e.message.includes('confirmado') &&
+        !e.message.includes('ainda não confirmado') &&
+        !e.message.includes('não confere')
+      ) {
         console.error(`[SyncPIX] Reserva #${reserva.id}:`, e.message);
       }
     }

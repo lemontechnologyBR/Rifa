@@ -233,6 +233,39 @@
         </form>
       </section>
 
+      <section class="admin-panel-card p-6 space-y-4 border border-red-200 dark:border-red-900/50">
+        <div class="admin-config-section-head">
+          <div class="admin-config-section-icon" style="background:rgba(239,68,68,.12);color:#dc2626;"><i data-lucide="trash-2" class="w-5 h-5"></i></div>
+          <div>
+            <h2 class="font-bold text-base text-red-700 dark:text-red-400">Excluir conta</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Apaga permanentemente sua loja, sorteios sem venda e dados de acesso. Não dá para desfazer.</p>
+          </div>
+        </div>
+
+        <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-1 list-disc pl-5">
+          <li>Loja pública <strong>/<%= tenant.slug %></strong> deixa de existir</li>
+          <li>Não é possível excluir se já houver cotas pagas ou saque em andamento</li>
+        </ul>
+
+        <form method="POST" action="<%= adminBase %>/config/excluir-conta" class="space-y-3 pt-2 border-t border-red-100 dark:border-red-900/40"
+          onsubmit="return confirm(<%= JSON.stringify('Excluir permanentemente a loja /' + tenant.slug + '? Esta ação não pode ser desfeita.') %>)">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div>
+            <label class="admin-label">Digite <code class="text-red-600 dark:text-red-400 font-mono"><%= tenant.slug %></code> para confirmar</label>
+            <input type="text" name="confirmacao" required autocomplete="off" class="admin-input" placeholder="<%= tenant.slug %>">
+          </div>
+          <% if (organizador.temSenha) { %>
+          <div>
+            <label class="admin-label">Sua senha</label>
+            <input type="password" name="senha" required minlength="6" class="admin-input" autocomplete="current-password">
+          </div>
+          <% } %>
+          <button type="submit" class="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-red-400 bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition">
+            Excluir minha conta e loja
+          </button>
+        </form>
+      </section>
+
     </div>
     <% } %>
 

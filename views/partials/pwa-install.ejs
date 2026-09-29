@@ -1,0 +1,47 @@
+<% if (typeof tenant !== 'undefined' && tenant && typeof pwaEnabled !== 'undefined' && pwaEnabled) { %>
+<%
+  const pwaNome = tenant.nome || 'loja';
+  const pwaIcon = (typeof pwaIconUrl !== 'undefined' && pwaIconUrl && pwaIconUrl !== '/img/pwa/icon-192.png')
+    ? pwaIconUrl
+    : (tenant.logoUrl || '/img/pwa/icon-192.png');
+%>
+<div id="pwa-install-bar" class="pwa-install-bar" hidden role="region" aria-label="Instalar aplicativo">
+  <img class="pwa-install-bar__icon" src="<%= pwaIcon %>" alt="" width="40" height="40" loading="lazy">
+  <div class="pwa-install-bar__text">
+    <strong>Instalar app</strong>
+    <span>Acesse <%= pwaNome %> pela tela inicial</span>
+  </div>
+  <button type="button" id="pwa-install-btn" class="pwa-install-bar__cta">Instalar</button>
+  <button type="button" id="pwa-install-dismiss" class="pwa-install-bar__close" aria-label="Fechar">×</button>
+</div>
+
+<div id="pwa-install-ios" class="pwa-install-ios" hidden role="dialog" aria-modal="true" aria-labelledby="pwa-install-ios-title">
+  <div class="pwa-install-ios__card">
+    <button type="button" id="pwa-install-ios-close" class="pwa-install-ios__x" aria-label="Fechar">×</button>
+    <div class="pwa-install-ios__head">
+      <img src="<%= pwaIcon %>" alt="" width="48" height="48">
+      <div>
+        <h3 id="pwa-install-ios-title">Adicionar à tela inicial</h3>
+        <p>Instale o app de <%= pwaNome %> no celular</p>
+      </div>
+    </div>
+    <ol class="pwa-install-ios__steps">
+      <li class="pwa-install-step-ios">Toque em <strong>Compartilhar</strong> na barra do Safari</li>
+      <li class="pwa-install-step-ios">Role e toque em <strong>Adicionar à Tela de Início</strong></li>
+      <li class="pwa-install-step-ios">Confirme em <strong>Adicionar</strong></li>
+      <li class="pwa-install-step-android" hidden>Abra o menu <strong>⋮</strong> do Chrome</li>
+      <li class="pwa-install-step-android" hidden>Toque em <strong>Instalar app</strong> ou <strong>Adicionar à tela inicial</strong></li>
+    </ol>
+    <button type="button" id="pwa-install-ios-ok" class="pwa-install-ios__ok">Entendi</button>
+  </div>
+</div>
+
+<script>
+  window.__PWA_INSTALL__ = {
+    enabled: true,
+    slug: <%- JSON.stringify(tenant.slug) %>,
+    name: <%- JSON.stringify(String(tenant.nome || '').slice(0, 40)) %>
+  };
+</script>
+<script src="/js/pwa-install.js?v=2" defer></script>
+<% } %>

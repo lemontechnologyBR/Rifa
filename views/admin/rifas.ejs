@@ -111,6 +111,31 @@
 
   <%- include('partials/nova-rifa-modal') %>
 
+  <div id="qrcode-modal" class="fixed inset-0 z-[80] hidden items-center justify-center p-4" style="background:rgba(2,6,23,.65);backdrop-filter:blur(6px);" role="dialog" aria-modal="true" aria-labelledby="qrcode-modal-title">
+    <div class="w-full max-w-[360px] relative">
+      <button type="button" id="qrcode-modal-close" class="absolute -top-2 -right-2 z-10 w-9 h-9 rounded-full bg-white/10 text-white hover:bg-white/20 text-xl leading-none" aria-label="Fechar">×</button>
+      <div id="qrcode-card" class="rounded-[28px] overflow-hidden shadow-2xl" style="background:#07111f;">
+        <div class="px-6 pt-7 pb-6 flex flex-col items-center text-center">
+          <p id="qrcode-card-url" class="text-[13px] font-medium tracking-wide mb-5 truncate max-w-full" style="color:#94a3b8;"></p>
+          <div class="rounded-[22px] bg-white p-4 shadow-lg mb-5">
+            <canvas id="qrcode-canvas" width="240" height="240" class="block"></canvas>
+          </div>
+          <p id="qrcode-card-premio" class="text-[15px] font-semibold leading-snug text-white px-2"></p>
+        </div>
+      </div>
+      <canvas id="qrcode-export" width="720" height="900" class="hidden"></canvas>
+      <div class="mt-4 flex flex-col gap-2">
+        <button type="button" id="qrcode-download" class="admin-btn-primary w-full justify-center text-sm py-2.5">
+          Baixar PNG
+        </button>
+        <button type="button" id="qrcode-copy-link" class="admin-action-btn w-full justify-center text-sm py-2.5 bg-white/95">
+          Copiar link
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/qrcode.min.js"></script>
   <script>
     lucide.createIcons();
 
@@ -122,10 +147,7 @@
       }
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(url).then(function () {
-          var wa = 'https://wa.me/?text=' + encodeURIComponent(texto);
-          if (confirm('Link copiado!\n\nAbrir WhatsApp para compartilhar?')) {
-            window.open(wa, '_blank', 'noopener');
-          }
+          alert('Link copiado!\n\n' + url);
         }).catch(function () { prompt('Copie o link:', url); });
       } else {
         prompt('Copie o link do sorteio:', url);
@@ -137,6 +159,241 @@
         compartilharRifa(btn.dataset.url, btn.dataset.titulo);
       });
     });
+
+    (function () {
+      var modal = document.getElementById('qrcode-modal');
+      var canvas = document.getElementById('qrcode-canvas');
+      var exportCv = document.getElementById('qrcode-export');
+      var urlEl = document.getElementById('qrcode-card-url');
+      var premioEl = document.getElementById('qrcode-card-premio');
+      var currentUrl = '';
+      var currentPremio = '';
+      var currentLogo = '';
+      var defaultLogo = <%- JSON.stringify((typeof tenant !== 'undefined' && tenant && tenant.logoUrl) ? tenant.logoUrl : '/img/pwa/icon-192.png') %>;
+      var qrSize = 240;
+      var qrColor = '#0f172a';
+
+      function fecharQr() {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+
+      function abrirQr() {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+
+      function shortUrl(url) {
+        try {
+          var u = new URL(url);
+          return (u.host + u.pathname).replace(/\/$/, '');
+        } catch (_) {
+          return String(url || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
+        }
+      }
+
+      function loadImage(src) {
+        return new Promise(function (resolve) {
+          if (!src) return resolve(null);
+          var img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = function () { resolve(img); };
+          img.onerror = function () { resolve(null); };
+          img.src = src;
+        });
+      }
+
+      function desenharLogoCircular(ctx, img, cx, cy, diameter) {
+        if (!img) return;
+        var r = diameter / 2;
+        var pad = Math.round(r * 0.18);
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cx, cy, r + pad, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.drawImage(img, cx - r, cy - r, diameter, diameter);
+        ctx.restore();
+      }
+
+      function pintarQrNoCanvas(srcEl, logoImg) {
+        var ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, qrSize, qrSize);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, qrSize, qrSize);
+        if (srcEl.tagName === 'CANVAS' || srcEl instanceof HTMLCanvasElement) {
+          ctx.drawImage(srcEl, 0, 0, qrSize, qrSize);
+        } else {
+          ctx.drawImage(srcEl, 0, 0, qrSize, qrSize);
+        }
+        desenharLogoCircular(ctx, logoImg, qrSize / 2, qrSize / 2, Math.round(qrSize * 0.22));
+      }
+
+      function montarExport() {
+        var W = 720, H = 900;
+        exportCv.width = W;
+        exportCv.height = H;
+        var ctx = exportCv.getContext('2d');
+        ctx.fillStyle = '#07111f';
+        ctx.fillRect(0, 0, W, H);
+
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '500 28px Inter, system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(shortUrl(currentUrl), W / 2, 90, W - 80);
+
+        var box = 460;
+        var boxX = (W - box) / 2;
+        var boxY = 140;
+        var radius = 36;
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(boxX + radius, boxY);
+        ctx.arcTo(boxX + box, boxY, boxX + box, boxY + box, radius);
+        ctx.arcTo(boxX + box, boxY + box, boxX, boxY + box, radius);
+        ctx.arcTo(boxX, boxY + box, boxX, boxY, radius);
+        ctx.arcTo(boxX, boxY, boxX + box, boxY, radius);
+        ctx.closePath();
+        ctx.fill();
+
+        var qrPad = 36;
+        ctx.drawImage(canvas, boxX + qrPad, boxY + qrPad, box - qrPad * 2, box - qrPad * 2);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '600 32px Inter, system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        var premio = currentPremio || 'Participe do sorteio';
+        var maxW = W - 100;
+        var words = String(premio).split(/\s+/);
+        var lines = [];
+        var line = '';
+        words.forEach(function (w) {
+          var test = line ? line + ' ' + w : w;
+          if (ctx.measureText(test).width > maxW && line) {
+            lines.push(line);
+            line = w;
+          } else {
+            line = test;
+          }
+        });
+        if (line) lines.push(line);
+        var startY = boxY + box + 70;
+        lines.slice(0, 3).forEach(function (ln, i) {
+          ctx.fillText(ln, W / 2, startY + i * 42);
+        });
+      }
+
+      function gerarViaLib(url) {
+        var holder = document.createElement('div');
+        holder.style.cssText = 'position:absolute;left:-9999px;top:0;';
+        document.body.appendChild(holder);
+        try {
+          new QRCode(holder, {
+            text: url,
+            width: qrSize,
+            height: qrSize,
+            colorDark: qrColor,
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.H
+          });
+        } catch (e) {
+          document.body.removeChild(holder);
+          return Promise.reject(e);
+        }
+        return new Promise(function (resolve, reject) {
+          var tries = 0;
+          (function wait() {
+            var el = holder.querySelector('canvas') || holder.querySelector('img');
+            if (el && (el.tagName === 'CANVAS' || el.src)) {
+              resolve(el);
+              setTimeout(function () {
+                try { document.body.removeChild(holder); } catch (_) {}
+              }, 0);
+              return;
+            }
+            if (++tries > 40) {
+              try { document.body.removeChild(holder); } catch (_) {}
+              reject(new Error('timeout'));
+              return;
+            }
+            setTimeout(wait, 50);
+          })();
+        });
+      }
+
+      function gerarViaApi(url) {
+        return new Promise(function (resolve, reject) {
+          var img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = function () { resolve(img); };
+          img.onerror = function () { reject(new Error('api')); };
+          img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=' + qrSize + 'x' + qrSize +
+            '&margin=8&ecc=H&color=0f172a&bgcolor=ffffff&data=' + encodeURIComponent(url);
+        });
+      }
+
+      function gerarQr(url, titulo, premio, logoUrl) {
+        currentUrl = url;
+        currentPremio = premio || titulo || 'Participe do sorteio';
+        currentLogo = logoUrl || defaultLogo;
+        urlEl.textContent = shortUrl(url);
+        premioEl.textContent = currentPremio;
+
+        var logoP = loadImage(currentLogo);
+        var qrP = (typeof QRCode !== 'undefined')
+          ? gerarViaLib(url)
+          : Promise.reject(new Error('no-lib'));
+
+        Promise.all([
+          qrP.catch(function () { return gerarViaApi(url); }),
+          logoP
+        ]).then(function (parts) {
+          pintarQrNoCanvas(parts[0], parts[1]);
+          montarExport();
+          abrirQr();
+        }).catch(function () {
+          alert('Não foi possível gerar o QR Code. Tente novamente.');
+        });
+      }
+
+      document.querySelectorAll('.btn-qrcode').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          gerarQr(
+            btn.dataset.url,
+            btn.dataset.titulo,
+            btn.dataset.premio,
+            btn.dataset.logo || defaultLogo
+          );
+        });
+      });
+
+      document.getElementById('qrcode-modal-close').addEventListener('click', fecharQr);
+      modal.addEventListener('click', function (e) {
+        if (e.target === modal) fecharQr();
+      });
+
+      document.getElementById('qrcode-download').addEventListener('click', function () {
+        montarExport();
+        var a = document.createElement('a');
+        a.href = exportCv.toDataURL('image/png');
+        a.download = 'qrcode-sorteio.png';
+        a.click();
+      });
+
+      document.getElementById('qrcode-copy-link').addEventListener('click', function () {
+        if (!currentUrl) return;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(currentUrl).then(function () {
+            alert('Link copiado!');
+          }).catch(function () { prompt('Copie o link:', currentUrl); });
+        } else {
+          prompt('Copie o link:', currentUrl);
+        }
+      });
+    })();
 
     (function () {
       var id = new URLSearchParams(window.location.search).get('compartilhar');

@@ -261,6 +261,27 @@ html:not(.dark) .public-site .imp-store [style*="background:#111827"] {
   border-radius: 9999px;
   white-space: nowrap;
   line-height: 1.2;
+  animation: impPkgPulse 1.8s ease-in-out infinite;
+  z-index: 2;
+}
+@keyframes impPkgPulse {
+  0%, 100% { transform: translateX(-50%) scale(1); box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand-from) 50%, transparent); }
+  50% { transform: translateX(-50%) scale(1.08); box-shadow: 0 0 0 6px color-mix(in srgb, var(--brand-from) 0%, transparent); }
+}
+
+.public-site .imp-btn-share.imp-pulse-share {
+  animation: impSharePulse 2.2s ease-in-out infinite;
+}
+@keyframes impSharePulse {
+  0%, 100% { box-shadow: 0 8px 20px -6px color-mix(in srgb, var(--brand-from, #6366f1) 45%, transparent); transform: scale(1); }
+  50% { box-shadow: 0 12px 28px -4px color-mix(in srgb, var(--brand-from, #6366f1) 75%, transparent); transform: scale(1.015); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .public-site .imp-pkg-popular,
+  .public-site .imp-btn-share.imp-pulse-share {
+    animation: none !important;
+  }
 }
 
 .public-site .imp-promo-grid {
@@ -1018,3 +1039,265 @@ html:not(.dark) .public-site .imp-detail [style*="border-top:1px solid rgba(255,
 .dark .public-footer-legal:hover {
   color: #cbd5e1;
 }
+
+/* Share CTA — abre o sheet nativo (WhatsApp, Instagram, etc.) */
+.public-site .imp-btn-share {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+  color: #fff !important;
+  background: linear-gradient(135deg, var(--brand-from, #6366f1), var(--brand-to, #4f46e5));
+  box-shadow: 0 8px 20px -6px color-mix(in srgb, var(--brand-from, #6366f1) 55%, transparent);
+  border: none;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+.public-site .imp-btn-share:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+  box-shadow: 0 12px 24px -6px color-mix(in srgb, var(--brand-from, #6366f1) 65%, transparent);
+}
+.public-site .imp-btn-share svg,
+.public-site .imp-btn-share [data-lucide] {
+  color: #fff !important;
+  stroke: currentColor;
+}
+
+/* legado */
+.public-site .imp-btn-share-wa {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+  color: #fff !important;
+  background: linear-gradient(135deg, var(--brand-from, #6366f1), var(--brand-to, #4f46e5));
+  box-shadow: 0 8px 20px -6px color-mix(in srgb, var(--brand-from, #6366f1) 55%, transparent);
+  border: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+.public-site .imp-btn-share-wa:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+.public-site .imp-btn-share-wa svg,
+.public-site .imp-btn-share-wa [data-lucide] {
+  color: #fff !important;
+  stroke: currentColor;
+}
+
+@keyframes impPulseSoft {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.04); opacity: 0.92; }
+}
+@keyframes impPulseGlow {
+  0%, 100% { box-shadow: 0 10px 24px -8px color-mix(in srgb, var(--brand-from, #22c55e) 55%, transparent); transform: scale(1); }
+  50% { box-shadow: 0 14px 32px -6px color-mix(in srgb, var(--brand-from, #22c55e) 75%, transparent); transform: scale(1.02); }
+}
+@keyframes impPulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(1.15); }
+}
+.public-site .imp-pulse-cta:not(:disabled) {
+  animation: impPulseGlow 2.2s ease-in-out infinite;
+}
+.public-site .imp-pulse-live {
+  animation: impPulseSoft 1.8s ease-in-out infinite;
+}
+.public-site .imp-pulse-live .imp-pulse-dot {
+  display: inline-block;
+  animation: impPulseDot 1.2s ease-in-out infinite;
+}
+
+/* PWA install banner (tenant index) */
+.pwa-install-bar {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  z-index: 80;
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.97);
+  color: #f8fafc;
+  box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.pwa-install-bar.is-visible,
+.pwa-install-bar:not([hidden]) {
+  display: flex !important;
+  animation: pwaInstallIn 0.35s ease;
+}
+.dark .pwa-install-bar {
+  background: rgba(2, 6, 23, 0.97);
+}
+html.pwa-install-visible .public-site .imp-sticky-buy,
+html.pwa-install-visible .public-site #sticky-buy {
+  bottom: calc(78px + env(safe-area-inset-bottom, 0px));
+}
+html.pwa-install-visible .public-site .public-social-float {
+  bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+}
+.pwa-install-bar__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: #1e293b;
+}
+.pwa-install-bar__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1.2;
+}
+.pwa-install-bar__text strong {
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+.pwa-install-bar__text span {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pwa-install-bar__cta {
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.5rem 0.9rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, var(--brand-from, #22c55e), var(--brand-to, #16a34a));
+  cursor: pointer;
+}
+.pwa-install-bar__close {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.pwa-install-bar__close:hover { color: #e2e8f0; }
+
+.pwa-install-ios {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+}
+.pwa-install-ios.is-visible,
+.pwa-install-ios:not([hidden]) {
+  display: flex !important;
+}
+.pwa-install-ios__card {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  background: #fff;
+  color: #0f172a;
+  border-radius: 20px;
+  padding: 1.25rem 1.25rem 1rem;
+  box-shadow: 0 24px 48px -16px rgba(0, 0, 0, 0.35);
+  animation: pwaInstallIn 0.3s ease;
+}
+.dark .pwa-install-ios__card {
+  background: #111827;
+  color: #f8fafc;
+}
+.pwa-install-ios__x {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  border: 0;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+.pwa-install-ios__head {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-right: 1.5rem;
+}
+.pwa-install-ios__head img {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+.pwa-install-ios__head h3 {
+  font-size: 1rem;
+  font-weight: 800;
+  margin: 0;
+}
+.pwa-install-ios__head p {
+  margin: 0.15rem 0 0;
+  font-size: 0.8125rem;
+  color: #64748b;
+}
+.dark .pwa-install-ios__head p { color: #94a3b8; }
+.pwa-install-ios__steps {
+  margin: 0 0 1rem;
+  padding-left: 1.15rem;
+  display: grid;
+  gap: 0.55rem;
+  font-size: 0.875rem;
+  color: #334155;
+}
+.dark .pwa-install-ios__steps { color: #cbd5e1; }
+.pwa-install-ios__ok {
+  width: 100%;
+  border: 0;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, var(--brand-from, #22c55e), var(--brand-to, #16a34a));
+  cursor: pointer;
+}
+@keyframes pwaInstallIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (min-width: 1024px) {
+  .pwa-install-bar {
+    left: auto;
+    right: 24px;
+    bottom: 24px;
+    max-width: 380px;
+  }
+}
+

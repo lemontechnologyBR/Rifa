@@ -115,6 +115,68 @@ const OrganizadorService = {
     );
 
     return { organizador, tenant: tenantAtualizado };
+  },
+
+  /**
+   * Exclui permanentemente a loja (tenant) e a conta do organizador.
+   * Bloqueia se já houver cotas/reservas pagas ou saque em andamento.
+   */
+  async excluirConta(organizadorId, tenantId, { confirmacao, senha } = {}) {
+    const bcrypt = require('bcrypt');
+    const tid = Number(tenantId);
+    const oid = Number(organizadorId);
+
+    const org = await prisma.organizador.findFirst({
+      where: { id: oid, tenantId: tid }
+    });
+    if (!org) throw new Error('Conta não encontrada.');
+
+    const tenant = await prisma.tenant.findUnique({ where: { id: tid } });
+    if (!tenant) throw new Error('Loja não encontrada.');
+
+    const conf = String(confirmacao || '').trim().toLowerCase();
+    if (conf !== String(tenant.slug).toLowerCase()) {
+      throw new Error(`Digite o endereço da loja "${tenant.slug}" para confirmar a exclusão.`);
+    }
+
+    if (org.senhaHash) {
+      const ok = await bcrypt.compare(String(senha || ''), org.senhaHash);
+      if (!ok) throw new Error('Senha incorreta.');
+    }
+
+    const [vendidos, confirmadas, saquesAbertos] = await Promise.all([
+      prisma.numero.count({
+        where: { status: 'vendido', rifa: { tenantId: tid } }
+      }),
+      prisma.reserva.count({
+        where: { statusPagamento: 'confirmado', rifa: { tenantId: tid } }
+      }),
+      prisma.saque.count({
+        where: {
+          tenantId: tid,
+          status: { in: ['solicitado', 'processando'] }
+        }
+      })
+    ]);
+
+    if (vendidos > 0 || confirmadas > 0) {
+      throw new Error(
+        'Não é possível excluir: esta loja já teve vendas pagas. Encerre os sorteios e mantenha o histórico, ou fale com o suporte.'
+      );
+    }
+    if (saquesAbertos > 0) {
+      throw new Error('Não é possível excluir: há saque em andamento. Aguarde a conclusão.');
+    }
+
+    await LogService.registrar(
+      org.nome || org.email,
+      'excluir_conta',
+      `Conta/loja excluída · /${tenant.slug} · ${org.email}`,
+      tid
+    );
+
+    await prisma.tenant.delete({ where: { id: tid } });
+    return { slug: tenant.slug, email: org.email };
   }
 };
 

@@ -272,17 +272,22 @@ const ReservaService = {
     });
   },
 
-  /** Confirma pagamento manual (admin) */
+  /** Confirma pagamento manual (admin) — também cobre reserva expirada com PIX já pago. */
   async confirmarPagamento(reservaId, adminUsuario, tenantId = null, rifaId = null) {
     const reserva = await this.buscarPorId(reservaId, tenantId);
     if (!reserva) throw new Error('Reserva não encontrada.');
     if (rifaId && reserva.rifaId !== Number(rifaId)) throw new Error('Reserva não pertence a esta rifa.');
+    if (reserva.statusPagamento === 'confirmado') return;
+    if (!['pendente', 'expirado'].includes(reserva.statusPagamento)) {
+      throw new Error(`Não é possível confirmar reserva com status "${reserva.statusPagamento}".`);
+    }
 
-    await this._confirmarInterno(reservaId);
+    await this._confirmarInterno(reservaId, { permitirExpirada: true });
+    await this._posConfirmacao(reserva);
     await LogService.registrar(adminUsuario, 'confirmar_pagamento', `Reserva #${reservaId}`, tenantId);
   },
 
-  /** Confirma pagamento via webhook Woovi */
+  /** Confirma pagamento via webhook Woovi (também dá baixa se o PIX chegou após expirar). */
   async confirmarViaGateway(referencia) {
     if (!referencia) throw new Error('Referência de pagamento ausente.');
 
@@ -297,34 +302,43 @@ const ReservaService = {
     });
     if (!reserva) throw new Error('Reserva não encontrada para esta cobrança.');
 
-    await this.expirarSeNecessario(reserva.id);
-    const atualizada = await prisma.reserva.findUnique({ where: { id: reserva.id } });
-    if (atualizada.statusPagamento === 'expirado') throw new Error('Reserva expirada.');
-    if (atualizada.statusPagamento === 'confirmado') return atualizada;
-    if (atualizada.statusPagamento !== 'pendente') throw new Error('Reserva não está pendente.');
+    if (reserva.statusPagamento === 'confirmado') return reserva;
+    if (!['pendente', 'expirado'].includes(reserva.statusPagamento)) {
+      throw new Error(`Reserva não pode ser confirmada (status: ${reserva.statusPagamento}).`);
+    }
 
     // Confirma só se a API Woovi disser COMPLETED e o valor bater com a reserva.
+    // PIX tardio (após expiraEm) também dá baixa — melhor que estornar.
     const WooviService = require('./wooviService');
     const PaymentService = require('./paymentService');
-    const charge = await WooviService.consultarCobranca(atualizada.wooviCorrelationId || ref);
+    const charge = await WooviService.consultarCobranca(reserva.wooviCorrelationId || ref);
     if (!PaymentService.pagamentoConfirmado(charge?.status)) {
+      // Sem pagamento no gateway: aí sim pode marcar expirada se o prazo passou
+      if (reserva.statusPagamento === 'pendente') {
+        await this.expirarSeNecessario(reserva.id);
+      }
       throw new Error(`Pagamento ainda não confirmado no gateway (${charge?.status || 'desconhecido'}).`);
     }
-    const esperadoCents = Math.round(Number(atualizada.valorTotal) * 100);
+    const esperadoCents = Math.round(Number(reserva.valorTotal) * 100);
     const pagoCents = Number(charge?.valueCents);
     if (!Number.isFinite(pagoCents) || Math.abs(esperadoCents - pagoCents) > 1) {
       console.warn(
-        `[Gateway] valor diverge reserva=#${atualizada.id} esperado=${esperadoCents}c pago=${pagoCents}c`
+        `[Gateway] valor diverge reserva=#${reserva.id} esperado=${esperadoCents}c pago=${pagoCents}c`
       );
       throw new Error('Valor do pagamento não confere com a reserva.');
     }
 
-    await this._confirmarInterno(atualizada.id);
-    await this._posConfirmacao(atualizada);
+    const eraExpirada = reserva.statusPagamento === 'expirado';
+    await this._confirmarInterno(reserva.id, { permitirExpirada: true });
+    await this._posConfirmacao(reserva);
     const origem = PaymentService.getProvider() || 'gateway';
-    await LogService.registrar(origem, 'confirmar_pagamento_auto', `Reserva #${atualizada.id} — ${ref}`);
+    const extra = eraExpirada ? ' (PIX após expiração — baixa automática)' : '';
+    await LogService.registrar(origem, 'confirmar_pagamento_auto', `Reserva #${reserva.id} — ${ref}${extra}`);
+    if (eraExpirada) {
+      console.log(`[Gateway] Reserva #${reserva.id} confirmada após expiração (PIX tardio).`);
+    }
 
-    return atualizada;
+    return prisma.reserva.findUnique({ where: { id: reserva.id } });
   },
 
   /** @deprecated alias Woovi */
@@ -336,16 +350,16 @@ const ReservaService = {
   async confirmarViaWebhook(codigoPagamento) {
     const reserva = await prisma.reserva.findUnique({ where: { codigoPagamento } });
     if (!reserva) throw new Error('Reserva não encontrada.');
-    await this.expirarSeNecessario(reserva.id);
-    const atualizada = await prisma.reserva.findUnique({ where: { id: reserva.id } });
-    if (atualizada.statusPagamento === 'expirado') throw new Error('Reserva expirada.');
-    if (atualizada.statusPagamento !== 'pendente') throw new Error('Reserva não está pendente.');
+    if (reserva.statusPagamento === 'confirmado') return reserva;
+    if (!['pendente', 'expirado'].includes(reserva.statusPagamento)) {
+      throw new Error('Reserva não está pendente.');
+    }
 
-    await this._confirmarInterno(atualizada.id);
-    await this._posConfirmacao(atualizada);
-    await LogService.registrar('webhook', 'confirmar_pagamento_auto', `Reserva #${atualizada.id} — ${codigoPagamento}`);
+    await this._confirmarInterno(reserva.id, { permitirExpirada: true });
+    await this._posConfirmacao(reserva);
+    await LogService.registrar('webhook', 'confirmar_pagamento_auto', `Reserva #${reserva.id} — ${codigoPagamento}`);
 
-    return atualizada;
+    return prisma.reserva.findUnique({ where: { id: reserva.id } });
   },
 
   async _posConfirmacao(reserva) {
@@ -367,23 +381,83 @@ const ReservaService = {
     };
   },
 
-  async _confirmarInterno(reservaId) {
+  /**
+   * Confirma reserva e marca números como vendidos.
+   * Se a reserva já expirava e algum número foi pego por outra pessoa,
+   * realoca números livres equivalentes (PIX tardio).
+   */
+  async _confirmarInterno(reservaId, { permitirExpirada = false } = {}) {
     let confirmada = null;
     await prisma.$transaction(async (tx) => {
       const reserva = await tx.reserva.findUnique({ where: { id: Number(reservaId) } });
-      if (!reserva || reserva.statusPagamento !== 'pendente') {
+      if (!reserva) throw new Error('Reserva não encontrada.');
+      if (reserva.statusPagamento === 'confirmado') {
+        confirmada = reserva;
+        return;
+      }
+      const statusOk =
+        reserva.statusPagamento === 'pendente' ||
+        (permitirExpirada && reserva.statusPagamento === 'expirado');
+      if (!statusOk) {
         throw new Error('Reserva não encontrada ou não pendente.');
+      }
+
+      const vinculos = await tx.reservaNumero.findMany({
+        where: { reservaId: reserva.id },
+        include: { numero: true }
+      });
+
+      for (const v of vinculos) {
+        const claimed = await tx.numero.updateMany({
+          where: {
+            id: v.numeroId,
+            status: { in: ['disponivel', 'reservado'] }
+          },
+          data: {
+            status: 'vendido',
+            usuarioId: reserva.usuarioId,
+            reservadoAte: null
+          }
+        });
+
+        if (claimed.count > 0) continue;
+
+        // Número já vendido (ou indisponível) — realoca outro livre na mesma rifa
+        const alt = await tx.numero.findFirst({
+          where: { rifaId: reserva.rifaId, status: 'disponivel' },
+          orderBy: { numero: 'asc' }
+        });
+        if (!alt) {
+          throw new Error(
+            `Pagamento ok, mas sem números livres para realocar a reserva #${reserva.id}. Contate o suporte.`
+          );
+        }
+        const altClaim = await tx.numero.updateMany({
+          where: { id: alt.id, status: 'disponivel' },
+          data: {
+            status: 'vendido',
+            usuarioId: reserva.usuarioId,
+            reservadoAte: null
+          }
+        });
+        if (altClaim.count === 0) {
+          throw new Error(
+            `Falha ao realocar número na reserva #${reserva.id}. Tente sincronizar de novo.`
+          );
+        }
+        await tx.reservaNumero.delete({ where: { id: v.id } });
+        await tx.reservaNumero.create({
+          data: { reservaId: reserva.id, numeroId: alt.id }
+        });
+        console.log(
+          `[Gateway] Reserva #${reserva.id}: número ${v.numero?.numero} indisponível → realocado para ${alt.numero}`
+        );
       }
 
       confirmada = await tx.reserva.update({
         where: { id: reserva.id },
         data: { statusPagamento: 'confirmado' }
       });
-
-      const vinculos = await tx.reservaNumero.findMany({ where: { reservaId: reserva.id } });
-      for (const v of vinculos) {
-        await tx.numero.update({ where: { id: v.numeroId }, data: { status: 'vendido' } });
-      }
     });
 
     if (confirmada) {

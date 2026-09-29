@@ -253,6 +253,53 @@
   text-transform: uppercase;
 }
 
+/* Pulsos suaves — CTAs e destaques */
+@keyframes impPulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand-from) 45%, transparent); transform: scale(1); }
+  50% { box-shadow: 0 0 0 10px color-mix(in srgb, var(--brand-from) 0%, transparent); transform: scale(1.02); }
+}
+@keyframes impPulseSoft {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.06); opacity: .92; }
+}
+@keyframes impPulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .55; transform: scale(1.15); }
+}
+@keyframes impPulseShare {
+  0%, 100% { box-shadow: 0 8px 20px -6px rgba(37, 211, 102, 0.45); transform: scale(1); }
+  50% { box-shadow: 0 10px 28px -4px rgba(37, 211, 102, 0.75); transform: scale(1.015); }
+}
+@keyframes impPulseGold {
+  0%, 100% { box-shadow: 0 4px 14px rgba(245,158,11,.35); transform: scale(1); }
+  50% { box-shadow: 0 6px 22px rgba(245,158,11,.6); transform: scale(1.05); }
+}
+.imp-pulse-cta:not(:disabled) {
+  animation: impPulseGlow 2.2s ease-in-out infinite;
+}
+.imp-pulse-live {
+  animation: impPulseSoft 1.8s ease-in-out infinite;
+}
+.imp-pulse-live .imp-pulse-dot {
+  display: inline-block;
+  animation: impPulseDot 1.2s ease-in-out infinite;
+}
+.imp-pulse-medal.gold {
+  animation: impPulseGold 2.4s ease-in-out infinite;
+}
+.imp-premio-row.is-gold {
+  animation: impPulseSoft 2.8s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .imp-pulse-cta,
+  .imp-pulse-live,
+  .imp-pulse-live .imp-pulse-dot,
+  .imp-pulse-medal.gold,
+  .imp-premio-row.is-gold {
+    animation: none !important;
+  }
+}
+
 .imp-sticky-buy {
   background: rgba(255, 255, 255, 0.97);
   border-top: 1px solid var(--imp-panel-border);
@@ -493,8 +540,8 @@
 
       <!-- Badge status -->
       <div style="position:absolute;top:12px;left:12px;display:flex;gap:6px;">
-        <span style="background:color-mix(in srgb, var(--brand-from) 20%, transparent);border:1px solid color-mix(in srgb, var(--brand-from) 40%, transparent);color:var(--brand-from);padding:4px 10px;border-radius:9999px;font-size:10px;font-weight:900;text-transform:uppercase;">● <%= rifa.status === 'ativa' ? 'ATIVA' : rifa.status.toUpperCase() %></span>
-        <% if (pctVend >= 75) { %><span style="background:rgba(249,115,22,.2);border:1px solid rgba(249,115,22,.4);color:#fb923c;padding:4px 10px;border-radius:9999px;font-size:10px;font-weight:900;">🔥 Quase esgotando!</span><% } %>
+        <span class="<%= rifa.status === 'ativa' ? 'imp-pulse-live' : '' %>" style="background:color-mix(in srgb, var(--brand-from) 20%, transparent);border:1px solid color-mix(in srgb, var(--brand-from) 40%, transparent);color:var(--brand-from);padding:4px 10px;border-radius:9999px;font-size:10px;font-weight:900;text-transform:uppercase;"><span class="imp-pulse-dot">●</span> <%= rifa.status === 'ativa' ? 'ATIVA' : rifa.status.toUpperCase() %></span>
+        <% if (pctVend >= 75) { %><span class="imp-pulse-live" style="background:rgba(249,115,22,.2);border:1px solid rgba(249,115,22,.4);color:#fb923c;padding:4px 10px;border-radius:9999px;font-size:10px;font-weight:900;">🔥 Quase esgotando!</span><% } %>
       </div>
 
       <div class="imp-hero-caption" style="position:absolute;bottom:0;left:0;right:0;padding:16px;z-index:3;">
@@ -514,10 +561,16 @@
       <div class="imp-progress-wrap" role="progressbar" aria-valuenow="<%= pctVend %>" aria-valuemin="0" aria-valuemax="100" aria-label="Progresso da campanha">
         <div class="imp-progress-bar" style="width:<%= Math.max(pctVend, 3) %>%;"></div>
       </div>
-      <div style="margin-top:10px;display:flex;justify-content:flex-end;">
-        <a href="<%= tenantBase %>/minhas-reservas" class="imp-txt-muted" style="font-size:11px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
-          <i data-lucide="ticket" class="w-3.5 h-3.5"></i> Ver minhas cotas
-        </a>
+      <div style="margin-top:12px;">
+        <button type="button"
+          id="btn-compartilhar-rifa"
+          class="imp-btn-share imp-pulse-share"
+          aria-label="Compartilhar"
+          data-share-path="/<%= tenant.slug %>/rifas/<%= rifa.id %>"
+          data-share-title="<%= String(rifa.titulo || '').replace(/"/g, '&quot;') %>">
+          <i data-lucide="share-2" class="w-4 h-4"></i>
+          Compartilhar
+        </button>
       </div>
     </div>
 
@@ -534,7 +587,7 @@
         const m = medalClass(i);
       %>
         <div class="imp-premio-row is-<%= m %>">
-          <div class="imp-premio-medal <%= m %>" aria-hidden="true">
+          <div class="imp-premio-medal <%= m %><%= m === 'gold' ? ' imp-pulse-medal' : '' %>" aria-hidden="true">
             <span class="rank"><%= rankText(i) %></span>
             <span class="tag">lugar</span>
           </div>
@@ -580,11 +633,6 @@
     </div>
 
     <% if (rifa.status === 'ativa') { %>
-
-    <p class="imp-txt-muted" style="font-size:12px;text-align:center;line-height:1.5;margin:0 0 12px;padding:0 4px;">
-      Cada número vendido e pago participa do sorteio com a mesma chance individual.
-      Comprar mais números aumenta suas chances de forma proporcional.
-    </p>
 
     <% if (rifa.modalidade === 'numeros') { %>
     <!-- ══ GRADE DE NÚMEROS ═══════════════════════════════════════ -->
@@ -716,20 +764,13 @@
         </div>
       </div>
 
-      <button type="button" id="btn-iniciar-compra" class="imp-btn-green"<%= detIni.subtotal < 5 ? ' disabled' : '' %>>
+      <button type="button" id="btn-iniciar-compra" class="imp-btn-green imp-pulse-cta"<%= detIni.subtotal < 5 ? ' disabled' : '' %>>
         <i data-lucide="qr-code" class="w-5 h-5"></i>
         Quero participar · <span id="btn-total-label">R$ <%= moedaBr(detIni.total) %></span>
       </button>
     </div>
 
     <% } /* fim else modalidade cotas */ %>
-
-    <!-- Compartilhar -->
-    <div style="margin-bottom:10px;">
-      <a href="https://wa.me/?text=<%= whatsappMsg %>" target="_blank" class="imp-btn-outline-sm" style="width:100%;justify-content:center;">
-        <i data-lucide="share-2" class="w-4 h-4"></i> Compartilhar no WhatsApp
-      </a>
-    </div>
 
     <% } else if (rifa.status === 'finalizada') { %>
     <div style="margin-bottom:10px;">
@@ -800,7 +841,7 @@
       <div class="imp-txt-muted" style="font-size:11px;"><span id="sticky-qtd">1</span> cota(s)</div>
       <div style="font-size:18px;font-weight:900;color:var(--brand-from);" id="sticky-total">R$ 0,00</div>
     </div>
-    <button id="btn-comprar-mobile" class="imp-btn-green" style="flex:1;max-width:180px;padding:12px 16px;font-size:14px;">
+    <button id="btn-comprar-mobile" class="imp-btn-green imp-pulse-cta" style="flex:1;max-width:180px;padding:12px 16px;font-size:14px;">
       <i data-lucide="qr-code" class="w-4 h-4"></i> Participar
     </button>
   </div>
@@ -965,7 +1006,44 @@
   })();
 
   window.__pendingScripts = window.__pendingScripts || [];
-  window.__pendingScripts.push('/js/rifa-detalhe.js?v=6');
+  window.__pendingScripts.push('/js/rifa-detalhe.js?v=8');
+
+  (function () {
+    var btn = document.getElementById('btn-compartilhar-rifa');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      var path = btn.getAttribute('data-share-path') || window.location.pathname;
+      var url = window.location.origin + path;
+      var title = btn.getAttribute('data-share-title') || document.title;
+      var text = '🎟️ Participe da rifa "' + title + '"!';
+      var payload = { title: title, text: text, url: url };
+
+      function fallbackCopy() {
+        var done = function () {
+          if (window.Notyf) {
+            try { new Notyf({ duration: 2500, position: { x: 'center', y: 'top' } }).success('Link copiado!'); return; } catch (_) {}
+          }
+          alert('Link copiado!\n\n' + url);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url).then(done).catch(function () {
+            window.prompt('Copie o link:', url);
+          });
+        } else {
+          window.prompt('Copie o link:', url);
+        }
+      }
+
+      if (navigator.share) {
+        navigator.share(payload).catch(function (err) {
+          if (err && err.name === 'AbortError') return;
+          fallbackCopy();
+        });
+        return;
+      }
+      fallbackCopy();
+    });
+  })();
 </script>
 
 <%- include('../partials/footer', { tenantPublic: true }) %>

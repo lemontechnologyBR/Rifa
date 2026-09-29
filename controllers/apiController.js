@@ -299,7 +299,7 @@ const apiController = {
       console.log(`[Webhook Woovi] Reserva #${reserva.id} confirmada via correlationID=${correlationID}`);
       return res.json({ ok: true, reservaId: reserva.id });
     } catch (err) {
-      if (!err.message.includes('não encontrada') && !err.message.includes('confirmado') && !err.message.includes('pendente') && !err.message.includes('não confere') && !err.message.includes('ainda não confirmado')) {
+      if (!err.message.includes('não encontrada') && !err.message.includes('confirmado') && !err.message.includes('não confere') && !err.message.includes('ainda não confirmado') && !err.message.includes('não pode ser confirmada') && !err.message.includes('sem números livres')) {
         console.error('[Webhook Woovi] Erro:', err.message);
       }
       return res.json({ ok: true });
@@ -316,13 +316,17 @@ const apiController = {
         return res.status(400).json({ erro: 'Tenant ausente.' });
       }
 
+      const desde = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
       const pendentes = await prisma.reserva.findMany({
         where: {
-          statusPagamento: 'pendente',
           wooviCorrelationId: { not: null },
-          rifa: { tenantId }
+          rifa: { tenantId },
+          OR: [
+            { statusPagamento: 'pendente' },
+            { statusPagamento: 'expirado', createdAt: { gte: desde } }
+          ]
         },
-        take: 20,
+        take: 40,
         orderBy: { createdAt: 'desc' }
       });
 
@@ -332,10 +336,10 @@ const apiController = {
           const status = await PaymentService.consultarStatus(r.wooviCorrelationId);
           if (PaymentService.pagamentoConfirmado(status)) {
             await ReservaService.confirmarViaGateway(r.wooviCorrelationId);
-            resultados.push({ id: r.id, acao: 'confirmado' });
-            console.log(`[SyncPIX] Reserva #${r.id} confirmada retroativamente`);
+            resultados.push({ id: r.id, acao: 'confirmado', era: r.statusPagamento });
+            console.log(`[SyncPIX] Reserva #${r.id} confirmada retroativamente (era: ${r.statusPagamento})`);
           } else {
-            resultados.push({ id: r.id, acao: 'pendente', status });
+            resultados.push({ id: r.id, acao: r.statusPagamento, status });
           }
         } catch (e) {
           resultados.push({ id: r.id, acao: 'erro', msg: e.message });

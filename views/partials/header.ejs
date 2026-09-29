@@ -26,7 +26,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="<%= typeof pwaShortName !== 'undefined' ? pwaShortName : (platformName || 'VouRifar') %>">
-  <link rel="apple-touch-icon" href="/img/pwa/icon-192.png">
+  <link rel="apple-touch-icon" href="<%= (typeof pwaIconUrl !== 'undefined' && pwaIconUrl) ? pwaIconUrl : ((typeof brandLogo !== 'undefined' && brandLogo) ? brandLogo : '/img/pwa/icon-192.png') %>">
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register(<%- JSON.stringify(pwaSwUrl || '/sw.js') %>, {
@@ -44,7 +44,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/custom.css" id="css-custom">
-  <link rel="stylesheet" href="/css/public.css?v=22" id="css-public">
+  <link rel="stylesheet" href="/css/public.css?v=30" id="css-public">
   <%- include('ngrok-assets') %>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -124,17 +124,17 @@
 
   <nav class="glass-nav border-b border-gray-200/60 dark:border-gray-700/60 sticky top-0 z-50 pt-safe">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex justify-between items-center h-16">
+      <div class="flex justify-between items-center min-h-16 h-auto py-2 sm:h-16 sm:py-0">
         <a href="<%= tb || '/' %>" class="flex items-center gap-2.5 group min-w-0 flex-1 sm:flex-initial">
           <% if (brandLogo) { %>
-            <img src="<%= brandLogo %>" alt="<%= brandName %>" class="w-9 h-9 rounded-xl object-cover shrink-0">
+            <img src="<%= brandLogo %>" alt="<%= brandName %>" class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl object-cover shrink-0 ring-2 ring-black/5 dark:ring-white/10 shadow-sm">
             <div class="leading-tight min-w-0">
-              <span class="font-extrabold text-lg block truncate max-w-[11rem] sm:max-w-none" style="color:<%= brandCor %>"><%= brandName %></span>
+              <span class="font-extrabold text-lg sm:text-xl block truncate max-w-[11rem] sm:max-w-none" style="color:<%= brandCor %>"><%= brandName %></span>
             </div>
           <% } else if (typeof tenant !== 'undefined' && tenant) { %>
-            <div class="w-9 h-9 rounded-xl shrink-0 flex items-center justify-center text-white font-bold text-sm" style="background:<%= brandCor %>"><%= brandName.charAt(0).toUpperCase() %></div>
+            <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl shrink-0 flex items-center justify-center text-white font-bold text-lg sm:text-xl shadow-sm ring-2 ring-black/5 dark:ring-white/10" style="background:<%= brandCor %>"><%= brandName.charAt(0).toUpperCase() %></div>
             <div class="leading-tight min-w-0">
-              <span class="font-extrabold text-lg block truncate max-w-[11rem] sm:max-w-none" style="color:<%= brandCor %>"><%= brandName %></span>
+              <span class="font-extrabold text-lg sm:text-xl block truncate max-w-[11rem] sm:max-w-none" style="color:<%= brandCor %>"><%= brandName %></span>
             </div>
           <% } else { %>
             <%- include('vourifar-logo', { logoClass: 'h-10 w-auto max-h-10 shrink-0', logoTitle: platformName || 'VouRifar' }) %>
@@ -145,7 +145,7 @@
           <% if (tb) { %>
             <a href="<%= tb %>/" class="px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition">Sorteios</a>
             <a href="<%= tb %>/encerradas" class="px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition">Encerradas</a>
-            <a href="<%= tb %>/minhas-reservas" class="px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition">Minhas Reservas</a>
+            <a href="<%= tb %>/minhas-reservas" class="px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition">Meus Títulos</a>
           <% } else { %>
             <a href="/" class="px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition">Início</a>
             <a href="/ajuda" class="px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition">Ajuda</a>
@@ -175,7 +175,7 @@
         <% if (tb) { %>
           <a href="<%= tb %>/" class="block px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800">Sorteios</a>
           <a href="<%= tb %>/encerradas" class="block px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800">Encerradas</a>
-          <a href="<%= tb %>/minhas-reservas" class="block px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800">Minhas Reservas</a>
+          <a href="<%= tb %>/minhas-reservas" class="block px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800">Meus Títulos</a>
           <a href="<%= tb %>/como-funciona" class="block px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800">Como funciona</a>
           <a href="/ajuda?para=comprador" class="block px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800">Ajuda</a>
           <a href="<%= tb %>/politica-de-privacidade" class="block px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800">Política de privacidade</a>

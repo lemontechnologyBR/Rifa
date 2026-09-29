@@ -1,7 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const { getBaseUrl } = require('../lib/requestUrl');
-const { buildPlatformManifest, buildTenantManifest } = require('../lib/pwa');
+const { buildPlatformManifest, buildTenantManifest, buildTenantAdminManifest } = require('../lib/pwa');
 
 function sendManifest(req, res, manifest) {
   res.set({
@@ -19,6 +19,10 @@ function tenantManifest(req, res) {
   sendManifest(req, res, buildTenantManifest(req.tenant, getBaseUrl(req)));
 }
 
+function tenantAdminManifest(req, res) {
+  sendManifest(req, res, buildTenantAdminManifest(req.tenant, getBaseUrl(req)));
+}
+
 function serviceWorker(req, res) {
   res.set({
     'Content-Type': 'application/javascript; charset=utf-8',
@@ -31,9 +35,10 @@ function serviceWorker(req, res) {
 function audit(req, res) {
   const origin = getBaseUrl(req);
   const slug = req.tenant?.slug;
-  const slugPath = slug ? `/${slug}/` : '/';
+  const isAdmin = String(req.originalUrl || '').includes('/admin');
+  const slugPath = slug ? (isAdmin ? `/${slug}/admin/` : `/${slug}/`) : '/';
   const manifest = slug
-    ? buildTenantManifest(req.tenant, origin)
+    ? (isAdmin ? buildTenantAdminManifest(req.tenant, origin) : buildTenantManifest(req.tenant, origin))
     : buildPlatformManifest(origin);
 
   const iconChecks = manifest.icons.map((icon) => {
@@ -61,14 +66,18 @@ function audit(req, res) {
     origin,
     slug: slug || null,
     page: `${origin}${slugPath}`,
-    manifestUrl: slug ? `${origin}/${slug}/manifest.webmanifest` : `${origin}/manifest.webmanifest`,
+    manifestUrl: slug
+      ? (isAdmin
+        ? `${origin}/${slug}/admin/manifest.webmanifest`
+        : `${origin}/${slug}/manifest.webmanifest`)
+      : `${origin}/manifest.webmanifest`,
     swUrl: `${origin}/sw.js`,
     swScope: '/',
     manifest,
     iconChecks,
     tips: [
       'Use HTTPS (ngrok ou produção).',
-      'Acesse sempre com barra final: /slug/',
+      'Acesse sempre com barra final: /slug/ ou /slug/admin/',
       'Chrome só mostra instalar após interagir na página (clique/scroll).',
       'DevTools → Application → Clear site data se testou antes.',
       'Ngrok free: abra o site uma vez e clique em "Visit Site" antes do SW registrar.'
@@ -79,6 +88,7 @@ function audit(req, res) {
 module.exports = {
   platformManifest,
   tenantManifest,
+  tenantAdminManifest,
   serviceWorker,
   audit
 };
