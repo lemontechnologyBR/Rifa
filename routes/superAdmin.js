@@ -6,6 +6,9 @@ const { authLimiter } = require('../middleware/rateLimit');
 
 router.get('/login', superAdminController.loginForm);
 router.post('/login', authLimiter, superAdminController.login);
+router.get('/2fa', superAdminController.twoFactorForm);
+router.post('/2fa', authLimiter, superAdminController.twoFactorVerify);
+router.post('/2fa/reenviar', authLimiter, superAdminController.twoFactorResend);
 router.get('/logout', superAdminController.logout);
 
 router.get('/', requireAdmin, superAdminController.dashboard);

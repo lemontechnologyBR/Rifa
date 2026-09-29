@@ -53,13 +53,20 @@
         el.className = 'depoimento-item flex gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700/50';
         const inicial = (c.usuario.nome || '?').charAt(0).toUpperCase();
         const dataFmt = new Date(c.createdAt).toLocaleDateString('pt-BR');
-        el.innerHTML = `
-          <div class="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 text-white text-sm font-bold flex items-center justify-center flex-shrink-0">${inicial}</div>
-          <div>
-            <p class="text-sm dark:text-gray-200 depoimento-texto"></p>
-            <p class="text-xs text-gray-400 mt-1">${c.usuario.nome} · ${dataFmt}</p>
-          </div>`;
-        el.querySelector('.depoimento-texto').textContent = c.texto;
+        const avatar = document.createElement('div');
+        avatar.className = 'w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 text-white text-sm font-bold flex items-center justify-center flex-shrink-0';
+        avatar.textContent = inicial;
+        const body = document.createElement('div');
+        const textoEl = document.createElement('p');
+        textoEl.className = 'text-sm dark:text-gray-200 depoimento-texto';
+        textoEl.textContent = c.texto || '';
+        const meta = document.createElement('p');
+        meta.className = 'text-xs text-gray-400 mt-1';
+        meta.textContent = (c.usuario.nome || '') + ' · ' + dataFmt;
+        body.appendChild(textoEl);
+        body.appendChild(meta);
+        el.appendChild(avatar);
+        el.appendChild(body);
         lista?.prepend(el);
 
         form.reset();

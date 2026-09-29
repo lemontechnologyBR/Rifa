@@ -214,17 +214,27 @@ const organizadorController = {
 
       const prisma = require('../lib/prisma');
       const DiditService = require('../services/diditService');
-      const orgPin = await prisma.organizador.findFirst({
+      let orgPin = await prisma.organizador.findFirst({
         where: { id: req.session.organizadorId, tenantId: req.tenant.id },
         select: {
+          id: true,
           pinHash: true,
           kycStatus: true,
           kycSessionId: true,
           kycVerifiedAt: true
         }
       });
+      // Auto-sync Didit → evita ficar preso em "em andamento" sem reset manual
+      if (orgPin?.kycSessionId && !DiditService.isKycAprovado(orgPin)) {
+        orgPin = await DiditService.sincronizarOrganizadorSePreciso(orgPin);
+      }
       const kycAprovado = DiditService.isKycAprovado(orgPin);
       const kycObrigatorio = DiditService.isConfigured();
+      const kycStatus = orgPin?.kycStatus || 'pendente';
+      const kycPodeRetentar = DiditService.isStatusTerminalFalha(kycStatus)
+        || kycStatus === 'pendente'
+        || kycStatus === 'em_andamento';
+      const kycEmAnalise = kycStatus === 'em_analise';
 
       res.render('admin/carteira', {
         titulo: 'Carteira',
@@ -236,7 +246,9 @@ const organizadorController = {
         temPin: !!orgPin?.pinHash,
         kycObrigatorio,
         kycAprovado,
-        kycStatus: orgPin?.kycStatus || 'pendente',
+        kycStatus,
+        kycEmAnalise,
+        kycPodeRetentar,
         kycVerifiedAt: orgPin?.kycVerifiedAt || null,
         carteiraOk: PaymentService.isConfigured(req.tenant),
         gateway: provider,
@@ -286,6 +298,9 @@ const organizadorController = {
       const result = await DiditService.iniciarVerificacao(org, { callbackUrl, language: 'pt' });
       if (result.alreadyApproved) {
         return res.redirect(`${ab}?msg=${encodeURIComponent('Identidade já verificada.')}`);
+      }
+      if (result.alreadyInReview) {
+        return res.redirect(`${ab}?msg=${encodeURIComponent('Sua verificação já está em análise. Atualizamos o status automaticamente — em breve você poderá sacar.')}`);
       }
       if (!result.url) {
         return res.redirect(`${ab}?erro=${encodeURIComponent('Não foi possível iniciar a verificação. Tente novamente.')}`);

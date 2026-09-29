@@ -200,6 +200,9 @@ const apiController = {
         expiraEm: reserva.expiraEm || null
       });
     } catch (err) {
+      if (err.code === 'XSS_REJECT') {
+        console.warn(`[Compra] XSS rejeitado ip=${req.ip} tenant=${req.tenant?.slug}`);
+      }
       res.status(400).json({ erro: err.message });
     }
   },
@@ -261,8 +264,9 @@ const apiController = {
     });
 
     if (!check.ok) {
+      const { webhookFail } = require('../lib/trollMessages');
       console.warn(`[Webhook Woovi] rejeitado ip=${ip} motivo=${check.reason}`);
-      return res.status(401).json({ ok: false, erro: 'Assinatura inválida.' });
+      return res.status(401).json(webhookFail(check.reason));
     }
 
     try {

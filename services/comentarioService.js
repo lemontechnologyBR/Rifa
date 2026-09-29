@@ -28,11 +28,19 @@ const ComentarioService = {
 
   /** Apenas comprador com cota paga e confirmada — 1 depoimento por pessoa/rifa */
   async criarSeCompradorConfirmado(rifaId, cpf, texto) {
+    const { HTML_INJECTION_RE } = require('../lib/sanitizeText');
+    const { xssReject } = require('../lib/trollMessages');
     const cpfLimpo = limparCpf(cpf);
     if (!cpfValido(cpfLimpo)) throw new Error('CPF inválido.');
 
     const t = String(texto || '').trim();
     if (t.length < 3) throw new Error('Depoimento deve ter pelo menos 3 caracteres.');
+    if (t.length > 500) throw new Error('Depoimento muito longo.');
+    if (HTML_INJECTION_RE.test(t)) {
+      const err = new Error(xssReject());
+      err.code = 'XSS_REJECT';
+      throw err;
+    }
 
     const usuario = await prisma.usuario.findUnique({ where: { cpf: cpfLimpo } });
     if (!usuario) {

@@ -37,12 +37,21 @@ function parseVendorOrgId(vendorData) {
   return m ? Number(m[1]) : null;
 }
 
-function mapStatus(diditStatus) {
-  return STATUS_MAP[diditStatus] || 'pendente';
+function mapStatus(diditStatus, fallback = 'em_andamento') {
+  if (!diditStatus) return fallback;
+  return STATUS_MAP[diditStatus] || fallback;
 }
 
 function isKycAprovado(org) {
   return org && String(org.kycStatus || '').toLowerCase() === 'aprovado';
+}
+
+function isStatusTerminalFalha(status) {
+  return ['reprovado', 'abandonado', 'expirado'].includes(String(status || '').toLowerCase());
+}
+
+function isStatusEmCurso(status) {
+  return ['em_andamento', 'em_analise', 'pendente'].includes(String(status || '').toLowerCase());
 }
 
 async function api(path, { method = 'GET', body } = {}) {
@@ -73,12 +82,74 @@ async function api(path, { method = 'GET', body } = {}) {
 }
 
 /**
- * Inicia (ou reutiliza) sessão KYC e devolve URL hospedada do Didit.
+ * Inicia ou reutiliza sessão KYC. Não cria sessão nova se a atual ainda for válida.
  */
-async function iniciarVerificacao(organizador, { callbackUrl, language = 'pt' } = {}) {
+async function iniciarVerificacao(organizador, { callbackUrl, language = 'pt', forcarNova = false } = {}) {
   if (!organizador?.id) throw new Error('Organizador inválido.');
   if (isKycAprovado(organizador)) {
     return { alreadyApproved: true, url: null, sessionId: organizador.kycSessionId };
+  }
+
+  // Reusa / sincroniza sessão existente antes de abrir outra
+  if (!forcarNova && organizador.kycSessionId) {
+    try {
+      const decision = await obterDecisao(organizador.kycSessionId);
+      const status = mapStatus(decision.status, organizador.kycStatus || 'em_andamento');
+
+      await prisma.organizador.update({
+        where: { id: organizador.id },
+        data: {
+          kycSessionId: organizador.kycSessionId,
+          kycStatus: status,
+          ...(status === 'aprovado' ? { kycVerifiedAt: new Date() } : {})
+        }
+      });
+
+      if (status === 'aprovado') {
+        return { alreadyApproved: true, url: null, sessionId: organizador.kycSessionId, status };
+      }
+
+      if (status === 'em_analise') {
+        return {
+          alreadyInReview: true,
+          url: null,
+          sessionId: organizador.kycSessionId,
+          status
+        };
+      }
+
+      const reuseUrl = decision.url || decision.session_url || decision.verification_url || null;
+      if (isStatusEmCurso(status) && reuseUrl) {
+        return {
+          alreadyApproved: false,
+          reused: true,
+          url: reuseUrl,
+          sessionId: organizador.kycSessionId,
+          status
+        };
+      }
+
+      // Em andamento sem URL reutilizável → cria nova (sessão antiga costuma estar morta)
+      // Terminal falha → cria nova
+      if (isStatusEmCurso(status) && !reuseUrl && status === 'em_andamento') {
+        // tenta GET da sessão completa por se a decision não traz URL
+        try {
+          const full = await api(`/session/${encodeURIComponent(organizador.kycSessionId)}/`);
+          const url = full?.url || full?.session_url || null;
+          if (url) {
+            return {
+              alreadyApproved: false,
+              reused: true,
+              url,
+              sessionId: organizador.kycSessionId,
+              status
+            };
+          }
+        } catch (_) {}
+      }
+    } catch (err) {
+      console.warn(`[Didit] sessão anterior inválida org=${organizador.id}: ${err.message}`);
+    }
   }
 
   const vendor_data = vendorDataForOrg(organizador.id);
@@ -100,11 +171,13 @@ async function iniciarVerificacao(organizador, { callbackUrl, language = 'pt' } 
     }
   });
 
+  const mapped = mapStatus(session.status);
   await prisma.organizador.update({
     where: { id: organizador.id },
     data: {
       kycSessionId: session.session_id,
-      kycStatus: mapStatus(session.status) === 'aprovado' ? 'aprovado' : 'em_andamento'
+      kycStatus: mapped === 'aprovado' ? 'aprovado' : (mapped === 'em_analise' ? 'em_analise' : 'em_andamento'),
+      ...(mapped === 'aprovado' ? { kycVerifiedAt: new Date() } : {})
     }
   });
 
@@ -122,11 +195,70 @@ async function iniciarVerificacao(organizador, { callbackUrl, language = 'pt' } 
   } catch (_) {}
 
   return {
-    alreadyApproved: false,
+    alreadyApproved: mapped === 'aprovado',
     url: session.url,
     sessionId: session.session_id,
-    status: session.status
+    status: mapped
   };
+}
+
+/**
+ * Sincroniza status local com Didit se houver sessão e ainda não estiver aprovado.
+ * Usado na carteira e no job — não engole erros críticos de config.
+ */
+async function sincronizarOrganizadorSePreciso(organizador) {
+  if (!organizador?.id || !organizador.kycSessionId) return organizador;
+  if (isKycAprovado(organizador)) return organizador;
+  if (!isConfigured()) return organizador;
+
+  try {
+    const { org } = await sincronizarPorSessionId(organizador.kycSessionId, {
+      expectedOrgId: organizador.id
+    });
+    return org;
+  } catch (err) {
+    console.warn(`[Didit] sync org=${organizador.id}: ${err.message}`);
+    return organizador;
+  }
+}
+
+/**
+ * Job: sincroniza organizadores travados em andamento/análise.
+ */
+async function sincronizarPendentes({ limit = 40 } = {}) {
+  if (!isConfigured()) return { ok: true, skipped: true, motivo: 'didit_off' };
+
+  const orgs = await prisma.organizador.findMany({
+    where: {
+      kycSessionId: { not: null },
+      kycStatus: { in: ['em_andamento', 'em_analise', 'pendente'] }
+    },
+    orderBy: { id: 'asc' },
+    take: limit,
+    select: {
+      id: true,
+      email: true,
+      kycStatus: true,
+      kycSessionId: true,
+      createdAt: true
+    }
+  });
+
+  let synced = 0;
+  let aprovados = 0;
+  let erros = 0;
+  for (const org of orgs) {
+    try {
+      const { status } = await sincronizarPorSessionId(org.kycSessionId, { expectedOrgId: org.id });
+      synced += 1;
+      if (status === 'aprovado') aprovados += 1;
+    } catch (err) {
+      erros += 1;
+      console.warn(`[Didit sync] org=#${org.id} ${org.email}: ${err.message}`);
+    }
+  }
+
+  return { ok: true, total: orgs.length, synced, aprovados, erros };
 }
 
 async function obterDecisao(sessionId) {
@@ -407,11 +539,15 @@ function verificarAssinaturaWebhook(req, body) {
 module.exports = {
   isConfigured,
   isKycAprovado,
+  isStatusTerminalFalha,
+  isStatusEmCurso,
   iniciarVerificacao,
   obterDecisao,
   extrairEvidencias,
   obterEvidenciasOrganizador,
   sincronizarPorSessionId,
+  sincronizarOrganizadorSePreciso,
+  sincronizarPendentes,
   aplicarStatusWebhook,
   verificarAssinaturaWebhook,
   vendorDataForOrg,

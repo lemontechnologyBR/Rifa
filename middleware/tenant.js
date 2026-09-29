@@ -50,6 +50,11 @@ async function requireOrganizador(req, res, next) {
     req.session?.tenantId === req.tenant?.id)
   ) {
     if (req.xhr || req.headers.accept?.includes('application/json')) {
+      const { syncDeny } = require('../lib/trollMessages');
+      // Mensagem troll só no endpoint de sync (scanners); demais rotas ficam neutras
+      if (String(req.originalUrl || '').includes('/pagamentos/sincronizar')) {
+        return res.status(401).json({ erro: 'Faça login como organizador.', troll: syncDeny() });
+      }
       return res.status(401).json({ erro: 'Faça login como organizador.' });
     }
     return res.redirect(`/${req.tenant.slug}/admin/login`);

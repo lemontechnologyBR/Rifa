@@ -219,8 +219,9 @@ const platformController = {
     try {
       // Honeypot anti-bot — campo oculto deve ficar vazio
       if (website) {
+        const { honeypotMsg } = require('../lib/trollMessages');
         console.warn(`[Cadastro] honeypot preenchido ip=${req.ip}`);
-        return res.redirect('/verificar-email?msg=' + encodeURIComponent('Se o e-mail for válido, enviaremos a confirmação.'));
+        return res.redirect('/verificar-email?msg=' + encodeURIComponent(honeypotMsg()));
       }
 
       if (useGoogle) {
@@ -306,6 +307,9 @@ const platformController = {
 
       return res.redirect(`/verificar-email?email=${encodeURIComponent(organizador.email)}`);
     } catch (err) {
+      if (err.code === 'XSS_REJECT') {
+        console.warn(`[Cadastro] XSS rejeitado ip=${req.ip} slug=${String(slug || '').slice(0, 40)}`);
+      }
       const appUrl = res.locals.baseUrl || process.env.APP_URL || '';
       res.render('platform/cadastro', {
         titulo: 'Criar seu sistema de rifas',

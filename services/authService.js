@@ -6,18 +6,7 @@ const prisma = require('../lib/prisma');
 const { gerarCodigoIndicacao, limparTelefone, limparCpf, cpfValido, gerarTokenRecuperacao } = require('../lib/helpers');
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const NOME_RE = /^[\p{L}\p{M}\s'.-]{2,80}$/u;
-
-function assertNomeValido(nome) {
-  const n = String(nome || '').trim().replace(/\s+/g, ' ');
-  if (!NOME_RE.test(n)) {
-    throw new Error('Nome inválido. Use apenas letras e espaços (2 a 80 caracteres).');
-  }
-  if (/https?:\/\/|www\.|@|<script/i.test(n)) {
-    throw new Error('Nome inválido.');
-  }
-  return n;
-}
+const { assertNomePessoa } = require('../lib/sanitizeText');
 
 function assertEmailValido(email) {
   const e = String(email || '').trim().toLowerCase();
@@ -93,7 +82,7 @@ const AuthService = {
   },
 
   async registrarOrganizador({ tenantId, nome, email, senha }) {
-    const nomeOk = assertNomeValido(nome);
+    const nomeOk = assertNomePessoa(nome);
     const emailOk = assertEmailValido(email);
     const existente = await prisma.organizador.findUnique({ where: { email: emailOk } });
     if (existente) throw new Error('E-mail já cadastrado.');
@@ -115,7 +104,7 @@ const AuthService = {
   },
 
   async registrarOrganizadorGoogle({ tenantId, nome, email, googleId }) {
-    const nomeOk = assertNomeValido(nome || 'Organizador');
+    const nomeOk = assertNomePessoa(nome || 'Organizador');
     const emailOk = assertEmailValido(email);
     const existente = await prisma.organizador.findUnique({ where: { email: emailOk } });
     if (existente) throw new Error('E-mail já cadastrado.');
@@ -301,6 +290,8 @@ const AuthService = {
   },
 
   async buscarOuCriarConvidado({ nome, telefone, cpf, chavePix, email = null }) {
+    const { assertNomePessoa } = require('../lib/sanitizeText');
+    const nomeOk = assertNomePessoa(nome);
     const tel = limparTelefone(telefone);
     const cpfLimpo = limparCpf(cpf);
     if (!cpfValido(cpfLimpo)) throw new Error('CPF inválido.');
@@ -328,7 +319,7 @@ const AuthService = {
       await assertEmailDisponivel(porCpf.id);
       return prisma.usuario.update({
         where: { id: porCpf.id },
-        data: { nome, telefone: tel, email: emailNorm, chavePix: chavePix || porCpf.chavePix }
+        data: { nome: nomeOk, telefone: tel, email: emailNorm, chavePix: chavePix || porCpf.chavePix }
       });
     }
 
@@ -342,7 +333,7 @@ const AuthService = {
       await assertEmailDisponivel(usuario.id);
       return prisma.usuario.update({
         where: { id: usuario.id },
-        data: { nome, cpf: cpfLimpo, email: emailNorm, chavePix: chavePix || usuario.chavePix }
+        data: { nome: nomeOk, cpf: cpfLimpo, email: emailNorm, chavePix: chavePix || usuario.chavePix }
       });
     }
 
@@ -355,7 +346,7 @@ const AuthService = {
 
     return prisma.usuario.create({
       data: {
-        nome,
+        nome: nomeOk,
         email: emailNorm,
         telefone: tel,
         cpf: cpfLimpo,

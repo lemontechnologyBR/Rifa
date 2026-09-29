@@ -5,10 +5,9 @@
     <div class="super-login-logo">
       <img src="/img/vourifar-logo.png" alt="VouRifar" height="40">
     </div>
-    <h1 class="super-login-title">Super Admin</h1>
-    <p class="super-login-sub">Painel de gestão da plataforma VouRifar</p>
 
-    <% if (erro) { %><div class="super-login-alert"><%= erro %></div><% } %>
+    <% if (typeof erro !== 'undefined' && erro) { %><div class="super-login-alert"><%= erro %></div><% } %>
+    <% if (typeof msg !== 'undefined' && msg) { %><div class="super-login-alert" style="background:#ecfdf5;color:#065f46;border-color:#a7f3d0;"><%= msg %></div><% } %>
 
     <form method="POST" action="/super/login">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">

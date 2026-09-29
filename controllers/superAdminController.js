@@ -132,22 +132,115 @@ function renderLocals(req, res, extra = {}) {
 const superAdminController = {
   loginForm(req, res) {
     if (req.session.adminLogado) return res.redirect('/super');
-    res.render('super/login', { titulo: 'Super Admin', erro: null, csrfToken: res.locals.csrfToken });
+    if (req.session.admin2fa) return res.redirect('/super/2fa');
+    const erro = req.query.erro ? decodeURIComponent(String(req.query.erro)) : null;
+    res.render('super/login', { titulo: 'VouRifar', erro, msg: null, csrfToken: res.locals.csrfToken });
   },
 
   async login(req, res) {
     const admin = await AuthService.loginAdmin(req.body.usuario, req.body.senha);
-    if (admin) {
-      req.session.adminLogado = true;
-      req.session.adminUsuario = admin.usuario;
-      return res.redirect('/super');
+    if (!admin) {
+      return res.render('super/login', {
+        titulo: 'VouRifar',
+        erro: 'Credenciais inválidas.',
+        csrfToken: res.locals.csrfToken
+      });
     }
-    res.render('super/login', { titulo: 'Super Admin', erro: 'Credenciais inválidas.', csrfToken: res.locals.csrfToken });
+
+    try {
+      const SuperAdmin2fa = require('../lib/superAdmin2fa');
+      const { emailMascarado } = await SuperAdmin2fa.iniciar2fa(req.session, admin);
+      return req.session.save(() => {
+        res.redirect(`/super/2fa?msg=${encodeURIComponent(`Código enviado para ${emailMascarado}`)}`);
+      });
+    } catch (err) {
+      console.error('[Super 2FA] falha ao enviar código:', err.message);
+      return res.render('super/login', {
+        titulo: 'VouRifar',
+        erro: 'Não foi possível enviar o código 2FA. Verifique o SMTP e tente de novo.',
+        csrfToken: res.locals.csrfToken
+      });
+    }
+  },
+
+  twoFactorForm(req, res) {
+    if (req.session.adminLogado) return res.redirect('/super');
+    if (!req.session.admin2fa) return res.redirect('/super/login');
+    const SuperAdmin2fa = require('../lib/superAdmin2fa');
+    const emailMascarado = SuperAdmin2fa.mascararEmail(req.session.admin2fa.email);
+    res.render('super/2fa', {
+      titulo: 'Verificação 2FA',
+      erro: req.query.erro ? decodeURIComponent(String(req.query.erro)) : null,
+      msg: req.query.msg ? decodeURIComponent(String(req.query.msg)) : null,
+      emailMascarado,
+      csrfToken: res.locals.csrfToken
+    });
+  },
+
+  async twoFactorVerify(req, res) {
+    if (req.session.adminLogado) return res.redirect('/super');
+    const SuperAdmin2fa = require('../lib/superAdmin2fa');
+    const result = SuperAdmin2fa.verificar2fa(req.session, req.body.codigo);
+
+    if (!result.ok) {
+      if (result.reset) {
+        return req.session.save(() => res.redirect('/super/login?erro=' + encodeURIComponent(result.erro)));
+      }
+      const emailMascarado = req.session.admin2fa
+        ? SuperAdmin2fa.mascararEmail(req.session.admin2fa.email)
+        : '';
+      return res.render('super/2fa', {
+        titulo: 'Verificação 2FA',
+        erro: result.erro,
+        msg: null,
+        emailMascarado,
+        csrfToken: res.locals.csrfToken
+      });
+    }
+
+    const finish = () => {
+      req.session.adminLogado = true;
+      req.session.adminUsuario = result.usuario;
+      req.session.save(() => res.redirect('/super'));
+    };
+
+    if (typeof req.session.regenerate === 'function') {
+      const pendingUser = result.usuario;
+      return req.session.regenerate((err) => {
+        if (err) {
+          console.error('[Super 2FA] regenerate falhou:', err.message);
+          req.session.adminLogado = true;
+          req.session.adminUsuario = pendingUser;
+          return req.session.save(() => res.redirect('/super'));
+        }
+        req.session.adminLogado = true;
+        req.session.adminUsuario = pendingUser;
+        req.session.save(() => res.redirect('/super'));
+      });
+    }
+
+    return finish();
+  },
+
+  async twoFactorResend(req, res) {
+    if (req.session.adminLogado) return res.redirect('/super');
+    const SuperAdmin2fa = require('../lib/superAdmin2fa');
+    try {
+      const { emailMascarado } = await SuperAdmin2fa.reenviar2fa(req.session);
+      return req.session.save(() => {
+        res.redirect(`/super/2fa?msg=${encodeURIComponent(`Novo código enviado para ${emailMascarado}`)}`);
+      });
+    } catch (err) {
+      return res.redirect(`/super/2fa?erro=${encodeURIComponent(err.message)}`);
+    }
   },
 
   logout(req, res) {
     req.session.adminLogado = false;
     req.session.adminUsuario = null;
+    try {
+      require('../lib/superAdmin2fa').limpar2fa(req.session);
+    } catch (_) {}
     res.redirect('/super/login');
   },
 

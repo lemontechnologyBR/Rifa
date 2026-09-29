@@ -63,7 +63,7 @@
                   <button type="submit" class="super-action-btn <%= t.status === 'ativo' ? '' : 'super-action-btn--ok' %>"><%= t.status === 'ativo' ? 'Suspender' : 'Ativar' %></button>
                 </form>
                 <form method="POST" action="/super/tenants/<%= t.id %>/saldo-bloqueado" class="inline"
-                  onsubmit="return confirm('<%= t.saldoBloqueado ? 'Desbloquear' : 'Bloquear' %> o saldo de <%= String(t.nome || '').replace(/'/g, "\\'") %>?')">
+                  onsubmit="return confirm(<%= JSON.stringify((t.saldoBloqueado ? 'Desbloquear' : 'Bloquear') + ' o saldo de ' + (t.nome || '') + '?') %>)">
                   <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                   <input type="hidden" name="redirect" value="/super/sistemas<%= busca ? '?q=' + encodeURIComponent(busca) : '' %><%= statusFiltro !== 'todos' ? (busca ? '&' : '?') + 'status=' + statusFiltro : '' %>">
                   <input type="hidden" name="acao" value="<%= t.saldoBloqueado ? 'desbloquear' : 'bloquear' %>">

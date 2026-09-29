@@ -256,6 +256,7 @@ async function bootstrap() {
 
   require('./jobs/syncPagamentos').iniciar();
   require('./jobs/syncSaques').iniciar();
+  require('./jobs/syncKyc').iniciar();
   require('./jobs/onboardingEmails').iniciar();
   require('./jobs/syncWooviSaldos').iniciar();
 

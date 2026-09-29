@@ -172,7 +172,7 @@
                   </button>
                 </form>
                 <form method="POST" action="/super/tenants/<%= o.tenant.id %>/saldo-bloqueado" class="inline"
-                  onsubmit="return confirm('<%= o.tenant.saldoBloqueado ? 'Desbloquear' : 'Bloquear' %> o saldo de <%= String(o.tenant.nome || '').replace(/'/g, "\\'") %>?')">
+                  onsubmit="return confirm(<%= JSON.stringify((o.tenant.saldoBloqueado ? 'Desbloquear' : 'Bloquear') + ' o saldo de ' + (o.tenant.nome || '') + '?') %>)">
                   <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                   <input type="hidden" name="redirect" value="/super/sistemas<%= contaQs({ page: page }) %>">
                   <input type="hidden" name="acao" value="<%= o.tenant.saldoBloqueado ? 'desbloquear' : 'bloquear' %>">

@@ -139,7 +139,7 @@
                   <a href="/super/organizadores/<%= o.id %>/kyc" class="super-action-link">Ver documento</a>
                   <% } %>
                   <form method="POST" action="/super/tenants/<%= o.tenant.id %>/saldo-bloqueado" class="inline"
-                    onsubmit="return confirm('<%= o.tenant.saldoBloqueado ? 'Desbloquear' : 'Bloquear' %> saldo de <%= String(o.tenant.nome || '').replace(/'/g, "\\'") %>?')">
+                    onsubmit="return confirm(<%= JSON.stringify((o.tenant.saldoBloqueado ? 'Desbloquear' : 'Bloquear') + ' saldo de ' + (o.tenant.nome || '') + '?') %>)">
                     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <input type="hidden" name="redirect" value="<%= redirectComp %>">
                     <input type="hidden" name="acao" value="<%= o.tenant.saldoBloqueado ? 'desbloquear' : 'bloquear' %>">
@@ -149,7 +149,7 @@
                   </form>
                   <% if (st !== 'pendente') { %>
                   <form method="POST" action="/super/organizadores/<%= o.id %>/kyc-reset" class="inline"
-                    onsubmit="return confirm('Resetar KYC de <%= String(o.nome || '').replace(/'/g, "\\'") %>?')">
+                    onsubmit="return confirm(<%= JSON.stringify('Resetar KYC de ' + (o.nome || '') + '?') %>)">
                     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <input type="hidden" name="redirect" value="<%= redirectComp %>">
                     <button type="submit" class="super-action-btn">Reset KYC</button>

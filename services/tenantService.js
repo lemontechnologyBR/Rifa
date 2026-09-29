@@ -62,13 +62,15 @@ const TenantService = {
   },
 
   async criar({ nome, slug, corPrimaria }) {
-    const slugFinal = this.validarSlug(slug || nome);
+    const { assertNomeLoja } = require('../lib/sanitizeText');
+    const nomeOk = assertNomeLoja(nome);
+    const slugFinal = this.validarSlug(slug || nomeOk);
     const existe = await prisma.tenant.findUnique({ where: { slug: slugFinal } });
     if (existe) throw new Error('Este slug já está em uso.');
 
     return prisma.tenant.create({
       data: {
-        nome,
+        nome: nomeOk,
         slug: slugFinal,
         corPrimaria: corPrimaria || '#6366f1'
       }
@@ -77,7 +79,10 @@ const TenantService = {
 
   async atualizar(id, dados) {
     const data = {};
-    if (dados.nome) data.nome = String(dados.nome).trim();
+    if (dados.nome) {
+      const { assertNomeLoja } = require('../lib/sanitizeText');
+      data.nome = assertNomeLoja(dados.nome);
+    }
     if (dados.descricao !== undefined) {
       const d = String(dados.descricao || '').trim();
       data.descricao = d || null;

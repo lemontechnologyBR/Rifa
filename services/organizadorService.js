@@ -67,11 +67,9 @@ const OrganizadorService = {
     });
     if (!org) throw new Error('Conta não encontrada.');
 
-    const nomeOrg = String(dados.nome_organizador || dados.nome || '').trim();
-    if (nomeOrg.length < 2) throw new Error('Informe seu nome (mínimo 2 caracteres).');
-
-    const nomeLoja = String(dados.nome_loja || '').trim();
-    if (nomeLoja.length < 2) throw new Error('Informe o nome da loja (mínimo 2 caracteres).');
+    const { assertNomePessoa, assertNomeLoja } = require('../lib/sanitizeText');
+    const nomeOrg = assertNomePessoa(dados.nome_organizador || dados.nome);
+    const nomeLoja = assertNomeLoja(dados.nome_loja);
 
     const slugFinal = TenantService.validarSlug(String(dados.slug || '').trim());
     const tenant = await prisma.tenant.findUnique({ where: { id: Number(tenantId) } });

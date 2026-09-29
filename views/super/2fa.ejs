@@ -1,0 +1,36 @@
+<%- include('partials/layout-start') %>
+
+<div class="super-login-page">
+  <div class="super-login-card">
+    <div class="super-login-logo">
+      <img src="/img/vourifar-logo.png" alt="VouRifar" height="40">
+    </div>
+    <h1 class="super-login-title">Verificação 2FA</h1>
+    <p class="super-login-sub">
+      Enviamos um código de 6 dígitos para<br>
+      <strong><%= emailMascarado %></strong>
+    </p>
+
+    <% if (msg) { %><div class="super-login-alert" style="background:#ecfdf5;color:#065f46;border-color:#a7f3d0;"><%= msg %></div><% } %>
+    <% if (erro) { %><div class="super-login-alert"><%= erro %></div><% } %>
+
+    <form method="POST" action="/super/2fa" autocomplete="one-time-code">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="text" name="codigo" required inputmode="numeric" pattern="[0-9]{6}" maxlength="6"
+        autocomplete="one-time-code" placeholder="000000" class="super-login-field"
+        style="letter-spacing:0.35em;text-align:center;font-size:1.35rem;font-weight:700;">
+      <button type="submit" class="super-login-btn">Confirmar código</button>
+    </form>
+
+    <form method="POST" action="/super/2fa/reenviar" style="margin-top:12px;">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button type="submit" class="super-login-btn" style="background:transparent;color:#64748b;border:1px solid #e2e8f0;box-shadow:none;">Reenviar código</button>
+    </form>
+
+    <p style="margin-top:18px;text-align:center;font-size:13px;">
+      <a href="/super/login" style="color:#64748b;text-decoration:underline;">Voltar ao login</a>
+    </p>
+  </div>
+</div>
+
+<%- include('partials/layout-end') %>
